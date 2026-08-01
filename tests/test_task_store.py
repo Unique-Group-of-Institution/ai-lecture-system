@@ -58,7 +58,7 @@ class TaskStoreTests(unittest.TestCase):
         self.assertEqual(task["history"][-1]["to"], "IN_PROGRESS")
 
     def test_owner_cannot_mark_own_task_done(self) -> None:
-        self.store.claim("T1", "claude")
+        self.store.claim("T1", "Claude")
         self.store.set_status("T1", "REVIEW", "claude", "Ready for review")
         with self.assertRaisesRegex(TaskError, "cannot mark its own task DONE"):
             self.store.set_status("T1", "DONE", "claude", "Self-approved")
@@ -86,4 +86,3 @@ class TaskStoreTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

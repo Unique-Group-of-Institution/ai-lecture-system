@@ -130,8 +130,9 @@ def record_decision(title: str, decision: str, rationale: str, actor: str) -> di
     numbers = [int(match) for match in re.findall(r"^## D(\d+)", existing, flags=re.MULTILINE)]
     next_number = max(numbers, default=0) + 1
     safe_actor = actor.strip().replace("\n", " ")
+    safe_title = title.strip().replace("\n", " ")
     entry = (
-        f"\n## D{next_number:03d} — {title.strip()}\n\n"
+        f"\n## D{next_number:03d} — {safe_title}\n\n"
         f"- **Status:** Proposed\n"
         f"- **Recorded:** {date.today().isoformat()} by {safe_actor}\n"
         f"- **Decision:** {decision.strip()}\n"
@@ -148,4 +149,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -137,7 +137,8 @@ class TaskStore:
         active = [
             item["id"]
             for item in payload["tasks"]
-            if item["owner"] == owner and item["status"] == "IN_PROGRESS"
+            if str(item["owner"] or "").casefold() == owner.casefold()
+            and item["status"] == "IN_PROGRESS"
         ]
         if active:
             raise TaskError(f"Owner {owner} already has an active task: {active[0]}")
@@ -163,7 +164,8 @@ class TaskStore:
         task = by_id[task_id]
         if new_status not in ALLOWED_TRANSITIONS[task["status"]]:
             raise TaskError(f"Invalid transition: {task['status']} -> {new_status}")
-        if new_status == "DONE" and actor.lower() != "human" and actor == task.get("owner"):
+        same_as_owner = actor.casefold() == str(task.get("owner") or "").casefold()
+        if new_status == "DONE" and actor.casefold() != "human" and same_as_owner:
             raise TaskError("The implementing owner cannot mark its own task DONE")
         if new_status == "READY":
             incomplete = [dep for dep in task["dependencies"] if by_id[dep]["status"] != "DONE"]
@@ -197,4 +199,3 @@ class TaskStore:
             "counts": counts,
             "next_ready": self.next_ready(),
         }
-
