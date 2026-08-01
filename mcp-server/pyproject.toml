@@ -1,0 +1,19 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lecture-workspace-mcp"
+version = "0.1.0"
+description = "Controlled MCP tools for the AI Lecture System agent workspace"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp>=1.0,<2"
+]
+
+[project.scripts]
+lecture-workspace-mcp = "lecture_workspace_mcp.server:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lecture_workspace_mcp"]
+

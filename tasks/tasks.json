@@ -1,0 +1,192 @@
+{
+  "schema_version": 1,
+  "project": "AI Lecture System",
+  "updated_at": "2026-08-01T13:45:16Z",
+  "tasks": [
+    {
+      "id": "T001",
+      "title": "Create Agent Workspace Bootstrap",
+      "priority": 1,
+      "status": "REVIEW",
+      "owner": "codex",
+      "dependencies": [],
+      "scope": [
+        "Shared agent instructions",
+        "Task state machine",
+        "Offline dashboard",
+        "Safe MCP skeleton",
+        "Windows setup and validation"
+      ],
+      "acceptance_criteria": [
+        "Claude and Codex can read the same durable project rules",
+        "Tasks can be claimed and transitioned with recorded history",
+        "Workspace validation and unit tests pass",
+        "Edge/Chrome dashboard is generated",
+        "Downloadable package is produced"
+      ],
+      "verification": [
+        {
+          "at": "2026-08-01T13:45:16Z",
+          "actor": "codex",
+          "evidence": "7 unit tests pass; workspace check passes; dashboard generated; Python sources compile"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-01T13:30:00Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Bootstrap implementation started"
+        },
+        {
+          "at": "2026-08-01T13:45:16Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Bootstrap implementation complete; ready for human review"
+        }
+      ]
+    },
+    {
+      "id": "T002",
+      "title": "Capture admin PC and LMS system profile",
+      "priority": 2,
+      "status": "READY",
+      "owner": null,
+      "dependencies": [],
+      "scope": [
+        "Complete docs/SYSTEM_PROFILE.md",
+        "Run scripts/system_probe.py on the target Windows laptop",
+        "Record LMS name and integration method"
+      ],
+      "acceptance_criteria": [
+        "Windows, CPU, RAM, GPU and storage are recorded",
+        "Python, Git, FFmpeg, LibreOffice and Node availability are recorded",
+        "LMS name/version and upload or API method are recorded"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T003",
+      "title": "Connect private GitHub repository and branch protections",
+      "priority": 3,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T002"
+      ],
+      "scope": [
+        "Create or select private repository",
+        "Add remote",
+        "Push bootstrap",
+        "Enable pull-request review workflow"
+      ],
+      "acceptance_criteria": [
+        "Private remote is configured",
+        "Main branch is protected from force pushes",
+        "CI runs on pull requests"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T010",
+      "title": "Create Phase-1 database and authentication foundation",
+      "priority": 4,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T002"
+      ],
+      "scope": [
+        "Django project",
+        "SQLite configuration",
+        "Teacher/admin roles",
+        "Course, chapter and lecture-request models"
+      ],
+      "acceptance_criteria": [
+        "Migrations apply on a clean database",
+        "Teacher and admin permissions are tested",
+        "Schema remains PostgreSQL-portable"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T020",
+      "title": "Benchmark local Whisper and audio-QC pipeline",
+      "priority": 5,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T002"
+      ],
+      "scope": [
+        "Install suitable local Whisper implementation",
+        "Transcribe the Aamir Sir pilot audio",
+        "Measure runtime and memory",
+        "Produce timestamped QC flags"
+      ],
+      "acceptance_criteria": [
+        "Timestamped Urdu/English transcript is produced locally",
+        "Runtime and selected model are documented",
+        "No teacher audio is sent to a paid or external transcription API"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T030",
+      "title": "Implement lecture-domain MCP tools",
+      "priority": 6,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T010"
+      ],
+      "scope": [
+        "Lecture request retrieval",
+        "Chapter context retrieval",
+        "Script and scene persistence",
+        "Status transitions",
+        "Correction requests"
+      ],
+      "acceptance_criteria": [
+        "Tools use validated schemas",
+        "Write operations are auditable",
+        "Approval-gated transitions cannot be bypassed"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T040",
+      "title": "Build three-scene teacher portal vertical slice",
+      "priority": 7,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T010",
+        "T020",
+        "T030"
+      ],
+      "scope": [
+        "Lecture request",
+        "Scene approval",
+        "Browser audio recording",
+        "Transcript review",
+        "Scene correction",
+        "Local MP4 render"
+      ],
+      "acceptance_criteria": [
+        "One teacher completes a three-scene lecture",
+        "One incorrect sentence is patched without full re-recording",
+        "Final local package includes PPTX, MP4, SRT and metadata"
+      ],
+      "verification": [],
+      "history": []
+    }
+  ]
+}

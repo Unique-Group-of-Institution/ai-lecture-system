@@ -1,0 +1,43 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+docs/SYSTEM_PROBE.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+
+# Runtime media and generated files
+data/uploads/*
+data/lectures/*
+data/exports/*
+!data/uploads/.gitkeep
+!data/lectures/.gitkeep
+!data/exports/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# Databases
+*.sqlite3
+*.db
+*.db-journal
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Render intermediates
+*.wav
+*.tmp
+*.part
