@@ -4,7 +4,7 @@
 
 **Phase:** Private repository bootstrap
 
-**Overall status:** T003 BLOCKED by unavailable private-repository branch protection
+**Overall status:** T003 ready for review with approved zero-cost Git safety
 
 ## Completed
 
@@ -21,22 +21,24 @@
 - Phase-1 publication boundary frozen: LMS integration is deferred; Phase 1 ends at admin-approved YouTube publication through the existing local uploader.
 - Private institutional repository created at `https://github.com/Unique-Group-of-Institution/ai-lecture-system` and reviewed bootstrap pushed to `main`.
 - Existing CI confirmed to run on `pull_request` events and pushes to `main`.
+- Version-controlled local Git safety rejects direct pushes to `main` while permitting task and feature branches.
+- Windows hook setup is repeatable and active in the current clone.
 
 ## Current task
 
-- `T003` is BLOCKED. The repository is private and correctly owned, but GitHub returned HTTP 403 when protection against force pushes and deletion was requested: "Upgrade to GitHub Pro or make this repository public to enable this feature."
+- `T003` is in REVIEW. The private institutional remote is configured, direct local pushes to `main` are blocked, and the pull-request CI workflow remains enabled. Paid server-side branch protection is explicitly deferred.
 
 ## Next READY task
 
-- None while `T003` is BLOCKED.
+- None until T003 receives independent or human review.
 
 ## Blockers
 
 - FFmpeg and LibreOffice are not installed.
 - The 8 GB RAM and low-memory legacy GPUs constrain local Whisper model and render-setting choices; benchmarking remains required.
 - Local Whisper model has not been installed or benchmarked on the admin PC.
-- The current GitHub plan does not support branch protection for this private repository. Do not make the repository public or move it to a personal owner; enable a supporting institutional plan, then retry protection.
+- The current GitHub plan does not support server-side branch protection for this private repository. The paid upgrade is deferred; local hooks must be installed on every clone and are not equivalent to server-side enforcement.
 
 ## Current quality rule
 
-Do not move T003 to REVIEW until `main` rejects force pushes and branch deletion. The repository must remain private under `Unique-Group-of-Institution`.
+Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.

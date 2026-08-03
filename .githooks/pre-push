@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Local safety guard: changes to main must go through the pull-request workflow.
+# Git supplies: <local-ref> <local-oid> <remote-ref> <remote-oid>.
+while read -r local_ref local_oid remote_ref remote_oid
+do
+    if [ "$remote_ref" = "refs/heads/main" ]; then
+        echo "ERROR: Direct pushes to main are blocked by the repository's local Git safety hook." >&2
+        echo "Push a task/* or feature/* branch and open a pull request into main." >&2
+        exit 1
+    fi
+done
+
+exit 0

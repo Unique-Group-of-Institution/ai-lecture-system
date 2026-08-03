@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-03T13:49:24Z",
+  "updated_at": "2026-08-03T14:03:15Z",
   "tasks": [
     {
       "id": "T001",
@@ -107,7 +107,7 @@
       "id": "T003",
       "title": "Connect private GitHub repository and branch protections",
       "priority": 3,
-      "status": "BLOCKED",
+      "status": "REVIEW",
       "owner": "codex",
       "dependencies": [
         "T002"
@@ -119,15 +119,21 @@
         "Enable pull-request review workflow"
       ],
       "acceptance_criteria": [
-        "Private remote is configured",
-        "Main branch is protected from force pushes",
-        "CI runs on pull requests"
+        "Private institutional remote is configured",
+        "Local direct pushes to main are blocked",
+        "Pull-request workflow and CI are enabled",
+        "Paid server-side protection is explicitly deferred"
       ],
       "verification": [
         {
           "at": "2026-08-03T13:49:24Z",
           "actor": "codex",
           "evidence": "Repository created private at https://github.com/Unique-Group-of-Institution/ai-lecture-system; bootstrap commit 0e5c041 pushed to origin/main; CI workflow includes pull_request; branch protection API returned HTTP 403 because the current GitHub plan does not support protection for this private repository."
+        },
+        {
+          "at": "2026-08-03T14:03:15Z",
+          "actor": "codex",
+          "evidence": "Private institutional origin verified; core.hooksPath=.githooks active; repeated Windows setup succeeded; synthetic main-target hook test blocked and task-branch test allowed; workspace validation passed; all 9 tests passed; git diff --check passed; pull_request CI configured; paid server-side protection deferred by product owner"
         }
       ],
       "history": [
@@ -151,6 +157,27 @@
           "from": "IN_PROGRESS",
           "to": "BLOCKED",
           "note": "GitHub branch protection failed with HTTP 403: Upgrade to GitHub Pro or make this repository public to enable this feature. Repository remains private; no fallback owner or weakened security was used."
+        },
+        {
+          "at": "2026-08-03T13:55:14Z",
+          "actor": "human",
+          "from": "BLOCKED",
+          "to": "READY",
+          "note": "Zero-cost local Git safety and PR workflow approved; paid GitHub branch protection deferred"
+        },
+        {
+          "at": "2026-08-03T13:57:23Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implement approved zero-cost local Git safety and PR workflow"
+        },
+        {
+          "at": "2026-08-03T14:03:15Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Approved local Git safety and PR workflow implemented; ready for independent or human review"
         }
       ]
     },
