@@ -21,11 +21,14 @@ content and generated media must not be made public.
    move it from `REVIEW` to `DONE` when accepted.
 6. Merge without force-pushing and delete only the short-lived branch.
 
-The repository protects `main` from force pushes and deletion. Required
-approving reviews are intentionally not enabled while there is only one GitHub
-operator, because GitHub does not allow an author to approve their own pull
-request. This does not relax the project rule that an implementer cannot mark
-their own task `DONE`.
+Protection of `main` from force pushes and deletion is required but not yet
+active. On 2026-08-03 GitHub rejected the protection request with HTTP 403,
+stating that GitHub Pro is required unless the repository is made public. The
+repository must remain private, so T003 is blocked pending a plan that supports
+private-repository branch protection. Required approving reviews should remain
+off while there is only one GitHub operator, because GitHub does not allow an
+author to approve their own pull request. This does not relax the project rule
+that an implementer cannot mark their own task `DONE`.
 
 The existing `.github/workflows/ci.yml` runs for both `pull_request` events and
 pushes to `main`, with read-only repository contents permission.

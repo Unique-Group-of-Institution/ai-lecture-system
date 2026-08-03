@@ -52,6 +52,6 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 
 ## D009 — Institutional private GitHub repository and review workflow
 
-- **Status:** Accepted
-- **Decision:** Host the project only in the private `Unique-Group-of-Institution/ai-lecture-system` repository. Protect `main` from force pushes and deletion. Changes should reach `main` through pull requests with CI validation; required approving reviews are not enforced while the project has a single operator, so emergency and bootstrap maintenance remain workable.
-- **Reason:** Institutional ownership, private source control and protected history are required without creating a review rule that the sole operator cannot satisfy. A different agent or the human product owner still performs the task-level review required by D004.
+- **Status:** Blocked pending a GitHub plan that supports private-repository branch protection
+- **Decision:** Host the project only in the private `Unique-Group-of-Institution/ai-lecture-system` repository. Before T003 can complete, protect `main` from force pushes and deletion. Changes should reach `main` through pull requests with CI validation; required approving reviews need not be enforced while the project has a single operator.
+- **Reason:** Institutional ownership, private source control and protected history are required without creating a review rule that the sole operator cannot satisfy. GitHub returned HTTP 403 when protection was requested because the current plan does not support this feature for the private repository. Making the repository public is not an acceptable workaround.

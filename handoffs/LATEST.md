@@ -1,11 +1,11 @@
 # Latest Agent Handoff
 
-- **Task:** T002 — Capture admin PC and LMS system profile
+- **Task:** T003 — Connect private GitHub repository and branch protections
 - **Owner:** codex
-- **Status:** REVIEW
-- **Summary:** Windows/admin-PC capabilities are recorded. LMS integration and APIs are deferred; Phase 1 ends at YouTube publication using the existing local uploader after package approval.
-- **Evidence:** `docs/SYSTEM_PROBE.json` records the local probe; product-owner-verified RAM, GPU, internet and uploader details are recorded in `docs/SYSTEM_PROFILE.md`.
-- **Checks:** `python scripts/check_workspace.py` passes; all seven tests discovered by `python -m unittest discover -s tests -v` pass.
-- **Safety:** Only approved publication files may be copied to the uploader watch folder. Uploader `.env`, `token.json` and other credentials are outside scope and must not be inspected or changed.
-- **Risks:** FFmpeg and LibreOffice are absent; local Whisper has not been benchmarked on the 8 GB machine; uploader metadata requirements remain to be confirmed during publication-package implementation.
-- **Next action:** Obtain independent or human review of T002. Do not begin T003 yet.
+- **Status:** BLOCKED
+- **Repository:** `https://github.com/Unique-Group-of-Institution/ai-lecture-system` is private; `origin` fetch and push use the matching HTTPS URL; `main` tracks `origin/main`.
+- **Bootstrap:** Commit `0e5c041` (`Connect institutional GitHub workflow`) was pushed after complete status, history and diff review.
+- **CI:** `.github/workflows/ci.yml` runs on `pull_request` and pushes to `main`, with read-only contents permission.
+- **Protection blocker:** GitHub returned HTTP 403: "Upgrade to GitHub Pro or make this repository public to enable this feature." Force-push and deletion protection are therefore not active. The repository was not made public and no personal-owner fallback was used.
+- **Checks:** `python scripts/check_workspace.py` passes; all seven tests discovered by `python -m unittest discover -s tests -v` pass; `git diff --check` passes; synthetic ignore checks cover secrets, auth caches, uploader artifacts, generated media, audio, video, uploads and local databases.
+- **Next action:** Enable an institutional GitHub plan that supports branch protection for this private repository, then retry protection of `main` with force pushes and deletion disabled. After verification, move T003 to REVIEW, not DONE.

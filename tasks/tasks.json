@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-03T13:45:15Z",
+  "updated_at": "2026-08-03T13:49:24Z",
   "tasks": [
     {
       "id": "T001",
@@ -107,7 +107,7 @@
       "id": "T003",
       "title": "Connect private GitHub repository and branch protections",
       "priority": 3,
-      "status": "IN_PROGRESS",
+      "status": "BLOCKED",
       "owner": "codex",
       "dependencies": [
         "T002"
@@ -123,7 +123,13 @@
         "Main branch is protected from force pushes",
         "CI runs on pull requests"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "at": "2026-08-03T13:49:24Z",
+          "actor": "codex",
+          "evidence": "Repository created private at https://github.com/Unique-Group-of-Institution/ai-lecture-system; bootstrap commit 0e5c041 pushed to origin/main; CI workflow includes pull_request; branch protection API returned HTTP 403 because the current GitHub plan does not support protection for this private repository."
+        }
+      ],
       "history": [
         {
           "at": "2026-08-03T13:17:19Z",
@@ -138,6 +144,13 @@
           "from": "READY",
           "to": "IN_PROGRESS",
           "note": "Connect verified private institutional GitHub repository and configure required main-branch protections"
+        },
+        {
+          "at": "2026-08-03T13:49:24Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "BLOCKED",
+          "note": "GitHub branch protection failed with HTTP 403: Upgrade to GitHub Pro or make this repository public to enable this feature. Repository remains private; no fallback owner or weakened security was used."
         }
       ]
     },
