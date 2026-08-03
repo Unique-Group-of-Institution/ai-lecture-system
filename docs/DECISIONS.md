@@ -44,3 +44,14 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 - **Decision:** No agent may publish to LMS or YouTube without explicit admin approval.
 - **Reason:** Quality, privacy and reputational risk.
 
+## D008 — Phase 1 ends at YouTube publication
+
+- **Status:** Accepted
+- **Decision:** Defer all LMS integration and LMS API work to a future phase. In Phase 1, generate and approve the final lecture package locally, then copy only approved publication files to the existing YouTube uploader watch folder at `F:\Youtube Setup\youtube-uploader\input_folder`.
+- **Reason:** This provides a concrete, local-first publication boundary using the existing uploader without coupling Phase 1 to an unknown LMS. Uploader credentials remain outside the AI Lecture System and must not be inspected, printed, modified or exposed.
+
+## D009 — Institutional private GitHub repository and review workflow
+
+- **Status:** Accepted
+- **Decision:** Host the project only in the private `Unique-Group-of-Institution/ai-lecture-system` repository. Protect `main` from force pushes and deletion. Changes should reach `main` through pull requests with CI validation; required approving reviews are not enforced while the project has a single operator, so emergency and bootstrap maintenance remain workable.
+- **Reason:** Institutional ownership, private source control and protected history are required without creating a review rule that the sole operator cannot satisfy. A different agent or the human product owner still performs the task-level review required by D004.

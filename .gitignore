@@ -2,6 +2,11 @@
 .env
 .env.*
 !.env.example
+token.json
+*credentials*.json
+*oauth*.json
+.auth/
+.github-token-cache/
 .claude/settings.local.json
 docs/SYSTEM_PROBE.json
 
@@ -19,6 +24,9 @@ venv/
 data/uploads/*
 data/lectures/*
 data/exports/*
+uploader/
+youtube-uploader/
+input_folder/
 !data/uploads/.gitkeep
 !data/lectures/.gitkeep
 !data/exports/.gitkeep
@@ -39,5 +47,16 @@ desktop.ini
 
 # Render intermediates
 *.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.ogg
+*.opus
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.avi
 *.tmp
 *.part

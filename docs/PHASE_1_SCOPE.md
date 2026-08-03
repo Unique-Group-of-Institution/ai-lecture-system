@@ -22,7 +22,7 @@ Prove one complete lecture workflow for one teacher, one course, one chapter and
 - SRT captions after teacher approval.
 - MP4 rendering.
 - Admin review and local export package.
-- Local YouTube watch-folder handoff.
+- Admin-approved local YouTube watch-folder handoff and publication.
 
 ## Deferred
 
@@ -33,7 +33,15 @@ Prove one complete lecture workflow for one teacher, one course, one chapter and
 - Multi-campus scaling.
 - Analytics dashboards.
 - Cloud hosting and paid AI APIs.
-- Full LMS API integration before the actual LMS interface is confirmed.
+- All LMS integration, including LMS APIs, uploads and publication. These are future-phase work.
+
+## Publication boundary
+
+Phase 1 ends at YouTube publication. The AI Lecture System must generate the
+final lecture package and record the required teacher and admin approvals before
+copying only approved publication files to the existing uploader watch folder at
+`F:\Youtube Setup\youtube-uploader\input_folder`. The uploader and its
+credentials remain outside this project's management boundary.
 
 ## Pilot definition of success
 
@@ -42,4 +50,4 @@ Prove one complete lecture workflow for one teacher, one course, one chapter and
 - Slide/audio mismatch can be corrected at scene level.
 - Final MP4, PPTX, SRT and metadata package are produced locally.
 - Teacher and admin approvals are recorded.
-
+- Only approved publication files are handed to the existing YouTube uploader.

@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-01T13:45:16Z",
+  "updated_at": "2026-08-03T13:45:15Z",
   "tasks": [
     {
       "id": "T001",
       "title": "Create Agent Workspace Bootstrap",
       "priority": 1,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [],
       "scope": [
@@ -45,6 +45,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Bootstrap implementation complete; ready for human review"
+        },
+        {
+          "at": "2026-08-03T08:50:42Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Bootstrap approved after Windows verification"
         }
       ]
     },
@@ -52,8 +59,8 @@
       "id": "T002",
       "title": "Capture admin PC and LMS system profile",
       "priority": 2,
-      "status": "READY",
-      "owner": null,
+      "status": "DONE",
+      "owner": "codex",
       "dependencies": [],
       "scope": [
         "Complete docs/SYSTEM_PROFILE.md",
@@ -65,15 +72,43 @@
         "Python, Git, FFmpeg, LibreOffice and Node availability are recorded",
         "LMS name/version and upload or API method are recorded"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-03T13:11:34Z",
+          "actor": "codex",
+          "evidence": "2026-08-03: scripts/system_probe.py corroborated Windows 10.0.19045, Python 3.14.5, Git 2.54.0.windows.1, Node v24.16.0, Codex CLI 0.146.0, Claude Code 2.1.185, 73,340,895,232 free bytes, and FFmpeg/LibreOffice absent; product owner supplied CPU, RAM, GPU, internet and uploader workflow details; python scripts/check_workspace.py passed; all 7 unittest-discovered tests passed"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-03T13:06:33Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Task claimed"
+        },
+        {
+          "at": "2026-08-03T13:11:34Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "System profile and Phase-1 publication boundary documented; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-03T13:14:56Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "System profile and Phase-1 YouTube publication scope approved"
+        }
+      ]
     },
     {
       "id": "T003",
       "title": "Connect private GitHub repository and branch protections",
       "priority": 3,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "IN_PROGRESS",
+      "owner": "codex",
       "dependencies": [
         "T002"
       ],
@@ -89,7 +124,22 @@
         "CI runs on pull requests"
       ],
       "verification": [],
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-03T13:17:19Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "T002 completed; private GitHub repository setup authorized as next task"
+        },
+        {
+          "at": "2026-08-03T13:45:15Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Connect verified private institutional GitHub repository and configure required main-branch protections"
+        }
+      ]
     },
     {
       "id": "T010",
