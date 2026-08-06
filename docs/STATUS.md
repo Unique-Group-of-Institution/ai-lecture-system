@@ -40,6 +40,7 @@
 - All real media, transcript text, timestamps, logs, model weights and tools remain local and ignored. No external upload, paid API, semantic correction, cut or caption judgment occurred.
 - Eight T020 synthetic unit tests cover path validation, overwrite refusal, timestamp ordering, Urdu/English Unicode, QC flags, safe placement, WAV metrics and missing dependencies.
 - Verification passed: `python scripts/check_workspace.py`; all 17 tests under `tests/`; all 13 Django tests; `manage.py check`; migration consistency; Python compilation; task/dashboard validation; `python -m pip check`; and `git diff --check`.
+- Implementation commit `835742a` was pushed on `task/t020-local-whisper-audio-qc` through the active hook. Draft PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`. `workspace-ci` passed in Actions run `31091173324`, job `92582267539`.
 
 ## T010 verification
 

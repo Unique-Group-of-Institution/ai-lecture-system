@@ -10,4 +10,6 @@
 - **QC:** Zero clipped samples; six long silences, two long transcript gaps and one possible-background-noise aggregate flag. No semantic corrections, captions, cuts or content judgments.
 - **Privacy:** Source audio remained immutable. Audio, PCM, transcript text, timestamp files, QC details, logs, binaries and weights remain under ignored local storage and were never uploaded or committed.
 - **Verification:** `python scripts/check_workspace.py` passed; all 17 non-Django tests passed; all 13 Django tests passed with a synthetic process-only key; Django system/migration checks, Python compilation, task/dashboard validation, `python -m pip check` and `git diff --check` passed. A generic root `unittest discover` invocation was unsuitable because it imports Django tests without settings; both supported suites passed independently.
-- **Next action:** Review the scoped diff, commit/push the task branch, open a draft PR, confirm CI starts, and obtain independent or human approval before DONE.
+- **Commit and PR:** Implementation commit `835742a` is pushed on `task/t020-local-whisper-audio-qc`. Draft PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`.
+- **CI:** `workspace-ci` passed in Actions run `31091173324`, job `92582267539`.
+- **Next action:** Independently review PR #3 and obtain human or independent-agent approval before DONE. Do not merge or self-approve.
