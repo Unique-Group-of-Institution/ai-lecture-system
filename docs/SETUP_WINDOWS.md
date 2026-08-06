@@ -12,6 +12,25 @@
 
 Local Whisper and the application framework are installed in later reviewed tasks after the system profile is known.
 
+## Django database foundation
+
+Create and activate a dedicated virtual environment, then install the project and initialize the
+local SQLite database:
+
+```powershell
+py -3.14 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e .
+python manage.py migrate
+python manage.py check
+python manage.py test
+```
+
+The default database is `db.sqlite3` in the repository root and is ignored by Git. For disposable
+validation, set `AI_LECTURE_SQLITE_PATH` to a temporary `.sqlite3` path before running migrations.
+Production credentials and production database settings do not belong in this local settings file.
+
 ## Bootstrap
 
 Open PowerShell in the repository root:
@@ -46,4 +65,3 @@ python scripts\taskctl.py claim T002 --owner claude
 python scripts\system_probe.py
 python scripts\taskctl.py status T002 REVIEW --actor claude --note "System profile completed" --verification "docs/SYSTEM_PROFILE.md and docs/SYSTEM_PROBE.json"
 ```
-

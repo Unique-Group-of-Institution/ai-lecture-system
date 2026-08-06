@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T06:02:06Z",
+  "updated_at": "2026-08-06T06:49:03Z",
   "tasks": [
     {
       "id": "T001",
@@ -192,8 +192,8 @@
       "id": "T010",
       "title": "Create Phase-1 database and authentication foundation",
       "priority": 4,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "REVIEW",
+      "owner": "codex",
       "dependencies": [
         "T002"
       ],
@@ -208,8 +208,36 @@
         "Teacher and admin permissions are tested",
         "Schema remains PostgreSQL-portable"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-06T06:49:03Z",
+          "actor": "codex",
+          "evidence": "Python 3.14.5 with Django 6.0.8; clean temporary SQLite migration passed; 11 Django tests passed; 9 existing unittest tests passed; workspace check passed; manage.py check passed; makemigrations --check --dry-run reported no changes; pip check passed; git diff --check passed"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-06T06:38:36Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "T001-T003 completed; Phase-1 database and authentication foundation approved as the next task"
+        },
+        {
+          "at": "2026-08-06T06:40:02Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implement the human-authorized Phase-1 Django database and authentication foundation"
+        },
+        {
+          "at": "2026-08-06T06:49:03Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Phase-1 Django database and authentication foundation implemented; ready for independent or human review"
+        }
+      ]
     },
     {
       "id": "T020",

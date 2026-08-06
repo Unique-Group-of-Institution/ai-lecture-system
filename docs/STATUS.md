@@ -2,9 +2,9 @@
 
 **Updated:** 2026-08-06
 
-**Phase:** Private repository bootstrap
+**Phase:** Phase-1 application foundation
 
-**Overall status:** T003 approved and DONE with zero-cost Git safety
+**Overall status:** T010 database and authentication foundation ready for review
 
 ## Completed
 
@@ -27,11 +27,19 @@
 
 ## Current task
 
-- None. `T003` is DONE. The approved zero-cost workflow keeps the private institutional remote, blocks direct local pushes to `main`, and requires pull requests with passing CI. Paid server-side branch protection remains explicitly deferred.
+- `T010` is in REVIEW. The Django 6.0 foundation uses local SQLite, built-in authentication groups and permissions, protected relationships, teacher-scoped access policies, and PostgreSQL-portable ORM schema features.
 
 ## Next READY task
 
 - None currently recorded.
+
+## T010 verification
+
+- Django 6.0.8 runs on the installed Python 3.14.5; the project dependency remains constrained to compatible 6.0 patch releases.
+- Clean migrations applied to a disposable SQLite database.
+- All 11 Django tests passed, including teacher/admin permissions, unauthorized access rejection, relationship/constraint behavior and portability checks.
+- All 9 existing repository tests passed through `python scripts/check_workspace.py`.
+- `python manage.py check`, migration consistency, and `git diff --check` passed.
 
 ## Blockers
 
