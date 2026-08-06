@@ -35,11 +35,11 @@
 - Input duration: 568.789 seconds; validated derivative: PCM signed 16-bit, 16 kHz, mono, 18,201,336 bytes.
 - Conversion runtime: 1.523 seconds. Source size and modification timestamp remained unchanged.
 - Transcription runtime: 1,616.126 seconds; real-time factor 2.8413; peak working set 670,408,704 bytes.
-- Detected language code: `hi` (the CLI JSON provided no probability); 29 segments with ordered, valid timestamps.
-- Transcript-free technical QC: zero clipped samples; six long-silence flags, two long-transcript-gap flags and one possible-background-noise flag.
+- Automatically detected language code: `hi` (the CLI JSON provided no probability). This is a model limitation for the Urdu/English recording, not an accuracy or correct-rendering claim; spoken-content validation remains pending local teacher inspection.
+- Transcript-free technical QC: 29 ordered/valid segments; two long-transcript-gap flags; zero low-confidence, timestamp-discontinuity, unusually-low-volume or clipping flags. Transcript gaps are not reported as silence, and no background-noise category is claimed because the tracked algorithm does not implement one.
 - All real media, transcript text, timestamps, logs, model weights and tools remain local and ignored. No external upload, paid API, semantic correction, cut or caption judgment occurred.
 - Eight T020 synthetic unit tests cover path validation, overwrite refusal, timestamp ordering, Urdu/English Unicode, QC flags, safe placement, WAV metrics and missing dependencies.
-- Verification passed: `python scripts/check_workspace.py`; all 17 tests under `tests/`; all 13 Django tests; `manage.py check`; migration consistency; Python compilation; task/dashboard validation; `python -m pip check`; and `git diff --check`.
+- Verification passed after review fixes: `python scripts/check_workspace.py`; all 19 tests under `tests/`; all 13 Django tests; `manage.py check`; migration consistency; Python compilation; task/dashboard validation; `python -m pip check`; and `git diff --check`.
 - Implementation commit `835742a` was pushed on `task/t020-local-whisper-audio-qc` through the active hook. Draft PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`. `workspace-ci` passed in Actions run `31091173324`, job `92582267539`.
 
 ## T010 verification

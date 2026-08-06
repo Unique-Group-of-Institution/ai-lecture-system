@@ -23,8 +23,14 @@ from agent_workspace.audio_qc import (  # noqa: E402
 )
 
 
+class PrivateArgumentParser(argparse.ArgumentParser):
+    def error(self, message: str) -> None:
+        self.print_usage(sys.stderr)
+        self.exit(2, "benchmark_audio.py: error: invalid or incomplete local arguments\n")
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Run a private local Whisper/audio-QC benchmark")
+    parser = PrivateArgumentParser(description="Run a private local Whisper/audio-QC benchmark")
     parser.add_argument("--input", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--whisper-cli", required=True, type=Path)
@@ -107,6 +113,13 @@ def main() -> int:
         return 0
     except AudioQCError as exc:
         print(f"Benchmark refused: {exc}", file=sys.stderr)
+        return 2
+    except (OSError, ValueError, KeyError, json.JSONDecodeError):
+        print(
+            "Benchmark refused: local validation or processing failed; "
+            "inspect private ignored logs.",
+            file=sys.stderr,
+        )
         return 2
 
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T09:56:47Z",
+  "updated_at": "2026-08-06T10:27:45Z",
   "tasks": [
     {
       "id": "T001",
@@ -281,6 +281,11 @@
           "at": "2026-08-06T09:56:47Z",
           "actor": "codex",
           "evidence": "Implementation commit 835742a pushed through the active local hook; draft PR #3 targets main; workspace-ci passed in Actions run 31091173324, job 92582267539."
+        },
+        {
+          "at": "2026-08-06T10:27:45Z",
+          "actor": "codex",
+          "evidence": "Human review fixes sanitize all user-visible path errors, add privacy regression tests, align QC evidence to the tracked reproducible algorithm, and document automatic language code hi as a model limitation pending local teacher inspection. Workspace check, 19 non-Django tests, 13 Django tests, Django checks, migration consistency, pip check, compilation and diff check passed; T020 remains REVIEW."
         }
       ],
       "history": [

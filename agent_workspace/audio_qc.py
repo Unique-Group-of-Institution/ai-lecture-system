@@ -38,7 +38,7 @@ def resolved(path: str | Path) -> Path:
 def require_file(path: str | Path, label: str) -> Path:
     candidate = resolved(path)
     if not candidate.is_file():
-        raise AudioQCError(f"Missing {label}: {candidate}")
+        raise AudioQCError(f"Missing required local {label}")
     return candidate
 
 
@@ -46,7 +46,7 @@ def validate_output_root(output_dir: str | Path, repository_root: str | Path) ->
     output = resolved(output_dir)
     allowed = resolved(repository_root) / "data" / "lectures"
     if output == allowed or allowed not in output.parents:
-        raise AudioQCError(f"Output must be below the ignored local root: {allowed}")
+        raise AudioQCError("Output directory is outside approved ignored local storage")
     return output
 
 
@@ -59,11 +59,11 @@ def validate_source_and_outputs(
     for output in outputs:
         target = resolved(output)
         if target == source_path:
-            raise AudioQCError("Refusing to overwrite the source recording")
+            raise AudioQCError("Output target conflicts with <authorized-local-input>")
         if root != target and root not in target.parents:
-            raise AudioQCError(f"Output escapes the approved local directory: {target}")
+            raise AudioQCError("Output target is outside the approved local output directory")
         if target.exists():
-            raise AudioQCError(f"Refusing to overwrite existing artifact: {target}")
+            raise AudioQCError("Refusing to overwrite an existing local artifact")
         checked.append(target)
     return source_path, checked
 

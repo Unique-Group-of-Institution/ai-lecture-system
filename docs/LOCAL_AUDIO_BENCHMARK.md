@@ -67,12 +67,21 @@ seconds and produced 18,201,336 bytes. The `small-q5_1` CPU transcription took
 1,616.126 seconds (real-time factor 2.8413) and peaked at 670,408,704 bytes of
 working-set memory.
 
-Whisper detected language code `hi`; this build did not include a language
-probability in its JSON. It produced 29 ordered, valid timestamped segments.
-Aggregate technical QC found zero clipped samples and nine flags: six long
-silences, two long transcript gaps and one possible-background-noise flag.
-These are technical suggestions only. No semantic correction, caption edit,
-cut or teacher-content judgment was made.
+Whisper automatically detected language code `hi`; this build did not include
+a language probability in its JSON. For this Urdu/English recording, `hi` is an
+automatic-model limitation, not evidence of transcript accuracy or correct Urdu
+rendering. Spoken-content validation remains pending local teacher inspection.
+
+The run produced 29 ordered, valid timestamped segments. The tracked,
+reproducible QC algorithm produced two long-transcript-gap flags and zero
+low-confidence, timestamp-discontinuity, unusually-low-volume or clipping flags.
+A transcript gap is not called silence: this implementation does not currently
+measure timestamped silence from the waveform or implement a reproducible
+background-noise category. No such unsupported category is recorded in tracked
+benchmark evidence. No semantic correction, caption edit, cut or teacher-content
+judgment was made.
 
 Only these privacy-safe aggregate metrics belong in Git. The real transcript,
-timestamps, media, filenames and logs remain local and ignored.
+timestamps, media, filenames and logs remain local and ignored. Use the neutral
+label `<authorized-local-input>` in human-facing output; never print its path or
+filename.

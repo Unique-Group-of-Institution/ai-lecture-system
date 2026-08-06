@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+import io
+import sys
 import tempfile
 import unittest
 import wave
+from contextlib import redirect_stderr
 from pathlib import Path
+from unittest.mock import patch
 
 from agent_workspace.audio_qc import (
     AudioQCError,
@@ -18,6 +22,7 @@ from agent_workspace.audio_qc import (
     wav_metrics,
     write_private_qc,
 )
+from scripts.benchmark_audio import main as benchmark_main
 
 
 class AudioQCTests(unittest.TestCase):
@@ -39,19 +44,26 @@ class AudioQCTests(unittest.TestCase):
 
     def test_output_root_must_be_in_ignored_lecture_tree(self) -> None:
         self.assertEqual(validate_output_root(self.output, self.repo), self.output.resolve())
-        with self.assertRaisesRegex(AudioQCError, "Output must be below"):
+        with self.assertRaisesRegex(AudioQCError, "outside approved"):
             validate_output_root(self.repo / "public", self.repo)
 
     def test_refuses_source_overwrite_and_output_escape(self) -> None:
-        with self.assertRaisesRegex(AudioQCError, "overwrite the source"):
+        private_component = self.root.name
+        with self.assertRaises(AudioQCError) as collision:
             validate_source_and_outputs(self.source, [self.source], self.output)
-        with self.assertRaisesRegex(AudioQCError, "escapes"):
+        self.assertNotIn(private_component, str(collision.exception))
+        self.assertNotIn(self.source.name, str(collision.exception))
+        self.assertIn("<authorized-local-input>", str(collision.exception))
+
+        with self.assertRaises(AudioQCError) as escape:
             validate_source_and_outputs(self.source, [self.root / "elsewhere.json"], self.output)
+        self.assertNotIn(private_component, str(escape.exception))
+        self.assertNotIn("elsewhere.json", str(escape.exception))
 
     def test_refuses_existing_output(self) -> None:
         existing = self.output / "result.json"
         existing.write_text("existing", encoding="utf-8")
-        with self.assertRaisesRegex(AudioQCError, "overwrite existing"):
+        with self.assertRaisesRegex(AudioQCError, "overwrite an existing"):
             validate_source_and_outputs(self.source, [existing], self.output)
 
     def test_timestamp_ordering(self) -> None:
@@ -109,8 +121,51 @@ class AudioQCTests(unittest.TestCase):
         self.assertEqual(clipped, 0)
 
     def test_missing_dependencies_fail_safely(self) -> None:
-        with self.assertRaisesRegex(AudioQCError, "Missing whisper-cli"):
-            require_file(self.root / "missing.exe", "whisper-cli executable")
+        private_component = self.root.name
+        missing = self.root / "private-teacher-folder" / "missing.exe"
+        with self.assertRaises(AudioQCError) as error:
+            require_file(missing, "whisper-cli executable")
+        message = str(error.exception)
+        self.assertNotIn(private_component, message)
+        self.assertNotIn("private-teacher-folder", message)
+        self.assertNotIn("missing.exe", message)
+
+    def test_cli_missing_input_error_does_not_print_private_path(self) -> None:
+        executable = self.root / "whisper-cli.exe"
+        model = self.root / "model.bin"
+        executable.write_bytes(b"synthetic")
+        model.write_bytes(b"synthetic")
+        private_input = self.root / "private-teacher-folder" / "recording.m4a"
+        stderr = io.StringIO()
+        argv = [
+            "benchmark_audio.py",
+            "--input",
+            str(private_input),
+            "--output-dir",
+            str(Path(__file__).resolve().parents[1] / "data" / "lectures" / "synthetic-test"),
+            "--whisper-cli",
+            str(executable),
+            "--model",
+            str(model),
+        ]
+        with patch.object(sys, "argv", argv), redirect_stderr(stderr):
+            self.assertEqual(benchmark_main(), 2)
+        error = stderr.getvalue()
+        self.assertNotIn("private-teacher-folder", error)
+        self.assertNotIn("recording.m4a", error)
+        self.assertNotIn(str(private_input), error)
+
+    def test_cli_argument_error_does_not_echo_private_argument(self) -> None:
+        private_argument = str(self.root / "private-teacher-folder" / "recording.m4a")
+        stderr = io.StringIO()
+        with patch.object(sys, "argv", ["benchmark_audio.py", "--unknown", private_argument]):
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as exit_error:
+                benchmark_main()
+        self.assertEqual(exit_error.exception.code, 2)
+        error = stderr.getvalue()
+        self.assertNotIn("private-teacher-folder", error)
+        self.assertNotIn("recording.m4a", error)
+        self.assertNotIn(private_argument, error)
 
 
 if __name__ == "__main__":
