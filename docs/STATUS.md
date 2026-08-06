@@ -40,6 +40,8 @@
 - All 11 Django tests passed, including teacher/admin permissions, unauthorized access rejection, relationship/constraint behavior and portability checks.
 - All 9 existing repository tests passed through `python scripts/check_workspace.py`.
 - `python manage.py check`, migration consistency, and `git diff --check` passed.
+- Implementation commit `96937e3` was pushed on `task/t010-db-auth-foundation` through the active local hook.
+- Draft PR #2 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/2`. Its `workspace-ci` validation passed in 7 seconds (Actions run `31078786315`). The PR remains unmerged.
 
 ## Blockers
 
