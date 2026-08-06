@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T020 local Whisper/audio-QC benchmark ready for independent review
+**Overall status:** Script-first Phase-1 workflow approved; T020 benchmark limitations ready for review
 
 ## Completed
 
@@ -28,7 +28,17 @@
 
 ## Current task
 
-- T020 is in REVIEW under `codex` on `task/t020-local-whisper-audio-qc`. The authorized pilot remained local and immutable. Portable FFmpeg produced a validated PCM derivative, and `whisper.cpp` 1.9.2 with multilingual `small-q5_1` completed the CPU-only benchmark. Tracked orchestration, documentation and synthetic privacy/safety tests are ready for independent review.
+- T020 remains in REVIEW under `codex` on `task/t020-local-whisper-audio-qc`. The local decoder/Whisper pipeline was benchmarked while the authorized source remained private and immutable. CPU processing is too slow for the primary workflow and automatic Urdu/Hindi script detection is unreliable. Full Urdu transcription and further model testing are explicitly deferred; no further teacher-audio processing is authorized for T020.
+
+## Approved Phase-1 workflow
+
+- Teacher selects class, subject and chapter, then opens authorized textbook/Unique notes locally.
+- Teacher provides generation guidelines; the system drafts source-grounded slides and a per-slide narration script.
+- Teacher approves slides/script before recording audio slide-by-slide.
+- The system assembles a local draft video; admin performs AI-assisted editing; teacher reviews the video; admin gives final approval.
+- The approved narration script supplies captions/transcript text. Full Whisper transcription is not required.
+- The final package moves to a local YouTube-ready folder; upload requires separate explicit admin approval.
+- Voice cloning is outside Phase 1 and separately gated by teacher consent, revocation, audit and institutional approval.
 
 ## T020 benchmark
 
@@ -38,9 +48,20 @@
 - Automatically detected language code: `hi` (the CLI JSON provided no probability). This is a model limitation for the Urdu/English recording, not an accuracy or correct-rendering claim; spoken-content validation remains pending local teacher inspection.
 - Transcript-free technical QC: 29 ordered/valid segments; two long-transcript-gap flags; zero low-confidence, timestamp-discontinuity, unusually-low-volume or clipping flags. Transcript gaps are not reported as silence, and no background-noise category is claimed because the tracked algorithm does not implement one.
 - All real media, transcript text, timestamps, logs, model weights and tools remain local and ignored. No external upload, paid API, semantic correction, cut or caption judgment occurred.
-- Eight T020 synthetic unit tests cover path validation, overwrite refusal, timestamp ordering, Urdu/English Unicode, QC flags, safe placement, WAV metrics and missing dependencies.
+- Ten T020 synthetic unit tests cover path validation, privacy-safe errors, overwrite refusal, timestamp ordering, Urdu/English Unicode, QC flags, safe placement, WAV metrics and missing dependencies.
 - Verification passed after review fixes: `python scripts/check_workspace.py`; all 19 tests under `tests/`; all 13 Django tests; `manage.py check`; migration consistency; Python compilation; task/dashboard validation; `python -m pip check`; and `git diff --check`.
 - Implementation commit `835742a` was pushed on `task/t020-local-whisper-audio-qc` through the active hook. Draft PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`. `workspace-ci` passed in Actions run `31091173324`, job `92582267539`.
+- Benchmark conclusion: preserve the local tools/evidence as optional future QC research, but stop diagnostics and full-audio reruns. The approved narration script replaces Whisper output as the primary caption/transcript source.
+
+## Proposed backlog — not yet implemented
+
+- T021: authorized chapter-content library and source-page extraction.
+- T022: source-grounded slide and per-slide narration-script generation.
+- T030: workflow/job queue and approval states.
+- T040: teacher slide-by-slide recording portal.
+- T050: admin video assembly, AI-assisted edit, teacher review and export.
+- T060: separately deferred consented voice-clone option.
+- T070: separately gated local YouTube-ready handoff and upload.
 
 ## T010 verification
 
@@ -58,8 +79,8 @@
 ## Blockers
 
 - FFmpeg is not globally installed; a verified portable FFmpeg 9.0 build is available only in ignored T020 local storage. LibreOffice is not installed.
-- The 8 GB RAM and low-memory legacy GPUs constrain larger Whisper models and later render-setting choices; T020's `small-q5_1` CPU benchmark is complete.
-- The local `small-q5_1` Whisper model has been benchmarked; larger models remain untested and are not required for T020.
+- The 8 GB RAM and low-memory legacy GPUs constrain render choices. T020 confirms local full-audio Whisper is too slow for the primary workflow.
+- Urdu/Hindi automatic script selection is unreliable with the tested model; full Urdu transcription and further model testing are deferred.
 - The current GitHub plan does not support server-side branch protection for this private repository. The paid upgrade is deferred; local hooks must be installed on every clone and are not equivalent to server-side enforcement.
 
 ## Current quality rule

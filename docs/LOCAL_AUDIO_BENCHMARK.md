@@ -5,6 +5,19 @@ transcripts, QC JSON and logs stay beneath `data/lectures/t020-local/`, which is
 Git-ignored. Never pass an HTTP(S) URL as an input and never commit the local
 tool, model or media files.
 
+## Product conclusion
+
+The benchmark is complete. At RTF 2.8413 on the target CPU, full-recording
+processing is too slow for the primary Phase-1 workflow. Automatic Urdu/Hindi
+language/script selection was unreliable, so no transcript accuracy or Urdu
+rendering acceptance claim is made. Further diagnostics, full-audio reruns and
+model testing are deferred.
+
+Phase 1 now uses an approved script-first workflow: source-grounded slides and
+per-slide narration are reviewed before recording, and that approved narration
+script supplies caption/transcript text. The local Whisper pipeline and all
+existing benchmark evidence remain preserved as optional future QC research.
+
 ## Selected implementation
 
 - Whisper implementation: `whisper.cpp` 1.9.2, official Windows x64 CPU build.
@@ -44,7 +57,8 @@ The `-n` option refuses overwrite. The command does not normalize, filter,
 trim or cut audio. Validate that the derivative is signed 16-bit PCM, 16 kHz,
 mono, and duration-matched before benchmarking.
 
-Run the tracked orchestrator with explicit local dependency paths:
+The tracked orchestrator remains available for separately authorized future QC
+research with explicit local dependency paths; it is not a primary Phase-1 step:
 
 ```powershell
 python scripts\benchmark_audio.py `
@@ -85,3 +99,7 @@ Only these privacy-safe aggregate metrics belong in Git. The real transcript,
 timestamps, media, filenames and logs remain local and ignored. Use the neutral
 label `<authorized-local-input>` in human-facing output; never print its path or
 filename.
+
+The later 90-second forced-language diagnostic was inconclusive and is not part
+of T020 acceptance evidence. Its private ignored artifacts are preserved and must
+not be deleted, committed or used to justify a full-length rerun.

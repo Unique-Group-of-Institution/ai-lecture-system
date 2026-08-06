@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T10:27:45Z",
+  "updated_at": "2026-08-06T12:00:04Z",
   "tasks": [
     {
       "id": "T001",
@@ -267,9 +267,12 @@
         "Produce timestamped QC flags"
       ],
       "acceptance_criteria": [
-        "Timestamped Urdu/English transcript is produced locally",
-        "Runtime and selected model are documented",
-        "No teacher audio is sent to a paid or external transcription API"
+        "Local Whisper and decoder pipeline are benchmarked",
+        "Runtime and memory are documented",
+        "Source remained immutable and private",
+        "Benchmark limitations are documented",
+        "Full Urdu transcription and further model testing are explicitly deferred",
+        "Script-first Phase-1 workflow is adopted"
       ],
       "verification": [
         {
@@ -313,8 +316,8 @@
       ]
     },
     {
-      "id": "T030",
-      "title": "Implement lecture-domain MCP tools",
+      "id": "T021",
+      "title": "Build authorized chapter-content library and source-page extraction",
       "priority": 6,
       "status": "BACKLOG",
       "owner": null,
@@ -322,15 +325,59 @@
         "T010"
       ],
       "scope": [
-        "Lecture request retrieval",
-        "Chapter context retrieval",
-        "Script and scene persistence",
-        "Status transitions",
-        "Correction requests"
+        "Register authorized textbook and Unique notes content locally",
+        "Extract chapter text with source-page references",
+        "Preserve local-only content provenance"
       ],
       "acceptance_criteria": [
-        "Tools use validated schemas",
-        "Write operations are auditable",
+        "Only authorized local sources are indexed",
+        "Extracted content retains file and page provenance",
+        "Private source content is never uploaded externally"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T022",
+      "title": "Generate source-grounded slides and narration scripts",
+      "priority": 7,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T021"
+      ],
+      "scope": [
+        "Teacher generation guidelines",
+        "Source-grounded slide drafts",
+        "Per-slide narration scripts and source references"
+      ],
+      "acceptance_criteria": [
+        "Every factual slide/script claim maps to authorized source context",
+        "Teacher can revise and approve slides and scripts before recording",
+        "Approved narration is the caption/transcript source"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T030",
+      "title": "Implement workflow job queue and approval states",
+      "priority": 8,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T010"
+      ],
+      "scope": [
+        "Local workflow and job queue",
+        "Slide and narration approval state",
+        "Recording and draft-video state",
+        "Teacher video review and admin final approval",
+        "Auditable state transitions"
+      ],
+      "acceptance_criteria": [
+        "Jobs and approvals use validated schemas",
+        "State changes are auditable",
         "Approval-gated transitions cannot be bypassed"
       ],
       "verification": [],
@@ -338,27 +385,93 @@
     },
     {
       "id": "T040",
-      "title": "Build three-scene teacher portal vertical slice",
-      "priority": 7,
+      "title": "Build teacher slide-by-slide recording portal",
+      "priority": 9,
       "status": "BACKLOG",
       "owner": null,
       "dependencies": [
-        "T010",
-        "T020",
+        "T022",
         "T030"
       ],
       "scope": [
-        "Lecture request",
-        "Scene approval",
-        "Browser audio recording",
-        "Transcript review",
-        "Scene correction",
-        "Local MP4 render"
+        "Class subject and chapter selection",
+        "Slide and narration review",
+        "Browser recording per approved slide",
+        "Slide-level retake",
+        "Teacher recording completion"
       ],
       "acceptance_criteria": [
-        "One teacher completes a three-scene lecture",
-        "One incorrect sentence is patched without full re-recording",
-        "Final local package includes PPTX, MP4, SRT and metadata"
+        "Teacher approves slides/scripts before recording",
+        "Each slide has an immutable raw recording",
+        "A slide can be retaken without re-recording the lecture"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T050",
+      "title": "Build admin video assembly edit review and export",
+      "priority": 10,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T040"
+      ],
+      "scope": [
+        "Local slide and audio assembly",
+        "AI-assisted admin editing",
+        "Teacher video review",
+        "Admin final approval",
+        "Local YouTube-ready export package"
+      ],
+      "acceptance_criteria": [
+        "Draft video uses approved slides scripts and slide recordings",
+        "Teacher review and admin final approval are recorded",
+        "Export remains local and does not trigger upload"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T060",
+      "title": "Deferred consented voice-clone option",
+      "priority": 11,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [],
+      "scope": [
+        "Later-phase option only",
+        "Explicit teacher consent and revocation",
+        "Auditable voice use",
+        "Institutional approval gate"
+      ],
+      "acceptance_criteria": [
+        "No Phase-1 implementation or use",
+        "Consent can be revoked",
+        "Every future use is auditable and institutionally approved"
+      ],
+      "verification": [],
+      "history": []
+    },
+    {
+      "id": "T070",
+      "title": "Implement separately gated YouTube upload",
+      "priority": 12,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T050"
+      ],
+      "scope": [
+        "Local YouTube-ready folder handoff",
+        "Explicit admin upload approval",
+        "Existing uploader boundary",
+        "Publication audit record"
+      ],
+      "acceptance_criteria": [
+        "Only an admin-final-approved package enters the ready folder",
+        "Upload cannot start without separate explicit admin approval",
+        "Uploader credentials remain outside the application boundary"
       ],
       "verification": [],
       "history": []

@@ -7,26 +7,30 @@ Prove one complete lecture workflow for one teacher, one course, one chapter and
 ## Included
 
 - Teacher and admin login.
-- Course, chapter and simple syllabus-file registration.
-- Lecture request form.
-- AI-assisted scene outline and slide-content workflow operated through an approved local coding/CLI workflow.
-- Teacher approval of scenes before recording.
-- Browser-based scene audio recording and upload.
+- Teacher selection of class, subject and chapter.
+- Local access to authorized textbook and Unique notes content with source-page references.
+- Teacher generation guidelines.
+- Source-grounded draft slides and one narration script per slide.
+- Teacher approval of slides and narration before recording.
+- Browser-based slide-by-slide teacher audio recording.
 - Immutable raw audio plus derived clean audio.
-- Local Whisper timestamped transcript.
 - Safe technical audio cleanup.
-- Transcript/script mismatch flags.
-- Sentence patch or scene-retake workflow.
+- The approved narration script as the primary caption/transcript source.
+- Slide-level retake or correction workflow.
 - Editable PPTX generation.
-- Scene-level audio/slide synchronization.
+- Slide-level audio/slide synchronization and draft video assembly.
 - SRT captions after teacher approval.
 - MP4 rendering.
-- Admin review and local export package.
-- Admin-approved local YouTube watch-folder handoff and publication.
+- AI-assisted admin editing and review.
+- Teacher review of the assembled video.
+- Admin final approval and local YouTube-ready export package.
+- Separately gated upload requiring explicit admin approval.
 
 ## Deferred
 
 - Voice cloning or synthetic teacher voice.
+- Full-recording Whisper transcription in the primary workflow; local Whisper remains optional future QC.
+- Further Whisper model and Urdu-script testing.
 - Automatic publishing without admin confirmation.
 - Advanced character animation or virtual presenters.
 - Mobile apps.
@@ -37,17 +41,18 @@ Prove one complete lecture workflow for one teacher, one course, one chapter and
 
 ## Publication boundary
 
-Phase 1 ends at YouTube publication. The AI Lecture System must generate the
-final lecture package and record the required teacher and admin approvals before
-copying only approved publication files to the existing uploader watch folder at
-`F:\Youtube Setup\youtube-uploader\input_folder`. The uploader and its
-credentials remain outside this project's management boundary.
+Phase 1 prepares a local YouTube-ready package. The AI Lecture System must
+generate the final lecture package and record teacher review plus admin final
+approval before copying only approved publication files to the existing uploader
+watch folder at `F:\Youtube Setup\youtube-uploader\input_folder`. Starting the
+upload is a separate privileged action requiring explicit admin approval. The
+uploader and its credentials remain outside this project's management boundary.
 
 ## Pilot definition of success
 
-- A teacher can finish a three-scene test lecture without technical staff editing audio manually.
-- A wrong sentence can be patched without re-recording the full lecture.
-- Slide/audio mismatch can be corrected at scene level.
+- A teacher can select authorized chapter content, guide generation and approve grounded slides/scripts.
+- A teacher can record and retake audio slide-by-slide without re-recording the full lecture.
+- Slide/audio mismatch can be corrected at slide level.
 - Final MP4, PPTX, SRT and metadata package are produced locally.
-- Teacher and admin approvals are recorded.
-- Only approved publication files are handed to the existing YouTube uploader.
+- Teacher script/slide approval, teacher video review and admin final approval are recorded.
+- Only explicitly admin-approved publication files are eligible for uploader handoff.

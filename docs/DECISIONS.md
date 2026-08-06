@@ -73,3 +73,15 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 - **Status:** Accepted for T020 review
 - **Decision:** Use the stable official `whisper.cpp` 1.9.2 Windows x64 CPU build with the multilingual quantized `small-q5_1` model and four CPU threads. Decode authorized M4A input to a separate 16 kHz mono signed-16-bit PCM derivative using the portable Gyan.dev FFmpeg 9.0 Release Essentials build. Keep tools, weights, PCM, transcript, QC and logs beneath ignored local storage; commit only standard-library orchestration, synthetic tests and transcript-free aggregate metrics.
 - **Reason:** The target PC has 8 GB RAM, an i5-6500 and no useful CUDA GPU, while its installed Python 3.14 makes native Python Whisper wheels uncertain. The portable CLI completed the 568.789-second pilot in 1,616.126 seconds (RTF 2.8413) with a 670,408,704-byte peak working set and no paid API or external media transfer. Separate no-overwrite PCM conversion preserves the immutable source and makes decoding repeatable.
+
+## D013 — Script-first Phase-1 lecture workflow
+
+- **Status:** Accepted; supersedes full Whisper transcription as a Phase-1 primary-path requirement
+- **Decision:** Build Phase 1 around authorized local chapter content, teacher generation guidelines, source-grounded slides, and a per-slide narration script approved before slide-by-slide recording. Use the approved script as the caption/transcript source. Assemble a draft video locally, allow AI-assisted admin editing, require teacher video review and admin final approval, then prepare a local YouTube-ready package. Upload remains a separate explicitly admin-approved action. Local Whisper is optional future QC, not a primary workflow dependency.
+- **Reason:** The T020 CPU benchmark ran at RTF 2.8413 and automatic Urdu/Hindi script detection was unreliable. Script-first production preserves source grounding, gives the teacher control before recording, avoids slow full-audio transcription, and provides an approved caption source without weakening privacy or approval gates.
+
+## D014 — Voice cloning is separately consented and deferred
+
+- **Status:** Accepted as a later-phase gate; not authorized for Phase 1
+- **Decision:** Any future voice-clone option requires explicit teacher consent, consent revocation, auditable use records and institutional approval before implementation or use.
+- **Reason:** A reusable synthetic voice changes the privacy, identity and security boundary. It cannot be inferred from ordinary recording approval and must not enter the Phase-1 workflow.
