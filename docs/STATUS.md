@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T010 database and authentication foundation ready for review
+**Overall status:** T010 database and authentication foundation approved; PR #2 ready to merge
 
 ## Completed
 
@@ -24,10 +24,11 @@
 - Version-controlled local Git safety rejects direct pushes to `main` while permitting task and feature branches.
 - Windows hook setup is repeatable and active in the current clone.
 - T003 was approved by the product owner through PR #1 and moved to DONE by a human.
+- T010 was approved by the product owner through PR #2 and moved to DONE by a human.
 
 ## Current task
 
-- `T010` is in REVIEW. The Django 6.0 foundation uses local SQLite, built-in authentication groups and permissions, protected relationships, teacher-scoped access policies, and PostgreSQL-portable ORM schema features.
+- No task is currently active. T010 is DONE; its Django 6.0 foundation uses local SQLite, built-in authentication groups and permissions, protected relationships, teacher-scoped access policies, and PostgreSQL-portable ORM schema features.
 
 ## Next READY task
 
@@ -41,9 +42,10 @@
 - All 9 existing repository tests passed through `python scripts/check_workspace.py`.
 - `python manage.py check`, migration consistency, and `git diff --check` passed.
 - Implementation commit `96937e3` was pushed on `task/t010-db-auth-foundation` through the active local hook.
-- Draft PR #2 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/2`. Its `workspace-ci` validation passed in 7 seconds (Actions run `31078786315`). The PR remains unmerged.
-- Human review fixes remove the tracked `SECRET_KEY` fallback, require `AI_LECTURE_SECRET_KEY`, document a process-only Windows setup, and run Django validation in CI on Python 3.14. T010 remains in REVIEW.
+- Draft PR #2 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/2`. Its latest `workspace-ci` validation passed (Actions run `31079810095`). The PR is cleanly mergeable and is being finalized after product-owner approval.
+- Human review fixes remove the tracked `SECRET_KEY` fallback, require `AI_LECTURE_SECRET_KEY`, document a process-only Windows setup, and run Django validation in CI on Python 3.14.
 - Editable installation now uses explicit setuptools package discovery and succeeds with the declared Python 3.12+ and Django 6.0 dependency metadata.
+- The product owner approved PR #2 and moved T010 from REVIEW to DONE at `2026-08-06T07:14:38Z`.
 
 ## Blockers
 

@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T07:04:52Z",
+  "updated_at": "2026-08-06T07:14:38Z",
   "tasks": [
     {
       "id": "T001",
@@ -192,7 +192,7 @@
       "id": "T010",
       "title": "Create Phase-1 database and authentication foundation",
       "priority": 4,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [
         "T002"
@@ -241,6 +241,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Phase-1 Django database and authentication foundation implemented; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-06T07:14:38Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner reviewed and approved PR #2"
         }
       ]
     },
