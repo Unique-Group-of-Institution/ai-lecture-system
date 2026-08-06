@@ -2,6 +2,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import unittest
 from pathlib import Path
 
 from django.contrib.auth import get_user_model
@@ -21,6 +22,33 @@ from .roles import (
     courses_visible_to,
     lecture_requests_visible_to,
 )
+
+
+class SettingsConfigurationTests(unittest.TestCase):
+    def _settings_import(self, secret: str | None) -> subprocess.CompletedProcess[str]:
+        project_root = Path(__file__).resolve().parents[1]
+        environment = os.environ.copy()
+        if secret is None:
+            environment.pop("AI_LECTURE_SECRET_KEY", None)
+        else:
+            environment["AI_LECTURE_SECRET_KEY"] = secret
+        return subprocess.run(
+            [sys.executable, "-c", "import lecture_system.settings"],
+            cwd=project_root,
+            env=environment,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+    def test_missing_secret_key_is_rejected(self) -> None:
+        result = self._settings_import(None)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("AI_LECTURE_SECRET_KEY is not set", result.stderr)
+
+    def test_supplied_secret_key_loads_settings(self) -> None:
+        result = self._settings_import("synthetic-test-key-not-a-real-secret")
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 class CleanMigrationTests(TestCase):
@@ -91,6 +119,7 @@ class RolePermissionTests(TestCase):
         self.assertFalse(courses_visible_to(user).exists())
         self.assertFalse(lecture_requests_visible_to(user).exists())
         self.assertFalse(courses_visible_to(AnonymousUser()).exists())
+        self.assertFalse(lecture_requests_visible_to(AnonymousUser()).exists())
 
     def test_teacher_sees_only_owned_records_and_admin_sees_all(self) -> None:
         self.assertQuerySetEqual(courses_visible_to(self.teacher), [self.course])

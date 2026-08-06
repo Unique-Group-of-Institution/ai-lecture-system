@@ -37,11 +37,13 @@
 
 - Django 6.0.8 runs on the installed Python 3.14.5; the project dependency remains constrained to compatible 6.0 patch releases.
 - Clean migrations applied to a disposable SQLite database.
-- All 11 Django tests passed, including teacher/admin permissions, unauthorized access rejection, relationship/constraint behavior and portability checks.
+- All 13 Django tests passed, including required/missing secret configuration, teacher/admin permissions, anonymous and unassigned-user rejection, relationship/constraint behavior and portability checks.
 - All 9 existing repository tests passed through `python scripts/check_workspace.py`.
 - `python manage.py check`, migration consistency, and `git diff --check` passed.
 - Implementation commit `96937e3` was pushed on `task/t010-db-auth-foundation` through the active local hook.
 - Draft PR #2 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/2`. Its `workspace-ci` validation passed in 7 seconds (Actions run `31078786315`). The PR remains unmerged.
+- Human review fixes remove the tracked `SECRET_KEY` fallback, require `AI_LECTURE_SECRET_KEY`, document a process-only Windows setup, and run Django validation in CI on Python 3.14. T010 remains in REVIEW.
+- Editable installation now uses explicit setuptools package discovery and succeeds with the declared Python 3.12+ and Django 6.0 dependency metadata.
 
 ## Blockers
 

@@ -3,7 +3,7 @@
 ## Required base software
 
 - Windows 10 or 11.
-- Python 3.11 or newer.
+- Python 3.12 or newer (Python 3.14 is used on the target system).
 - Git for Windows.
 - FFmpeg.
 - LibreOffice.
@@ -22,10 +22,16 @@ py -3.14 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install -e .
+$env:AI_LECTURE_SECRET_KEY = "choose-a-local-development-value"
 python manage.py migrate
 python manage.py check
 python manage.py test
 ```
+
+`AI_LECTURE_SECRET_KEY` is required and must be supplied through the process environment. The
+example above is a placeholder, not a production secret. Choose a private local value and set it
+again in each new PowerShell session. Do not put a real value in tracked files or commit a populated
+`.env` file. CI uses a synthetic test-only value configured in the workflow.
 
 The default database is `db.sqlite3` in the repository root and is ignored by Git. For disposable
 validation, set `AI_LECTURE_SQLITE_PATH` to a temporary `.sqlite3` path before running migrations.

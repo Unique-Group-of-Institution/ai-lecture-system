@@ -1,11 +1,20 @@
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Local development only. Production must provide its own secret and hardened settings.
-SECRET_KEY = "local-development-only-not-for-production"
+
+def required_environment(name: str) -> str:
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise ImproperlyConfigured(f"Required environment variable {name} is not set")
+    return value
+
+
+SECRET_KEY = required_environment("AI_LECTURE_SECRET_KEY")
 DEBUG = True
 ALLOWED_HOSTS: list[str] = []
 
