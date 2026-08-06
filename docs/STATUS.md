@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-03
+**Updated:** 2026-08-06
 
 **Phase:** Private repository bootstrap
 
-**Overall status:** T003 ready for review with approved zero-cost Git safety
+**Overall status:** T003 approved and DONE with zero-cost Git safety
 
 ## Completed
 
@@ -23,14 +23,15 @@
 - Existing CI confirmed to run on `pull_request` events and pushes to `main`.
 - Version-controlled local Git safety rejects direct pushes to `main` while permitting task and feature branches.
 - Windows hook setup is repeatable and active in the current clone.
+- T003 was approved by the product owner through PR #1 and moved to DONE by a human.
 
 ## Current task
 
-- `T003` is in REVIEW. The private institutional remote is configured, direct local pushes to `main` are blocked, and the pull-request CI workflow remains enabled. Paid server-side branch protection is explicitly deferred.
+- None. `T003` is DONE. The approved zero-cost workflow keeps the private institutional remote, blocks direct local pushes to `main`, and requires pull requests with passing CI. Paid server-side branch protection remains explicitly deferred.
 
 ## Next READY task
 
-- None until T003 receives independent or human review.
+- None currently recorded.
 
 ## Blockers
 

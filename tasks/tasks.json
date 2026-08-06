@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-03T14:03:15Z",
+  "updated_at": "2026-08-06T06:02:06Z",
   "tasks": [
     {
       "id": "T001",
@@ -107,7 +107,7 @@
       "id": "T003",
       "title": "Connect private GitHub repository and branch protections",
       "priority": 3,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [
         "T002"
@@ -178,6 +178,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Approved local Git safety and PR workflow implemented; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-06T06:02:06Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner approved PR #1 and moved T003 from REVIEW to DONE"
         }
       ]
     },
