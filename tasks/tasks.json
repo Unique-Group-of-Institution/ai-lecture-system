@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T07:14:38Z",
+  "updated_at": "2026-08-06T09:53:39Z",
   "tasks": [
     {
       "id": "T001",
@@ -255,8 +255,8 @@
       "id": "T020",
       "title": "Benchmark local Whisper and audio-QC pipeline",
       "priority": 5,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "REVIEW",
+      "owner": "codex",
       "dependencies": [
         "T002"
       ],
@@ -271,8 +271,36 @@
         "Runtime and selected model are documented",
         "No teacher audio is sent to a paid or external transcription API"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-06T09:53:39Z",
+          "actor": "codex",
+          "evidence": "Authorized 568.789-second pilot processed fully locally with whisper.cpp 1.9.2 small-q5_1 CPU Q5_1: runtime 1616.126 seconds, RTF 2.8413, peak working set 670408704 bytes, 29 ordered/valid timestamped segments; source and PCM integrity preserved; no private content committed. Workspace check passed; 17 non-Django tests and 13 Django tests passed; Django check and migration consistency, Python compilation, task/dashboard validation, pip check and git diff --check passed."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-06T07:25:13Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Local-only Whisper and audio-QC benchmark approved for the authorized Aamir Sir pilot audio; no external audio upload or paid API"
+        },
+        {
+          "at": "2026-08-06T07:26:32Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Benchmark the human-authorized Aamir Sir pilot audio using a fully local zero-cost Whisper and technical-QC pipeline"
+        },
+        {
+          "at": "2026-08-06T09:53:39Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Local Whisper and technical audio-QC benchmark implemented with private local artifacts and synthetic safety tests; ready for independent review"
+        }
+      ]
     },
     {
       "id": "T030",

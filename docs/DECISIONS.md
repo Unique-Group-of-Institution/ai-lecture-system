@@ -67,3 +67,9 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 - **Status:** Accepted for T010 review
 - **Decision:** Use stable Django 6.0 with its built-in user, group and permission system. Use local SQLite through the Django ORM, with `Teacher` and `Administrator` groups, explicit object-visibility policies, protected ownership relationships, portable constraints and conventional indexes. Teachers may view their own course context and create/view their own lecture requests. Administrators receive all lecture-domain permissions, non-destructive user-management permissions and Django staff access.
 - **Reason:** Django 6.0 supports the installed Python 3.14 release and provides a small, maintainable authentication foundation without a custom backend. ORM-only schema features keep the pilot portable to PostgreSQL, while protected foreign keys and scoped query policies preserve teacher content and approval boundaries.
+
+## D012 — Portable CPU-only Whisper benchmark pipeline
+
+- **Status:** Accepted for T020 review
+- **Decision:** Use the stable official `whisper.cpp` 1.9.2 Windows x64 CPU build with the multilingual quantized `small-q5_1` model and four CPU threads. Decode authorized M4A input to a separate 16 kHz mono signed-16-bit PCM derivative using the portable Gyan.dev FFmpeg 9.0 Release Essentials build. Keep tools, weights, PCM, transcript, QC and logs beneath ignored local storage; commit only standard-library orchestration, synthetic tests and transcript-free aggregate metrics.
+- **Reason:** The target PC has 8 GB RAM, an i5-6500 and no useful CUDA GPU, while its installed Python 3.14 makes native Python Whisper wheels uncertain. The portable CLI completed the 568.789-second pilot in 1,616.126 seconds (RTF 2.8413) with a 670,408,704-byte peak working set and no paid API or external media transfer. Separate no-overwrite PCM conversion preserves the immutable source and makes decoding repeatable.

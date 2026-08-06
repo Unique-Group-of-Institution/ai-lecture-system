@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T010 database and authentication foundation approved; PR #2 ready to merge
+**Overall status:** T020 local Whisper/audio-QC benchmark ready for independent review
 
 ## Completed
 
@@ -28,11 +28,18 @@
 
 ## Current task
 
-- No task is currently active. T010 is DONE; its Django 6.0 foundation uses local SQLite, built-in authentication groups and permissions, protected relationships, teacher-scoped access policies, and PostgreSQL-portable ORM schema features.
+- T020 is in REVIEW under `codex` on `task/t020-local-whisper-audio-qc`. The authorized pilot remained local and immutable. Portable FFmpeg produced a validated PCM derivative, and `whisper.cpp` 1.9.2 with multilingual `small-q5_1` completed the CPU-only benchmark. Tracked orchestration, documentation and synthetic privacy/safety tests are ready for independent review.
 
-## Next READY task
+## T020 benchmark
 
-- None currently recorded.
+- Input duration: 568.789 seconds; validated derivative: PCM signed 16-bit, 16 kHz, mono, 18,201,336 bytes.
+- Conversion runtime: 1.523 seconds. Source size and modification timestamp remained unchanged.
+- Transcription runtime: 1,616.126 seconds; real-time factor 2.8413; peak working set 670,408,704 bytes.
+- Detected language code: `hi` (the CLI JSON provided no probability); 29 segments with ordered, valid timestamps.
+- Transcript-free technical QC: zero clipped samples; six long-silence flags, two long-transcript-gap flags and one possible-background-noise flag.
+- All real media, transcript text, timestamps, logs, model weights and tools remain local and ignored. No external upload, paid API, semantic correction, cut or caption judgment occurred.
+- Eight T020 synthetic unit tests cover path validation, overwrite refusal, timestamp ordering, Urdu/English Unicode, QC flags, safe placement, WAV metrics and missing dependencies.
+- Verification passed: `python scripts/check_workspace.py`; all 17 tests under `tests/`; all 13 Django tests; `manage.py check`; migration consistency; Python compilation; task/dashboard validation; `python -m pip check`; and `git diff --check`.
 
 ## T010 verification
 
@@ -49,9 +56,9 @@
 
 ## Blockers
 
-- FFmpeg and LibreOffice are not installed.
-- The 8 GB RAM and low-memory legacy GPUs constrain local Whisper model and render-setting choices; benchmarking remains required.
-- Local Whisper model has not been installed or benchmarked on the admin PC.
+- FFmpeg is not globally installed; a verified portable FFmpeg 9.0 build is available only in ignored T020 local storage. LibreOffice is not installed.
+- The 8 GB RAM and low-memory legacy GPUs constrain larger Whisper models and later render-setting choices; T020's `small-q5_1` CPU benchmark is complete.
+- The local `small-q5_1` Whisper model has been benchmarked; larger models remain untested and are not required for T020.
 - The current GitHub plan does not support server-side branch protection for this private repository. The paid upgrade is deferred; local hooks must be installed on every clone and are not equivalent to server-side enforcement.
 
 ## Current quality rule

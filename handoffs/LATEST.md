@@ -1,16 +1,13 @@
 # Latest Agent Handoff
 
-- **Task:** T010 — Create Phase-1 database and authentication foundation
+- **Task:** T020 — Benchmark local Whisper and audio-QC pipeline
 - **Owner:** codex
-- **Status:** DONE — product owner approved PR #2
-- **Branch:** `task/t010-db-auth-foundation`
-- **Implementation commit:** `96937e3` (`Build T010 database and auth foundation`)
-- **Architecture:** Django 6.0 with built-in users, groups and permissions; local SQLite configured through the ORM; no custom authentication backend, paid API, external upload, portal UI, Whisper processing or MCP tools.
-- **Roles:** Teachers can view their own course/chapter context and create/view their own lecture requests. Administrators have all lecture-domain permissions, add/change/view user permissions and staff access, but cannot delete users or manage role groups.
-- **Schema:** `Course`, `Chapter` and `LectureRequest` use portable fields, protected foreign keys, deterministic ordering, conventional indexes, uniqueness checks and database check constraints.
-- **Migrations:** `lectures.0001_initial` and `lectures.0002_chapter_chapter_number_positive`; a clean disposable SQLite application succeeded.
-- **Safety:** Local database and journal/WAL artifacts are ignored. `AI_LECTURE_SECRET_KEY` is required from the process environment with no tracked fallback. No real `.env`, credentials, tokens, media, audio, video or uploader data were inspected or added.
-- **Verification:** `python -m pip install -e .` succeeded; `python scripts/check_workspace.py` passed all 9 existing tests; `python manage.py test -v 2` passed all 13 Django tests; `python manage.py check` passed; `python manage.py makemigrations --check --dry-run` reported no changes; `python -m pip check` and `git diff --check` passed.
-- **Pull request:** PR #2 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/2`. The product owner approved it; final merge is the remaining repository action.
-- **CI:** Latest `workspace-ci` validation passed (Actions run `31079810095`, job `92545813617`), and GitHub reports the PR as cleanly mergeable.
-- **Next action:** Merge approved PR #2, then select and authorize the next task; no task is currently READY.
+- **Status:** REVIEW — implementation, benchmark and required validation complete
+- **Branch:** `task/t020-local-whisper-audio-qc`
+- **Implementation:** Standard-library orchestration validates local paths, refuses overwrite/source collision, captures private subprocess logs, measures runtime/memory, checks input integrity, validates timestamp ordering and produces transcript-free technical QC. Automated tests use only synthetic media/text.
+- **Local stack:** Official `whisper.cpp` 1.9.2 Windows x64 CPU CLI, multilingual `small-q5_1` Q5_1 model, four CPU threads, and portable Gyan.dev FFmpeg 9.0 Release Essentials. No global install or `PATH` change.
+- **Benchmark:** 568.789 seconds of audio; PCM conversion 1.523 seconds; Whisper runtime 1,616.126 seconds; RTF 2.8413; peak working set 670,408,704 bytes; detected language code `hi`; 29 ordered/valid segments.
+- **QC:** Zero clipped samples; six long silences, two long transcript gaps and one possible-background-noise aggregate flag. No semantic corrections, captions, cuts or content judgments.
+- **Privacy:** Source audio remained immutable. Audio, PCM, transcript text, timestamp files, QC details, logs, binaries and weights remain under ignored local storage and were never uploaded or committed.
+- **Verification:** `python scripts/check_workspace.py` passed; all 17 non-Django tests passed; all 13 Django tests passed with a synthetic process-only key; Django system/migration checks, Python compilation, task/dashboard validation, `python -m pip check` and `git diff --check` passed. A generic root `unittest discover` invocation was unsuitable because it imports Django tests without settings; both supported suites passed independently.
+- **Next action:** Review the scoped diff, commit/push the task branch, open a draft PR, confirm CI starts, and obtain independent or human approval before DONE.
