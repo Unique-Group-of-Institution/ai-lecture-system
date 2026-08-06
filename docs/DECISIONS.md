@@ -61,3 +61,9 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 - **Status:** Accepted; supersedes D009's blocked completion condition
 - **Decision:** Keep the institutional repository private and require changes to use `task/*` or `feature/*` branches, pull requests into `main`, and passing CI. Install the version-controlled `.githooks/pre-push` hook in every clone so local direct pushes to `main` are rejected. Defer paid GitHub server-side branch protection.
 - **Reason:** The product owner approved this zero-cost Phase-1 substitute after GitHub returned HTTP 403 for private-repository protection on the current organization plan. Local hooks reduce accidental direct pushes but are explicitly not equivalent to server-side enforcement.
+
+## D011 — Django authentication and portable local data foundation
+
+- **Status:** Accepted for T010 review
+- **Decision:** Use stable Django 6.0 with its built-in user, group and permission system. Use local SQLite through the Django ORM, with `Teacher` and `Administrator` groups, explicit object-visibility policies, protected ownership relationships, portable constraints and conventional indexes. Teachers may view their own course context and create/view their own lecture requests. Administrators receive all lecture-domain permissions, non-destructive user-management permissions and Django staff access.
+- **Reason:** Django 6.0 supports the installed Python 3.14 release and provides a small, maintainable authentication foundation without a custom backend. ORM-only schema features keep the pilot portable to PostgreSQL, while protected foreign keys and scoped query policies preserve teacher content and approval boundaries.

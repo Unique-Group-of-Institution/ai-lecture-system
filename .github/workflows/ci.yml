@@ -15,7 +15,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.14"
+      - name: Install project
+        run: python -m pip install -e .
       - name: Validate workspace
         run: python scripts/check_workspace.py
-
+      - name: Validate Django foundation
+        env:
+          AI_LECTURE_SECRET_KEY: synthetic-ci-key-not-a-real-secret
+        run: |
+          python manage.py test -v 2
+          python manage.py check
+          python manage.py makemigrations --check --dry-run
+          python -m pip check
