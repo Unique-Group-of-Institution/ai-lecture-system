@@ -55,3 +55,9 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 - **Status:** Blocked pending a GitHub plan that supports private-repository branch protection
 - **Decision:** Host the project only in the private `Unique-Group-of-Institution/ai-lecture-system` repository. Before T003 can complete, protect `main` from force pushes and deletion. Changes should reach `main` through pull requests with CI validation; required approving reviews need not be enforced while the project has a single operator.
 - **Reason:** Institutional ownership, private source control and protected history are required without creating a review rule that the sole operator cannot satisfy. GitHub returned HTTP 403 when protection was requested because the current plan does not support this feature for the private repository. Making the repository public is not an acceptable workaround.
+
+## D010 — Zero-cost local Git safety for the private repository
+
+- **Status:** Accepted; supersedes D009's blocked completion condition
+- **Decision:** Keep the institutional repository private and require changes to use `task/*` or `feature/*` branches, pull requests into `main`, and passing CI. Install the version-controlled `.githooks/pre-push` hook in every clone so local direct pushes to `main` are rejected. Defer paid GitHub server-side branch protection.
+- **Reason:** The product owner approved this zero-cost Phase-1 substitute after GitHub returned HTTP 403 for private-repository protection on the current organization plan. Local hooks reduce accidental direct pushes but are explicitly not equivalent to server-side enforcement.
