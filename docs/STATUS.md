@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** Script-first Phase-1 workflow approved; T020 benchmark limitations ready for review
+**Overall status:** Script-first Phase-1 workflow approved; T020 approved and complete
 
 ## Completed
 
@@ -25,10 +25,11 @@
 - Windows hook setup is repeatable and active in the current clone.
 - T003 was approved by the product owner through PR #1 and moved to DONE by a human.
 - T010 was approved by the product owner through PR #2 and moved to DONE by a human.
+- T020 was approved by the product owner through PR #3 and moved from REVIEW to DONE by a human.
 
-## Current task
+## Latest completed task
 
-- T020 remains in REVIEW under `codex` on `task/t020-local-whisper-audio-qc`. The local decoder/Whisper pipeline was benchmarked while the authorized source remained private and immutable. CPU processing is too slow for the primary workflow and automatic Urdu/Hindi script detection is unreliable. Full Urdu transcription and further model testing are explicitly deferred; no further teacher-audio processing is authorized for T020.
+- T020 is DONE under `codex` on `task/t020-local-whisper-audio-qc` after the product owner approved PR #3 and performed the `REVIEW` to `DONE` transition. The local decoder/Whisper pipeline was benchmarked while the authorized source remained private and immutable. CPU processing is too slow for the primary workflow and automatic Urdu/Hindi script detection is unreliable. Full Urdu transcription and further model testing are explicitly deferred; no further teacher-audio processing is authorized for T020.
 
 ## Approved Phase-1 workflow
 

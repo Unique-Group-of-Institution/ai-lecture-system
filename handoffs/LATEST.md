@@ -2,7 +2,7 @@
 
 - **Task:** T020 — Benchmark local Whisper and audio-QC pipeline
 - **Owner:** codex
-- **Status:** REVIEW — benchmark complete; script-first product decision synchronized
+- **Status:** DONE — product owner approved PR #3 and performed the `REVIEW` to `DONE` transition
 - **Branch:** `task/t020-local-whisper-audio-qc`
 - **Implementation:** Standard-library orchestration validates local paths, refuses overwrite/source collision, captures private subprocess logs, measures runtime/memory, checks input integrity, validates timestamp ordering and produces transcript-free technical QC. Automated tests use only synthetic media/text.
 - **Local stack:** Official `whisper.cpp` 1.9.2 Windows x64 CPU CLI, multilingual `small-q5_1` Q5_1 model, four CPU threads, and portable Gyan.dev FFmpeg 9.0 Release Essentials. No global install or `PATH` change.
@@ -13,6 +13,7 @@
 - **Approval flow:** Local draft assembly → AI-assisted admin editing → teacher video review → admin final approval → local YouTube-ready package. Upload requires separate explicit admin approval.
 - **Voice cloning:** Separately deferred beyond Phase 1; any future option requires explicit teacher consent, revocation, audit and institutional approval.
 - **Verification:** After privacy/QC review fixes, `python scripts/check_workspace.py` passed; all 19 non-Django tests passed; all 13 Django tests passed with a synthetic process-only key; Django system/migration checks, Python compilation, task/dashboard validation, `python -m pip check` and `git diff --check` passed. A generic root `unittest discover` invocation was unsuitable because it imports Django tests without settings; both supported suites passed independently.
-- **Commit and PR:** Implementation commit `835742a` is pushed on `task/t020-local-whisper-audio-qc`. Draft PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`.
-- **CI:** `workspace-ci` passed in Actions run `31091173324`, job `92582267539`.
-- **Next action:** Review the product-decision synchronization in draft PR #3. Do not run more Whisper diagnostics, process teacher audio, implement backlog tasks, merge, self-approve or move T020 to DONE.
+- **Commit and PR:** Implementation commit `835742a` is pushed on `task/t020-local-whisper-audio-qc`. PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`.
+- **Approval:** The product owner approved PR #3 and manually moved T020 from REVIEW to DONE at `2026-08-06T12:20:58Z`.
+- **CI:** `workspace-ci` passed in Actions run `31091173324`, job `92582267539`; final approval-synchronization CI must pass before handoff completes.
+- **Next action:** Preserve the approved T020 result. Do not run more Whisper diagnostics, process teacher audio, implement backlog tasks, merge PR #3 or delete the task branch or ignored local artifacts.

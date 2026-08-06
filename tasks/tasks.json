@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T12:00:04Z",
+  "updated_at": "2026-08-06T12:20:58Z",
   "tasks": [
     {
       "id": "T001",
@@ -255,7 +255,7 @@
       "id": "T020",
       "title": "Benchmark local Whisper and audio-QC pipeline",
       "priority": 5,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [
         "T002"
@@ -312,6 +312,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Local Whisper and technical audio-QC benchmark implemented with private local artifacts and synthetic safety tests; ready for independent review"
+        },
+        {
+          "at": "2026-08-06T12:20:58Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner reviewed and approved PR #3; local benchmark accepted, script-first Phase-1 workflow adopted, and further Whisper testing deferred"
         }
       ]
     },
