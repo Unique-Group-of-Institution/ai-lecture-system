@@ -12,6 +12,18 @@
 
 Local Whisper and the application framework are installed in later reviewed tasks after the system profile is known.
 
+## Local audio benchmark
+
+T020 uses pinned portable tools under the ignored `data\lectures\t020-local`
+directory; it does not install packages globally or modify `PATH`. See
+`docs/LOCAL_AUDIO_BENCHMARK.md` for checksums, placement, source-safe PCM
+conversion and the repeatable benchmark command. Model weights, tool archives,
+executables, teacher audio, transcripts and QC artifacts must never be committed.
+
+The tracked benchmark/QC code has no additional Python dependency. Keep using
+the project environment described below. Automated tests generate synthetic WAV
+and Urdu/English JSON fixtures and do not require FFmpeg, Whisper or teacher media.
+
 ## Django database foundation
 
 Create and activate a dedicated virtual environment, then install the project and initialize the
