@@ -1,0 +1,8 @@
+# T021 content-extraction runtime. Install from verified local wheels with:
+# python -m pip install --no-index --find-links <wheel-dir> --require-hashes -r requirements-content.lock
+Pillow==12.3.0 \
+    --hash=sha256:fdafc9cce40277e0f7a0feabce0ee50dd2fa1800f3b38015e51296b5e814048d
+pypdf==6.14.2 \
+    --hash=sha256:3f07891af76dc002657e04993ab9b4de81de29f9013b9761d0b7968bff12e946
+pypdfium2==5.12.1 \
+    --hash=sha256:9609be73a6701a68f29dffe0335f7a2e4b3ba581542ed65d35d49f761a4600ca

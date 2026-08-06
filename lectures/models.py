@@ -7,6 +7,8 @@ from django.db.models import Q
 class Course(models.Model):
     code = models.CharField(max_length=32, unique=True)
     title = models.CharField(max_length=200)
+    class_name = models.CharField(max_length=100, blank=True)
+    subject_name = models.CharField(max_length=100, blank=True)
     teacher = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
@@ -78,3 +80,140 @@ class LectureRequest(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+
+class ContentSource(models.Model):
+    class SourceType(models.TextChoices):
+        INSTITUTIONAL = "INSTITUTIONAL", "Institutional textbook or notes"
+        TEACHER = "TEACHER", "Teacher-owned upload"
+
+    class AccessScope(models.TextChoices):
+        AUTHORIZED_TEACHERS = "AUTHORIZED_TEACHERS", "Authorized teachers"
+        OWNER_AND_ADMINS = "OWNER_AND_ADMINS", "Owner and administrators"
+
+    class ProcessingState(models.TextChoices):
+        REGISTERED = "REGISTERED", "Registered"
+        READY = "READY", "Ready"
+        PROCESSING = "PROCESSING", "Processing"
+        REVIEW_REQUIRED = "REVIEW_REQUIRED", "Teacher review required"
+        FAILED = "FAILED", "Failed safely"
+
+    chapter = models.ForeignKey(Chapter, on_delete=models.PROTECT, related_name="content_sources")
+    source_type = models.CharField(max_length=20, choices=SourceType)
+    access_scope = models.CharField(max_length=24, choices=AccessScope)
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="owned_content_sources",
+        null=True,
+        blank=True,
+    )
+    title = models.CharField(max_length=200)
+    rights_confirmed = models.BooleanField(default=False)
+    rights_confirmed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="rights_confirmed_sources",
+        null=True,
+        blank=True,
+    )
+    rights_confirmed_at = models.DateTimeField(null=True, blank=True)
+    page_count = models.PositiveIntegerField(default=0)
+    processing_state = models.CharField(
+        max_length=24,
+        choices=ProcessingState,
+        default=ProcessingState.REGISTERED,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("chapter", "title", "pk")
+        constraints = [
+            models.CheckConstraint(
+                condition=(Q(source_type="INSTITUTIONAL", owner__isnull=True) | Q(source_type="TEACHER", owner__isnull=False)),
+                name="content_source_owner_matches_type",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(source_type="INSTITUTIONAL", access_scope="AUTHORIZED_TEACHERS")
+                    | Q(source_type="TEACHER", access_scope="OWNER_AND_ADMINS")
+                ),
+                name="content_source_scope_matches_type",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("chapter", "source_type"), name="content_chapter_type_idx"),
+            models.Index(fields=("owner", "processing_state"), name="content_owner_state_idx"),
+        ]
+
+    def __str__(self) -> str:
+        return self.title
+
+
+class ContentFile(models.Model):
+    source = models.OneToOneField(ContentSource, on_delete=models.PROTECT, related_name="original_file")
+    original_name = models.CharField(max_length=255)
+    storage_key = models.CharField(max_length=255, unique=True)
+    extension = models.CharField(max_length=8)
+    media_type = models.CharField(max_length=40)
+    byte_size = models.PositiveBigIntegerField()
+    sha256 = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=("sha256",), name="content_file_sha_idx")]
+
+    def save(self, *args, **kwargs):
+        if self.pk and ContentFile.objects.filter(pk=self.pk).exists():
+            raise ValueError("Original content-file records are immutable.")
+        return super().save(*args, **kwargs)
+
+
+class ExtractionVersion(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        PROCESSING = "PROCESSING", "Processing"
+        COMPLETE = "COMPLETE", "Complete"
+        REVIEW_REQUIRED = "REVIEW_REQUIRED", "Teacher review required"
+        FAILED = "FAILED", "Failed safely"
+
+    source = models.ForeignKey(ContentSource, on_delete=models.PROTECT, related_name="extractions")
+    version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    status = models.CharField(max_length=24, choices=Status, default=Status.PENDING)
+    extractor = models.CharField(max_length=100)
+    error_code = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("source", "version")
+        constraints = [
+            models.UniqueConstraint(fields=("source", "version"), name="unique_source_extraction_version")
+        ]
+
+
+class ExtractedPage(models.Model):
+    class Method(models.TextChoices):
+        PDF_TEXT = "PDF_TEXT", "PDF text layer"
+        OCR = "OCR", "Local OCR"
+
+    extraction = models.ForeignKey(ExtractionVersion, on_delete=models.PROTECT, related_name="pages")
+    source_file = models.ForeignKey(ContentFile, on_delete=models.PROTECT, related_name="extracted_pages")
+    page_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    method = models.CharField(max_length=16, choices=Method)
+    text_storage_key = models.CharField(max_length=255)
+    text_sha256 = models.CharField(max_length=64)
+    character_count = models.PositiveIntegerField(default=0)
+    mean_confidence = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    requires_review = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("extraction", "page_number")
+        constraints = [
+            models.UniqueConstraint(fields=("extraction", "page_number"), name="unique_extraction_page")
+        ]
+        indexes = [
+            models.Index(fields=("source_file", "page_number"), name="content_file_page_idx")
+        ]

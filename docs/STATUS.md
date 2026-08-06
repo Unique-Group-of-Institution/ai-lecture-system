@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** Script-first Phase-1 workflow approved; T020 approved and complete
+**Overall status:** T021 authorized content-library foundation is in REVIEW
 
 ## Completed
 
@@ -56,7 +56,6 @@
 
 ## Proposed backlog — not yet implemented
 
-- T021: authorized chapter-content library and source-page extraction.
 - T022: source-grounded slide and per-slide narration-script generation.
 - T030: workflow/job queue and approval states.
 - T040: teacher slide-by-slide recording portal.
@@ -83,6 +82,15 @@
 - The 8 GB RAM and low-memory legacy GPUs constrain render choices. T020 confirms local full-audio Whisper is too slow for the primary workflow.
 - Urdu/Hindi automatic script selection is unreliable with the tested model; full Urdu transcription and further model testing are deferred.
 - The current GitHub plan does not support server-side branch protection for this private repository. The paid upgrade is deferred; local hooks must be installed on every clone and are not equivalent to server-side enforcement.
+
+## T021 implementation
+
+- Rights-confirmed institutional and teacher-owned sources have enforced access scopes plus class, subject, course and chapter context.
+- Immutable originals and versioned derived UTF-8 page text retain source-file, extraction, page, method, hash, confidence and review provenance.
+- Validation permits only PDF/PNG/JPG/JPEG and checks safe names/paths, size, signatures, strict PDF parsing and Pillow decoding.
+- Text PDFs use local pypdf. Scans/images use explicit local Tesseract `urd+eng`, orientation-aware segmentation and TSV confidence. No cloud OCR or external transfer exists.
+- All binaries, models, real sources and derived content remain ignored. Only synthetic fixtures were used.
+- Verification passed: workspace check, 19 non-Django tests, 25 Django tests, clean migrations, Django/migration checks, dependency check, compilation, privacy/ignore validation and diff check.
 
 ## Current quality rule
 

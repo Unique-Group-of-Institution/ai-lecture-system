@@ -76,3 +76,13 @@ USE_I18N = True
 USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CONTENT_STORAGE_ROOT = Path(os.environ.get("AI_LECTURE_CONTENT_ROOT", BASE_DIR / "data" / "content-library"))
+CONTENT_MAX_UPLOAD_BYTES = int(os.environ.get("AI_LECTURE_CONTENT_MAX_BYTES", 25 * 1024 * 1024))
+CONTENT_OCR_TIMEOUT_SECONDS = int(os.environ.get("AI_LECTURE_OCR_TIMEOUT_SECONDS", 120))
+CONTENT_TESSERACT_PATH = Path(
+    os.environ.get("AI_LECTURE_TESSERACT_PATH", BASE_DIR / "data" / "content-tools" / "tesseract-5.4.0" / "tesseract.exe")
+)
+CONTENT_TESSDATA_PATH = Path(
+    os.environ.get("AI_LECTURE_TESSDATA_PATH", BASE_DIR / "data" / "content-tools" / "tesseract-5.4.0" / "tessdata")
+)

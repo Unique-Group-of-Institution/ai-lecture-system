@@ -85,3 +85,9 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 - **Status:** Accepted as a later-phase gate; not authorized for Phase 1
 - **Decision:** Any future voice-clone option requires explicit teacher consent, consent revocation, auditable use records and institutional approval before implementation or use.
 - **Reason:** A reusable synthetic voice changes the privacy, identity and security boundary. It cannot be inferred from ordinary recording approval and must not enter the Phase-1 workflow.
+
+## D015 — Authorized local content library and page provenance
+
+- **Status:** Accepted for T021 review
+- **Decision:** Register only rights-confirmed institutional or teacher-owned PDF/PNG/JPG sources. Institutional content is visible to administrators and the assigned course teacher; teacher uploads are owner/admin private. Store immutable originals and separately versioned page text beneath ignored local storage. Validate names, containment, size, signatures and decoder integrity. Extract PDF text with pypdf and use explicit project-local Tesseract 5.4.0 with official `tessdata_fast` 4.1.0 `urd+eng` and `osd` for scanned pages. Preserve file/page hashes, methods, confidence and review state.
+- **Reason:** T022 needs claim-to-page traceability without exposing private material. OCR is advisory: equations, diagrams, RTL layout and complex pages remain subject to teacher review against the retained original page.

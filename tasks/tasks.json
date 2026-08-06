@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T12:20:58Z",
+  "updated_at": "2026-08-06T13:32:10Z",
   "tasks": [
     {
       "id": "T001",
@@ -326,8 +326,8 @@
       "id": "T021",
       "title": "Build authorized chapter-content library and source-page extraction",
       "priority": 6,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "REVIEW",
+      "owner": "codex",
       "dependencies": [
         "T010"
       ],
@@ -341,8 +341,36 @@
         "Extracted content retains file and page provenance",
         "Private source content is never uploaded externally"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-06T13:32:10Z",
+          "actor": "codex",
+          "evidence": "Synthetic-only verification: workspace check passed; 19 non-Django and 25 Django tests passed; clean migrations, Django check, migration consistency, compilation, pip check, task/dashboard validation, privacy ignore check and diff check passed; explicit local Tesseract 5.4.0 produced intact Urdu/English Unicode and TSV provenance for synthetic PNG/JPG/PDF-rendered pages and orientation-corrected a rotated fixture; no real content or external upload."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-06T12:36:17Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Build the authorized local chapter-content library with institutional textbook/Unique notes selection, teacher-owned PDF/image uploads, local extraction/OCR, provenance and private access controls"
+        },
+        {
+          "at": "2026-08-06T12:37:30Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implement the human-authorized local chapter-content library, secure uploads, extraction, OCR foundation, provenance, and access controls"
+        },
+        {
+          "at": "2026-08-06T13:32:10Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Authorized local content library and synthetic extraction/OCR foundation complete; ready for independent or human review"
+        }
+      ]
     },
     {
       "id": "T022",

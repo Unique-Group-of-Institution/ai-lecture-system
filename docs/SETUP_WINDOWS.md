@@ -49,6 +49,30 @@ The default database is `db.sqlite3` in the repository root and is ignored by Gi
 validation, set `AI_LECTURE_SQLITE_PATH` to a temporary `.sqlite3` path before running migrations.
 Production credentials and production database settings do not belong in this local settings file.
 
+## Local chapter-content tools
+
+T021 accepts only PDF, PNG and JPG/JPEG sources. Originals and extracted text stay beneath ignored
+`data\content-library`; quarantined wheels, OCR binaries and language models stay beneath ignored
+`data\content-tools`. Never point storage at a personal folder. Real institutional or teacher
+documents require separate authorization for their exact paths.
+
+Install the verified wheels only in the project environment with the tracked hash lock:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install --no-index `
+  --find-links data\content-tools\downloads --require-hashes `
+  -r requirements-content.lock
+```
+
+The local OCR runtime is Tesseract 5.4.0.20240606 with official `tessdata_fast` 4.1.0 `urd`, `eng`
+and `osd` data. It is invoked by explicit project-local paths with `urd+eng`; it is not installed,
+added to `PATH`, or permitted to upload content. Equations, diagrams, RTL layout and complex pages
+may OCR imperfectly, so low-confidence pages require teacher review against the retained original.
+
+Optional process-only settings are `AI_LECTURE_CONTENT_ROOT`, `AI_LECTURE_CONTENT_MAX_BYTES`,
+`AI_LECTURE_TESSERACT_PATH`, `AI_LECTURE_TESSDATA_PATH` and
+`AI_LECTURE_OCR_TIMEOUT_SECONDS`. Keep their paths inside ignored project-local storage.
+
 ## Bootstrap
 
 Open PowerShell in the repository root:
