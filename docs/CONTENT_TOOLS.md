@@ -59,3 +59,15 @@ retained a network connection, and all inputs/outputs remained in ignored local 
 OCR does not reliably understand equations, diagrams or complex/multi-column layouts. These pages,
 and any low-confidence result, require teacher review against the immutable original page and its
 stored provenance.
+## Dependency lock assessment
+
+requirements-content.lock is intentionally a T021 extraction-runtime lock, not a claim that the
+entire application environment is transitively locked across operating systems. It pins the exact
+three content-processing distributions and the verified Python 3.14 Windows x64 wheel hashes used
+for Pillow, pypdf and pypdfium2. Tesseract and its language data are separately versioned and
+hashed above. Django and packaging/build transitive dependencies remain declared by compatible
+ranges in pyproject.toml; a full cross-platform hash lock is deferred until the project selects
+one deployment target and lock-generation workflow. Phase 1 mitigates that deferral with the
+existing isolated virtual environment, offline require-hashes installation for T021 wheels,
+pip check, clean-migration tests and CI installation/testing. No dependency was installed or
+downloaded during the T021 review corrections.

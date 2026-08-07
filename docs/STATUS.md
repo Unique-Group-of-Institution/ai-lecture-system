@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-06
+**Updated:** 2026-08-07
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T021 authorized content-library foundation is in REVIEW
+**Overall status:** T021 authorized content-library review corrections are in REVIEW
 
 ## Completed
 
@@ -90,7 +90,9 @@
 - Validation permits only PDF/PNG/JPG/JPEG and checks safe names/paths, size, signatures, strict PDF parsing and Pillow decoding.
 - Text PDFs use local pypdf. Scans/images use explicit local Tesseract `urd+eng`, orientation-aware segmentation and TSV confidence. No cloud OCR or external transfer exists.
 - All binaries, models, real sources and derived content remain ignored. Only synthetic fixtures were used.
-- Verification passed: workspace check, 19 non-Django tests, 25 Django tests, clean migrations, Django/migration checks, dependency check, compilation, privacy/ignore validation and diff check.
+- Independent-review corrections add bounded/isolated PDF extraction and rendering, decompression-bomb and cumulative resource ceilings, mandatory teacher approval for every OCR page, database-enforced review provenance, read-only admin provenance, atomic staging/promotion with failure cleanup, a final original-integrity gate, and collision-retrying extraction-version allocation.
+- The T021 extraction lock is complete for the three verified Windows content wheels; a full cross-platform application transitive lock is documented as deferred in docs/CONTENT_TOOLS.md.
+- Review-correction verification passed with synthetic fixtures and a process-scoped key: workspace check and 19 non-Django tests; 46 Django tests; clean migrations; Django and migration-consistency checks; compilation; pip check; task/dashboard validation; content-library/tool ignore validation; and git diff --check.
 
 ## Current quality rule
 

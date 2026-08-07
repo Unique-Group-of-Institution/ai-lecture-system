@@ -97,6 +97,7 @@ class ContentSource(models.Model):
         PROCESSING = "PROCESSING", "Processing"
         REVIEW_REQUIRED = "REVIEW_REQUIRED", "Teacher review required"
         FAILED = "FAILED", "Failed safely"
+        COMPROMISED = "COMPROMISED", "Original integrity mismatch"
 
     chapter = models.ForeignKey(Chapter, on_delete=models.PROTECT, related_name="content_sources")
     source_type = models.CharField(max_length=20, choices=SourceType)
@@ -194,6 +195,11 @@ class ExtractionVersion(models.Model):
 
 
 class ExtractedPage(models.Model):
+    class ReviewStatus(models.TextChoices):
+        NOT_REQUIRED = "NOT_REQUIRED", "Not required"
+        PENDING = "PENDING", "Teacher review pending"
+        APPROVED = "APPROVED", "Teacher approved"
+
     class Method(models.TextChoices):
         PDF_TEXT = "PDF_TEXT", "PDF text layer"
         OCR = "OCR", "Local OCR"
@@ -207,12 +213,27 @@ class ExtractedPage(models.Model):
     character_count = models.PositiveIntegerField(default=0)
     mean_confidence = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     requires_review = models.BooleanField(default=False)
+    review_status = models.CharField(max_length=16, choices=ReviewStatus, default=ReviewStatus.NOT_REQUIRED)
+    review_flags = models.JSONField(default=list, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, null=True, blank=True,
+        related_name="reviewed_extracted_pages",
+    )
+    reviewed_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         ordering = ("extraction", "page_number")
         constraints = [
-            models.UniqueConstraint(fields=("extraction", "page_number"), name="unique_extraction_page")
+            models.UniqueConstraint(fields=("extraction", "page_number"), name="unique_extraction_page"),
+            models.CheckConstraint(
+                condition=(
+                    Q(method="PDF_TEXT", requires_review=False, review_status="NOT_REQUIRED", reviewed_by__isnull=True, reviewed_at__isnull=True)
+                    | Q(method="OCR", requires_review=True, review_status="PENDING", reviewed_by__isnull=True, reviewed_at__isnull=True)
+                    | Q(method="OCR", requires_review=False, review_status="APPROVED", reviewed_by__isnull=False, reviewed_at__isnull=False)
+                ),
+                name="extracted_page_review_invariants",
+            ),
         ]
         indexes = [
             models.Index(fields=("source_file", "page_number"), name="content_file_page_idx")

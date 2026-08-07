@@ -43,7 +43,7 @@ def content_sources(request):
             filename=upload.name,
         )
         return JsonResponse(_source_payload(source), status=201)
-    except (KeyError, Chapter.DoesNotExist, ValidationError, PermissionDenied) as exc:
+    except (KeyError, ValueError, Chapter.DoesNotExist, ValidationError, PermissionDenied) as exc:
         return JsonResponse({"error": str(exc)}, status=400 if not isinstance(exc, PermissionDenied) else 403)
 
 
@@ -55,7 +55,11 @@ def content_selection(request):
         requested = {int(value) for value in body.get("source_ids", [])}
     except (ValueError, TypeError, json.JSONDecodeError):
         return JsonResponse({"error": "Invalid source selection."}, status=400)
-    visible = sources_visible_to(request.user).filter(pk__in=requested, rights_confirmed=True)
+    visible = sources_visible_to(request.user).filter(
+        pk__in=requested,
+        rights_confirmed=True,
+        processing_state=ContentSource.ProcessingState.READY,
+    )
     if set(visible.values_list("pk", flat=True)) != requested:
         return JsonResponse({"error": "Selection includes an unauthorized source."}, status=403)
     return JsonResponse({"sources": [_source_payload(item) for item in visible]})

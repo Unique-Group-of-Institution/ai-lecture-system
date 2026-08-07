@@ -2,11 +2,10 @@
 
 - **Task:** T021 — Build authorized chapter-content library and source-page extraction
 - **Owner:** codex
-- **Status:** REVIEW — synthetic implementation and local validation complete; independent review required
-- **Branch:** `task/t021-content-library`
-- **Architecture:** Django source/file/extraction/page records plus local validation, registration, visibility, extraction, API and admin foundations. T022 can select multiple visible sources and map claims to immutable file/page records.
-- **Privacy/access:** Institutional sources are administrator-managed and visible to the assigned course teacher; teacher uploads are owner/admin private. Rights confirmation is mandatory. Originals and derived text live only in ignored local storage and are never overwritten.
-- **Extraction:** pypdf 6.14.2, pypdfium2 5.12.1, Pillow 12.3.0, and explicit portable Tesseract 5.4.0 with official `tessdata_fast` 4.1.0 `urd+eng` plus `osd`. Low confidence requires review; complex layouts, equations and diagrams require comparison with the retained original.
-- **Safety:** Only PDF/PNG/JPG/JPEG; signature, decoder, size, filename and containment checks; synthetic fixtures only; no external upload, global install, PATH/registry change or real-content access.
-- **Verification:** Workspace check, 19 non-Django tests, 25 Django tests, clean migrations, Django/migration checks, compilation, dependency, privacy/ignore and diff checks passed. Synthetic PNG/JPG/PDF OCR preserved logical Urdu/English Unicode, TSV positions/confidence and orientation handling.
-- **Next:** Review the draft PR and CI result. Do not merge, self-approve, process real content or move T021 to DONE without human approval.
+- **Status:** REVIEW — independent-review corrections complete; independent or human approval required
+- **Branch/PR:** task/t021-content-library; existing draft PR #4 remains the only PR and must stay open, draft and unmerged
+- **Review corrections:** Bounded PDF text/render workers and image/PDF/cumulative ceilings; mandatory assigned-teacher approval for every OCR page; READY-only selection; immutable/read-only admin and database provenance invariants; atomic registration/extraction staging and rollback cleanup; final original hash/size verification; collision-retrying version allocation.
+- **Privacy/access:** Synthetic fixtures only. No real teacher, textbook, PDF or image content was accessed. Institutional sources remain admin-managed and course-teacher visible; teacher uploads remain owner/admin private. data/content-library and data/content-tools are ignored.
+- **Dependencies:** requirements-content.lock hash-locks the three verified T021 Windows extraction wheels. Full cross-platform application transitive locking is deferred with justification in docs/CONTENT_TOOLS.md; no install or download occurred during review fixes.
+- **Verification:** Workspace check and 19 non-Django tests; 46 Django tests; clean migrations; Django and migration-consistency checks; compilation; pip check; task/dashboard validation; privacy ignore checks; and diff checks passed with a process-scoped synthetic key.
+- **Next:** Review PR #4 and fresh CI. Do not merge, self-approve, process real content, publish, or move T021 to DONE without human approval.

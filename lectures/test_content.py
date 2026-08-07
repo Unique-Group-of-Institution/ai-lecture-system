@@ -1,16 +1,20 @@
 import io
 import json
+import subprocess
 import tempfile
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import DEFAULT, patch
 
 from django.contrib.auth.models import Group, User
-from django.core.exceptions import ValidationError
-from django.test import TestCase, override_settings
+from django.contrib import admin as django_admin
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.db import IntegrityError
+from django.test import Client, RequestFactory, TestCase, override_settings
 from PIL import Image
 from pypdf import PdfWriter
 
-from .content import _contained, _ocr_image, extract_source, register_upload, sources_visible_to, validate_upload
+from .admin import ContentFileAdmin, ContentSourceAdmin, ExtractedPageAdmin, ExtractionVersionAdmin
+from .content import _allocate_extraction, _contained, _extract_pdf_text_bounded, _ocr_image, _render_page_bounded, approve_ocr_extraction, extract_source, register_upload, sources_visible_to, validate_upload
 from .models import Chapter, ContentFile, ContentSource, Course, ExtractedPage, ExtractionVersion
 from .roles import ADMINISTRATOR_ROLE, TEACHER_ROLE, ensure_roles
 
@@ -103,9 +107,13 @@ class ContentFoundationTests(TestCase):
         class Page:
             def __init__(self, text): self.text = text
             def extract_text(self): return self.text
+            mediabox = type("Box", (), {"width": 72, "height": 72})()
         class Reader:
             pages = [Page("Page one"), Page("Page two")]
-        with patch("lectures.content.PdfReader", return_value=Reader()):
+        def native(source_path, output):
+            (output / "native-0001.txt").write_text("Page one", encoding="utf-8")
+            (output / "native-0002.txt").write_text("Page two", encoding="utf-8")
+        with patch("lectures.content.PdfReader", return_value=Reader()), patch("lectures.content._extract_pdf_text_bounded", side_effect=native):
             extraction = extract_source(source)
         self.assertEqual(extraction.status, ExtractionVersion.Status.COMPLETE)
         self.assertEqual(list(extraction.pages.values_list("page_number", "method")), [(1, ExtractedPage.Method.PDF_TEXT), (2, ExtractedPage.Method.PDF_TEXT)])
@@ -151,6 +159,7 @@ class ContentFoundationTests(TestCase):
     def test_selection_api_combines_only_visible_rights_confirmed_sources(self):
         institutional = self.upload(self.admin, ContentSource.SourceType.INSTITUTIONAL)
         private = self.upload()
+        ContentSource.objects.filter(pk__in=(institutional.pk, private.pk)).update(processing_state=ContentSource.ProcessingState.READY)
         hidden = register_upload(actor=self.other, chapter=Chapter.objects.create(
             course=Course.objects.create(code="OTHER", title="Other", teacher=self.other),
             number=1, title="Other"), title="Hidden", source_type=ContentSource.SourceType.TEACHER,
@@ -169,3 +178,242 @@ class ContentFoundationTests(TestCase):
             content_type="application/json",
         )
         self.assertEqual(denied.status_code, 403)
+
+    @override_settings(CONTENT_MAX_IMAGE_PIXELS=100, CONTENT_MAX_IMAGE_WIDTH=1000, CONTENT_MAX_IMAGE_HEIGHT=1000)
+    def test_decompression_bomb_warning_is_validation_failure(self):
+        with self.assertRaises(ValidationError):
+            validate_upload(synthetic_image(), "bomb.png")
+
+    @override_settings(CONTENT_MAX_IMAGE_WIDTH=32)
+    def test_extreme_image_dimensions_are_rejected(self):
+        with self.assertRaises(ValidationError):
+            validate_upload(synthetic_image(), "wide.png")
+
+    @override_settings(CONTENT_MAX_PDF_PAGES=2)
+    def test_excessive_pdf_pages_are_rejected(self):
+        with self.assertRaises(ValidationError):
+            validate_upload(synthetic_pdf(3), "many.pdf")
+
+    @override_settings(CONTENT_MAX_PDF_PAGE_WIDTH_POINTS=100)
+    def test_oversized_pdf_page_dimensions_are_rejected(self):
+        output = io.BytesIO()
+        writer = PdfWriter()
+        writer.add_blank_page(width=101, height=72)
+        writer.write(output)
+        output.seek(0)
+        with self.assertRaises(ValidationError):
+            validate_upload(output, "wide.pdf")
+
+    def test_high_confidence_ocr_still_requires_teacher_review_and_gate(self):
+        source = self.upload()
+        with patch("lectures.content._ocr_image", return_value=("اردو English = x", 99.9)):
+            extraction = extract_source(source)
+        page = extraction.pages.get()
+        source.refresh_from_db()
+        self.assertEqual(extraction.status, ExtractionVersion.Status.REVIEW_REQUIRED)
+        self.assertEqual(source.processing_state, ContentSource.ProcessingState.REVIEW_REQUIRED)
+        self.assertEqual(page.review_status, ExtractedPage.ReviewStatus.PENDING)
+        self.assertIn("MIXED_URDU_ENGLISH_DIRECTION", page.review_flags)
+        self.client.force_login(self.teacher)
+        self.assertEqual(self.client.post("/api/content-selection/", data=json.dumps({"source_ids": [source.pk]}), content_type="application/json").status_code, 403)
+        approve_ocr_extraction(actor=self.teacher, extraction=extraction)
+        source.refresh_from_db()
+        self.assertEqual(source.processing_state, ContentSource.ProcessingState.READY)
+
+    def test_unassigned_teacher_cannot_approve_ocr(self):
+        source = self.upload()
+        with patch("lectures.content._ocr_image", return_value=("text", 90)):
+            extraction = extract_source(source)
+        with self.assertRaises(PermissionDenied):
+            approve_ocr_extraction(actor=self.other, extraction=extraction)
+
+    def test_registration_failure_leaves_no_database_or_private_artifact(self):
+        with patch("lectures.content.ContentFile.objects.create", side_effect=RuntimeError("injected")), self.assertRaises(RuntimeError):
+            self.upload()
+        self.assertFalse(ContentSource.objects.exists())
+        files = [path for path in Path(self.tmp.name).rglob("*") if path.is_file()]
+        self.assertEqual(files, [])
+
+    def test_extraction_failure_cleans_staging_and_keeps_original(self):
+        source = self.upload()
+        original_path = Path(self.tmp.name, source.original_file.storage_key)
+        before = original_path.read_bytes()
+        with patch("lectures.content._ocr_image", side_effect=RuntimeError("injected")), self.assertRaises(RuntimeError):
+            extract_source(source)
+        self.assertEqual(original_path.read_bytes(), before)
+        self.assertFalse(any(Path(self.tmp.name, "staging").glob("extraction-*")))
+        self.assertFalse(Path(self.tmp.name, "derived", str(source.pk)).exists())
+
+    def test_database_failure_after_promotion_removes_derived_tree(self):
+        source = self.upload()
+        original_path = Path(self.tmp.name, source.original_file.storage_key)
+        before = original_path.read_bytes()
+        with patch("lectures.content._ocr_image", return_value=("synthetic", 95)), patch(
+            "lectures.content.ExtractedPage.objects.create", side_effect=IntegrityError("injected")
+        ), self.assertRaises(IntegrityError):
+            extract_source(source)
+        source.refresh_from_db()
+        extraction = source.extractions.get()
+        self.assertEqual(original_path.read_bytes(), before)
+        self.assertEqual(source.processing_state, ContentSource.ProcessingState.FAILED)
+        self.assertEqual(extraction.status, ExtractionVersion.Status.FAILED)
+        self.assertFalse(Path(self.tmp.name, "derived", str(source.pk)).exists())
+
+    def test_final_integrity_mismatch_never_becomes_ready(self):
+        source = self.upload()
+        original_path = Path(self.tmp.name, source.original_file.storage_key)
+        def mutate(*args, **kwargs):
+            original_path.write_bytes(b"changed evidence")
+            return "text", 95
+        with patch("lectures.content._ocr_image", side_effect=mutate), self.assertRaisesRegex(RuntimeError, "FINAL_INTEGRITY_MISMATCH"):
+            extract_source(source)
+        source.refresh_from_db()
+        extraction = source.extractions.get()
+        self.assertEqual(source.processing_state, ContentSource.ProcessingState.COMPROMISED)
+        self.assertEqual(extraction.error_code, "ORIGINAL_INTEGRITY_MISMATCH")
+        self.assertTrue(original_path.exists())
+        self.assertFalse(extraction.pages.exists())
+
+    def test_version_allocation_retries_a_unique_collision(self):
+        source = self.upload()
+        manager_create = ExtractionVersion.objects.create
+        with patch("lectures.content.ExtractionVersion.objects.create", side_effect=[IntegrityError("collision"), DEFAULT], wraps=manager_create) as create:
+            extraction = _allocate_extraction(source.pk)
+        self.assertEqual(extraction.version, 1)
+        self.assertEqual(create.call_count, 2)
+
+    @override_settings(CONTENT_MAX_RENDERED_TOTAL_PIXELS=3)
+    def test_cumulative_rendering_limit_fails_before_render(self):
+        source = self.upload(data=synthetic_pdf(2), name="scans.pdf")
+        class Page:
+            mediabox = type("Box", (), {"width": 72, "height": 72})()
+            def extract_text(self): return ""
+        class Reader: pages = [Page(), Page()]
+        def blank(source_path, output):
+            (output / "native-0001.txt").write_text("", encoding="utf-8")
+            (output / "native-0002.txt").write_text("", encoding="utf-8")
+        with patch("lectures.content.PdfReader", return_value=Reader()), patch("lectures.content._extract_pdf_text_bounded", side_effect=blank), patch("lectures.content._render_page_bounded") as render, self.assertRaises(ValidationError):
+            extract_source(source)
+        render.assert_not_called()
+
+    def test_ocr_timeout_is_safe_failure(self):
+        image = Path(self.tmp.name, "fixture.png")
+        image.write_bytes(synthetic_image().read())
+        tool = Path(self.tmp.name, "tesseract.exe")
+        tool.write_bytes(b"synthetic")
+        tessdata = Path(self.tmp.name, "tessdata")
+        tessdata.mkdir()
+        for language in ("urd", "eng", "osd"):
+            (tessdata / f"{language}.traineddata").write_bytes(b"synthetic")
+        with patch("lectures.content.subprocess.run", side_effect=subprocess.TimeoutExpired("tesseract", 1)), self.assertRaisesRegex(RuntimeError, "time limit"):
+            _ocr_image(image, tool, tessdata)
+
+    def test_render_timeout_terminates_isolated_worker(self):
+        class Process:
+            exitcode = None
+            def start(self): pass
+            def join(self, timeout): pass
+            def is_alive(self): return True
+            def terminate(self): self.terminated = True
+        process = Process()
+        context = type("Context", (), {"Process": lambda *args, **kwargs: process})()
+        with patch("lectures.content.multiprocessing.get_context", return_value=context), self.assertRaisesRegex(RuntimeError, "time limit"):
+            _render_page_bounded(Path("input.pdf"), 0, Path("output.png"))
+        self.assertTrue(process.terminated)
+
+    @override_settings(CONTENT_PDF_TEXT_TIMEOUT_SECONDS=0)
+    def test_pdf_text_timeout_terminates_isolated_worker(self):
+        class Process:
+            exitcode = None
+            def start(self): pass
+            def join(self, timeout): pass
+            def is_alive(self): return True
+            def terminate(self): self.terminated = True
+        process = Process()
+        context = type("Context", (), {"Process": lambda *args, **kwargs: process})()
+        with patch("lectures.content.multiprocessing.get_context", return_value=context), self.assertRaisesRegex(RuntimeError, "time limit"):
+            _extract_pdf_text_bounded(Path("input.pdf"), Path("output"))
+        self.assertTrue(process.terminated)
+
+    def test_mixed_text_and_scanned_pdf_preserves_methods_and_requires_review(self):
+        source = self.upload(data=synthetic_pdf(2), name="mixed.pdf")
+        class Page:
+            mediabox = type("Box", (), {"width": 72, "height": 72})()
+            def __init__(self, text): self.text = text
+            def extract_text(self): return self.text
+        class Reader: pages = [Page("native"), Page("")]
+        def render(source_path, index, output):
+            output.write_bytes(synthetic_image().read())
+        def native(source_path, output):
+            (output / "native-0001.txt").write_text("native", encoding="utf-8")
+            (output / "native-0002.txt").write_text("", encoding="utf-8")
+        with patch("lectures.content.PdfReader", return_value=Reader()), patch("lectures.content._extract_pdf_text_bounded", side_effect=native), patch("lectures.content._render_page_bounded", side_effect=render), patch("lectures.content._ocr_image", return_value=("اردو English", 98)):
+            extraction = extract_source(source)
+        self.assertEqual(list(extraction.pages.values_list("method", flat=True)), [ExtractedPage.Method.PDF_TEXT, ExtractedPage.Method.OCR])
+        self.assertEqual(extraction.status, ExtractionVersion.Status.REVIEW_REQUIRED)
+
+    @override_settings(CONTENT_MAX_DERIVED_BYTES=2)
+    def test_cumulative_output_bytes_fail_safely(self):
+        source = self.upload()
+        with patch("lectures.content._ocr_image", return_value=("long text", 90)), self.assertRaises(ValidationError):
+            extract_source(source)
+        self.assertFalse(Path(self.tmp.name, "derived", str(source.pk)).exists())
+
+    def test_http_upload_permissions_chapter_validation_and_csrf(self):
+        url = "/api/content-sources/"
+        payload = {"chapter_id": self.chapter.pk, "title": "Synthetic", "source_type": ContentSource.SourceType.TEACHER, "rights_confirmed": "true", "file": synthetic_image()}
+        self.assertEqual(self.client.post(url, payload).status_code, 302)
+        self.client.force_login(User.objects.create_user("unassigned"))
+        self.assertEqual(self.client.post(url, payload).status_code, 403)
+        self.client.force_login(self.teacher)
+        malformed = dict(payload, chapter_id="not-a-number", file=synthetic_image())
+        self.assertEqual(self.client.post(url, malformed).status_code, 400)
+        other_chapter = Chapter.objects.create(course=Course.objects.create(code="X", title="X", teacher=self.other), number=1, title="X")
+        crossed = dict(payload, chapter_id=other_chapter.pk, file=synthetic_image())
+        self.assertEqual(self.client.post(url, crossed).status_code, 403)
+        csrf_client = Client(enforce_csrf_checks=True)
+        csrf_client.force_login(self.teacher)
+        self.assertEqual(csrf_client.post(url, payload).status_code, 403)
+
+    def test_teacher_cannot_create_institutional_but_admin_can(self):
+        with self.assertRaises(PermissionDenied):
+            self.upload(self.teacher, ContentSource.SourceType.INSTITUTIONAL)
+        source = self.upload(self.admin, ContentSource.SourceType.INSTITUTIONAL)
+        self.assertIsNone(source.owner)
+
+    def test_admin_provenance_models_are_read_only_and_role_scoped(self):
+        request = RequestFactory().get("/admin/")
+        staff = User.objects.create_user("staff", is_staff=True)
+        source = self.upload()
+        for model_admin in (
+            ContentSourceAdmin(ContentSource, django_admin.site),
+            ContentFileAdmin(ContentFile, django_admin.site),
+            ExtractionVersionAdmin(ExtractionVersion, django_admin.site),
+            ExtractedPageAdmin(ExtractedPage, django_admin.site),
+        ):
+            request.user = staff
+            self.assertFalse(model_admin.has_add_permission(request))
+            self.assertFalse(model_admin.has_change_permission(request, source if isinstance(model_admin, ContentSourceAdmin) else None))
+            self.assertFalse(model_admin.has_delete_permission(request))
+        request.user = self.admin
+        source_admin = ContentSourceAdmin(ContentSource, django_admin.site)
+        self.assertFalse(source_admin.has_add_permission(request))
+        self.assertFalse(source_admin.has_change_permission(request, source))
+        self.assertFalse(source_admin.has_delete_permission(request, source))
+
+    def test_database_rejects_invalid_ocr_review_provenance(self):
+        source = self.upload()
+        extraction = ExtractionVersion.objects.create(
+            source=source, version=1, status=ExtractionVersion.Status.PROCESSING, extractor="synthetic"
+        )
+        with self.assertRaises(IntegrityError):
+            ExtractedPage.objects.create(
+                extraction=extraction,
+                source_file=source.original_file,
+                page_number=1,
+                method=ExtractedPage.Method.OCR,
+                text_storage_key="synthetic/page.txt",
+                text_sha256="0" * 64,
+                requires_review=False,
+                review_status=ExtractedPage.ReviewStatus.NOT_REQUIRED,
+            )
