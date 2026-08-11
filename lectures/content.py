@@ -3,11 +3,14 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import math
 import multiprocessing
 import os
 import re
 import shutil
 import subprocess
+import threading
+import time
 import uuid
 import warnings
 from dataclasses import dataclass
@@ -21,6 +24,7 @@ from django.utils import timezone
 from PIL import Image, UnidentifiedImageError
 from pypdf import PdfReader
 
+from .content_workers import pdf_inspection_worker, pdf_text_worker, render_worker
 from .models import ContentFile, ContentSource, ExtractedPage, ExtractionVersion
 from .roles import ADMINISTRATOR_ROLE, TEACHER_ROLE
 
@@ -28,6 +32,7 @@ ALLOWED_EXTENSIONS = {".pdf": "application/pdf", ".png": "image/png", ".jpg": "i
 SAFE_NAME = re.compile(r"^[^\x00-\x1f<>:\"/\\|?*]+$")
 WINDOWS_RESERVED = {"CON", "PRN", "AUX", "NUL", *(f"COM{i}" for i in range(1, 10)), *(f"LPT{i}" for i in range(1, 10))}
 LOW_CONFIDENCE = 70.0
+PIPE_READ_CHUNK_BYTES = 64 * 1024
 
 
 @dataclass(frozen=True)
@@ -92,6 +97,60 @@ def _pdf_dimensions(reader: PdfReader) -> None:
             raise ValidationError("PDF render dimensions exceed the safe pixel limit.")
 
 
+def _inspect_pdf_bounded(pdf_path: Path, response_path: Path) -> int:
+    limits = {
+        "max_pages": settings.CONTENT_MAX_PDF_PAGES,
+        "max_width": settings.CONTENT_MAX_PDF_PAGE_WIDTH_POINTS,
+        "max_height": settings.CONTENT_MAX_PDF_PAGE_HEIGHT_POINTS,
+        "render_scale": settings.CONTENT_PDF_RENDER_SCALE,
+        "max_pixels": settings.CONTENT_MAX_RENDERED_PAGE_PIXELS,
+    }
+    process = multiprocessing.get_context("spawn").Process(
+        target=pdf_inspection_worker,
+        args=(str(pdf_path), str(response_path), limits),
+    )
+    process.start()
+    process.join(settings.CONTENT_PDF_INSPECTION_TIMEOUT_SECONDS)
+    if process.is_alive():
+        process.terminate()
+        process.join(5)
+        if process.is_alive():
+            process.kill()
+            process.join()
+        raise ValidationError("PDF inspection exceeded the safe time limit.")
+    if process.exitcode != 0 or not response_path.is_file():
+        raise ValidationError("Corrupted or unsupported PDF.")
+    with response_path.open("rb") as response_file:
+        raw = response_file.read(settings.CONTENT_MAX_PDF_INSPECTION_RESPONSE_BYTES + 1)
+    if not raw or len(raw) > settings.CONTENT_MAX_PDF_INSPECTION_RESPONSE_BYTES:
+        raise ValidationError("PDF inspection returned an unsafe response.")
+    try:
+        import json
+
+        response = json.loads(raw.decode("utf-8", errors="strict"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValidationError("PDF inspection returned an unsafe response.") from exc
+    if not isinstance(response, dict) or set(response) not in ({"ok"}, {"ok", "page_count", "dimensions"}):
+        raise ValidationError("PDF inspection returned an unsafe response.")
+    if response.get("ok") is not True:
+        raise ValidationError("Corrupted or unsupported PDF.")
+    page_count, dimensions = response.get("page_count"), response.get("dimensions")
+    if type(page_count) is not int or not 1 <= page_count <= settings.CONTENT_MAX_PDF_PAGES:
+        raise ValidationError("PDF inspection returned an unsafe response.")
+    if not isinstance(dimensions, list) or len(dimensions) != page_count:
+        raise ValidationError("PDF inspection returned an unsafe response.")
+    for dimension in dimensions:
+        if not isinstance(dimension, list) or len(dimension) != 2 or any(type(value) not in (int, float) for value in dimension):
+            raise ValidationError("PDF inspection returned an unsafe response.")
+        width, height = dimension
+        if not math.isfinite(width) or not math.isfinite(height) or width <= 0 or height <= 0 or width > settings.CONTENT_MAX_PDF_PAGE_WIDTH_POINTS or height > settings.CONTENT_MAX_PDF_PAGE_HEIGHT_POINTS:
+            raise ValidationError("PDF inspection returned an unsafe response.")
+        pixels = int(width * settings.CONTENT_PDF_RENDER_SCALE / 72) * int(height * settings.CONTENT_PDF_RENDER_SCALE / 72)
+        if pixels > settings.CONTENT_MAX_RENDERED_PAGE_PIXELS:
+            raise ValidationError("PDF inspection returned an unsafe response.")
+    return page_count
+
+
 def _validate_image(content: bytes, expected: str) -> None:
     try:
         with warnings.catch_warnings():
@@ -121,14 +180,17 @@ def validate_upload(upload: BinaryIO, name: str, max_bytes: int | None = None) -
     if extension == ".pdf":
         if not content.startswith(b"%PDF-"):
             raise ValidationError("PDF extension and signature do not match.")
+        token = uuid.uuid4().hex
+        staging_dir = _contained(f"staging/pdf-inspection-{token}")
+        pdf_path = staging_dir / "upload.pdf"
+        response_path = staging_dir / "response.json"
         try:
-            reader = PdfReader(io.BytesIO(content), strict=True)
-            _pdf_dimensions(reader)
-            pages = len(reader.pages)
-        except ValidationError:
-            raise
-        except Exception as exc:
-            raise ValidationError("Corrupted or unsupported PDF.") from exc
+            staging_dir.mkdir(parents=True, exist_ok=False)
+            pdf_path.write_bytes(content)
+            pages = _inspect_pdf_bounded(pdf_path, response_path)
+        finally:
+            if staging_dir.exists():
+                _remove_known_tree(staging_dir, _contained("staging"))
     else:
         _validate_image(content, expected)
     return ValidatedUpload(name, extension, expected, len(content), hashlib.sha256(content).hexdigest(), content, pages)
@@ -202,52 +264,89 @@ def _ocr_image(image_path: Path, tesseract: Path, tessdata: Path):
         if not required.is_file():
             raise FileNotFoundError("Required local OCR dependency is unavailable.")
     command = [str(tesseract), str(image_path), "stdout", "--tessdata-dir", str(tessdata), "-l", "urd+eng", "--oem", "1", "--psm", "1", "tsv"]
-    try:
-        result = subprocess.run(command, capture_output=True, check=False, timeout=settings.CONTENT_OCR_TIMEOUT_SECONDS)
-    except subprocess.TimeoutExpired as exc:
-        raise RuntimeError("Local OCR exceeded the safe time limit.") from exc
-    if result.returncode != 0:
-        raise RuntimeError("Local OCR failed safely.")
-    rows = list(csv.DictReader(io.StringIO(result.stdout.decode("utf-8", errors="strict")), delimiter="\t"))
-    words, confidences, last_line = [], [], None
-    for row in rows:
-        word = (row.get("text") or "").strip()
-        if not word:
-            continue
-        line = (row.get("block_num"), row.get("par_num"), row.get("line_num"))
-        if words and line != last_line:
-            words.append("\n")
-        words.append(word)
-        last_line = line
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    buffers = {"stdout": bytearray(), "stderr": bytearray()}
+    overflow = threading.Event()
+
+    def drain(name: str, pipe, limit: int) -> None:
         try:
-            confidence = float(row.get("conf", "-1"))
+            while chunk := pipe.read(PIPE_READ_CHUNK_BYTES):
+                remaining = limit - len(buffers[name])
+                if len(chunk) > remaining:
+                    if remaining > 0:
+                        buffers[name].extend(chunk[:remaining])
+                    overflow.set()
+                    return
+                buffers[name].extend(chunk)
+        finally:
+            pipe.close()
+
+    readers = [
+        threading.Thread(target=drain, args=("stdout", process.stdout, settings.CONTENT_MAX_OCR_STDOUT_BYTES), daemon=True),
+        threading.Thread(target=drain, args=("stderr", process.stderr, settings.CONTENT_MAX_OCR_STDERR_BYTES), daemon=True),
+    ]
+    for reader in readers:
+        reader.start()
+    deadline = time.monotonic() + settings.CONTENT_OCR_TIMEOUT_SECONDS
+    timed_out = False
+    while process.poll() is None:
+        if overflow.wait(0.02):
+            break
+        if time.monotonic() >= deadline:
+            timed_out = True
+            break
+    if process.poll() is None:
+        process.terminate()
+    try:
+        process.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait()
+    for reader in readers:
+        reader.join(5)
+    if any(reader.is_alive() for reader in readers):
+        raise RuntimeError("Local OCR failed safely.")
+    if timed_out:
+        raise RuntimeError("Local OCR exceeded the safe time limit.")
+    if overflow.is_set():
+        raise RuntimeError("Local OCR output exceeded the safe limit.")
+    if process.returncode != 0:
+        raise RuntimeError("Local OCR failed safely.")
+    try:
+        stdout = buffers["stdout"].decode("utf-8", errors="strict")
+    except UnicodeDecodeError as exc:
+        raise RuntimeError("Local OCR returned invalid output.") from exc
+    words, confidences, last_line = [], [], None
+    try:
+        rows = csv.DictReader(io.StringIO(stdout), delimiter="\t")
+        required_fields = {"block_num", "par_num", "line_num", "conf", "text"}
+        if rows.fieldnames is None or not required_fields.issubset(rows.fieldnames):
+            raise ValueError("missing fields")
+        for row in rows:
+            if None in row:
+                raise ValueError("excess fields")
+            word = (row["text"] or "").strip()
+            line = tuple(int(row[field]) for field in ("block_num", "par_num", "line_num"))
+            confidence = float(row["conf"])
+            if not math.isfinite(confidence) or confidence < -1 or confidence > 100:
+                raise ValueError("invalid confidence")
+            if not word:
+                continue
+            if words and line != last_line:
+                words.append("\n")
+            words.append(word)
+            last_line = line
             if confidence >= 0:
                 confidences.append(confidence)
-        except ValueError:
-            pass
+    except (csv.Error, KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError("Local OCR returned invalid output.") from exc
     text = " ".join(words).replace(" \n ", "\n").strip()
     return text, (sum(confidences) / len(confidences) if confidences else None)
 
 
-def _render_worker(pdf_path: str, page_index: int, scale: float, output_path: str) -> None:
-    import pypdfium2 as pdfium
-    document = pdfium.PdfDocument(pdf_path)
-    document[page_index].render(scale=scale).to_pil().save(output_path, format="PNG")
-
-
-def _pdf_text_worker(pdf_path: str, output_dir: str, max_page_bytes: int) -> None:
-    reader = PdfReader(pdf_path, strict=True)
-    target = Path(output_dir)
-    for index, page in enumerate(reader.pages, start=1):
-        encoded = (page.extract_text() or "").strip().encode("utf-8")
-        if len(encoded) > max_page_bytes:
-            raise RuntimeError("PDF page text exceeds safe output limit.")
-        (target / f"native-{index:04d}.txt").write_bytes(encoded)
-
-
 def _extract_pdf_text_bounded(source_path: Path, output_dir: Path) -> None:
     process = multiprocessing.get_context("spawn").Process(
-        target=_pdf_text_worker,
+        target=pdf_text_worker,
         args=(str(source_path), str(output_dir), settings.CONTENT_MAX_PAGE_TEXT_BYTES),
     )
     process.start()
@@ -261,7 +360,7 @@ def _extract_pdf_text_bounded(source_path: Path, output_dir: Path) -> None:
 
 
 def _render_page_bounded(source_path: Path, page_index: int, output_path: Path) -> None:
-    process = multiprocessing.get_context("spawn").Process(target=_render_worker, args=(str(source_path), page_index, settings.CONTENT_PDF_RENDER_SCALE, str(output_path)))
+    process = multiprocessing.get_context("spawn").Process(target=render_worker, args=(str(source_path), page_index, settings.CONTENT_PDF_RENDER_SCALE, str(output_path)))
     process.start()
     process.join(settings.CONTENT_RENDER_TIMEOUT_SECONDS)
     if process.is_alive():

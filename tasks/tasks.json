@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-07T05:13:58Z",
+  "updated_at": "2026-08-11T04:46:03Z",
   "tasks": [
     {
       "id": "T001",
@@ -351,6 +351,11 @@
           "at": "2026-08-07T05:13:58Z",
           "actor": "codex",
           "evidence": "Synthetic-only review fixes: 19 non-Django and 46 Django tests passed; clean migrations, Django checks, compilation, pip check, task/dashboard validation, privacy ignore validation and diff check passed; content-runtime lock assessed and broader cross-platform lock deferral documented"
+        },
+        {
+          "at": "2026-08-11T04:46:03Z",
+          "actor": "codex",
+          "evidence": "Synthetic-only second-review verification: focused 41 T021 tests, 19 non-Django tests and 54 Django tests passed; clean migrations, Django system and migration checks, full compilation, pip check, workspace check, task/dashboard validation, privacy/ignore checks and git diff --check passed under unique process-scoped temp roots beneath ignored data/content-tools/tmp; T030 not implemented"
         }
       ],
       "history": [
@@ -388,6 +393,20 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Independent-review corrections complete; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-07T06:57:22Z",
+          "actor": "codex",
+          "from": "REVIEW",
+          "to": "IN_PROGRESS",
+          "note": "Implement second independent-review corrections for bounded OCR subprocess output, isolated PDF upload inspection, SQLite concurrency limits, and regression coverage"
+        },
+        {
+          "at": "2026-08-11T04:46:03Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Second independent-review corrections complete; ready for independent or human review"
         }
       ]
     },

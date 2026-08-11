@@ -59,6 +59,18 @@ retained a network connection, and all inputs/outputs remained in ignored local 
 OCR does not reliably understand equations, diagrams or complex/multi-column layouts. These pages,
 and any low-confidence result, require teacher review against the immutable original page and its
 stored provenance.
+
+## Phase-1 execution boundary
+
+Content registration and extraction are single-worker and sequential while the Phase-1 pilot uses
+SQLite. Operators must not start parallel extraction processes or use this implementation for
+concurrent multi-teacher production workloads. The current transactions and collision retry protect
+the local pilot but are not a substitute for production worker coordination or PostgreSQL row locks.
+
+Concurrent multi-teacher production use requires PostgreSQL plus a controlled background queue with
+explicit job claiming, retry and idempotency behavior. That queue belongs to T030 or another
+separately authorized task; T021 does not implement it.
+
 ## Dependency lock assessment
 
 requirements-content.lock is intentionally a T021 extraction-runtime lock, not a claim that the

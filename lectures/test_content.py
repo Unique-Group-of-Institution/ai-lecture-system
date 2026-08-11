@@ -2,6 +2,7 @@ import io
 import json
 import subprocess
 import tempfile
+from io import BytesIO
 from pathlib import Path
 from unittest.mock import DEFAULT, patch
 
@@ -14,7 +15,7 @@ from PIL import Image
 from pypdf import PdfWriter
 
 from .admin import ContentFileAdmin, ContentSourceAdmin, ExtractedPageAdmin, ExtractionVersionAdmin
-from .content import _allocate_extraction, _contained, _extract_pdf_text_bounded, _ocr_image, _render_page_bounded, approve_ocr_extraction, extract_source, register_upload, sources_visible_to, validate_upload
+from .content import _allocate_extraction, _contained, _extract_pdf_text_bounded, _inspect_pdf_bounded, _ocr_image, _remove_known_tree, _render_page_bounded, approve_ocr_extraction, extract_source, register_upload, sources_visible_to, validate_upload
 from .models import Chapter, ContentFile, ContentSource, Course, ExtractedPage, ExtractionVersion
 from .roles import ADMINISTRATOR_ROLE, TEACHER_ROLE, ensure_roles
 
@@ -57,6 +58,39 @@ class ContentFoundationTests(TestCase):
     def upload(self, actor=None, source_type=ContentSource.SourceType.TEACHER, data=None, name="lesson.png", rights=True):
         return register_upload(actor=actor or self.teacher, chapter=self.chapter, title="Synthetic only", source_type=source_type, rights_confirmed=rights, upload=data or synthetic_image(), filename=name)
 
+    def ocr_paths(self):
+        image = Path(self.tmp.name, "fixture.png")
+        image.write_bytes(synthetic_image().read())
+        tool = Path(self.tmp.name, "tesseract.exe")
+        tool.write_bytes(b"synthetic")
+        tessdata = Path(self.tmp.name, "tessdata")
+        tessdata.mkdir(exist_ok=True)
+        for language in ("urd", "eng", "osd"):
+            (tessdata / f"{language}.traineddata").write_bytes(b"synthetic")
+        return image, tool, tessdata
+
+    @staticmethod
+    def ocr_process(stdout=b"", stderr=b"", returncode=0, hangs=False):
+        class Process:
+            def __init__(self):
+                self.stdout = BytesIO(stdout)
+                self.stderr = BytesIO(stderr)
+                self.returncode = None if hangs else returncode
+                self.terminated = False
+                self.killed = False
+                self.wait_calls = 0
+            def poll(self): return self.returncode
+            def terminate(self):
+                self.terminated = True
+                self.returncode = -15
+            def kill(self):
+                self.killed = True
+                self.returncode = -9
+            def wait(self, timeout=None):
+                self.wait_calls += 1
+                return self.returncode
+        return Process()
+
     def test_access_policy_separates_institutional_and_private_teacher_sources(self):
         institutional = self.upload(self.admin, ContentSource.SourceType.INSTITUTIONAL)
         private = self.upload()
@@ -89,6 +123,11 @@ class ContentFoundationTests(TestCase):
     def test_size_limit_is_enforced(self):
         with self.assertRaises(ValidationError):
             validate_upload(synthetic_image(), "page.png", max_bytes=10)
+
+    def test_near_boundary_upload_is_accepted(self):
+        data = synthetic_image()
+        size = len(data.getvalue())
+        self.assertEqual(validate_upload(data, "page.png", max_bytes=size).byte_size, size)
 
     def test_original_record_and_bytes_are_immutable(self):
         source = self.upload()
@@ -147,12 +186,11 @@ class ContentFoundationTests(TestCase):
         for language in ("urd", "eng", "osd"):
             (tessdata / f"{language}.traineddata").write_bytes(b"synthetic")
         tsv = b"level\tpage_num\tblock_num\tpar_num\tline_num\tword_num\tleft\ttop\twidth\theight\tconf\ttext\n5\t1\t1\t1\t1\t1\t0\t0\t1\t1\t90\tEnglish\n"
-        with patch("socket.create_connection", side_effect=AssertionError("network forbidden")), patch("lectures.content.subprocess.run") as run:
-            run.return_value.returncode = 0
-            run.return_value.stdout = tsv
+        process = self.ocr_process(stdout=tsv)
+        with patch("socket.create_connection", side_effect=AssertionError("network forbidden")), patch("lectures.content.subprocess.Popen", return_value=process) as popen:
             text, confidence = _ocr_image(image, tool, tessdata)
         self.assertEqual((text, confidence), ("English", 90.0))
-        command = run.call_args.args[0]
+        command = popen.call_args.args[0]
         self.assertIn("urd+eng", command)
         self.assertIn("tsv", command)
 
@@ -297,16 +335,107 @@ class ContentFoundationTests(TestCase):
         render.assert_not_called()
 
     def test_ocr_timeout_is_safe_failure(self):
-        image = Path(self.tmp.name, "fixture.png")
-        image.write_bytes(synthetic_image().read())
-        tool = Path(self.tmp.name, "tesseract.exe")
-        tool.write_bytes(b"synthetic")
-        tessdata = Path(self.tmp.name, "tessdata")
-        tessdata.mkdir()
-        for language in ("urd", "eng", "osd"):
-            (tessdata / f"{language}.traineddata").write_bytes(b"synthetic")
-        with patch("lectures.content.subprocess.run", side_effect=subprocess.TimeoutExpired("tesseract", 1)), self.assertRaisesRegex(RuntimeError, "time limit"):
+        image, tool, tessdata = self.ocr_paths()
+        process = self.ocr_process(hangs=True)
+        with override_settings(CONTENT_OCR_TIMEOUT_SECONDS=0), patch("lectures.content.subprocess.Popen", return_value=process), self.assertRaisesRegex(RuntimeError, "time limit"):
             _ocr_image(image, tool, tessdata)
+        self.assertTrue(process.terminated)
+        self.assertGreaterEqual(process.wait_calls, 1)
+
+    def test_ocr_stdout_and_stderr_limits_terminate_and_reap(self):
+        image, tool, tessdata = self.ocr_paths()
+        for stream in ("stdout", "stderr"):
+            process = self.ocr_process(hangs=True, **{stream: b"x" * 9})
+            with self.subTest(stream=stream), override_settings(CONTENT_MAX_OCR_STDOUT_BYTES=8, CONTENT_MAX_OCR_STDERR_BYTES=8), patch("lectures.content.subprocess.Popen", return_value=process), self.assertRaisesRegex(RuntimeError, "output exceeded"):
+                _ocr_image(image, tool, tessdata)
+            self.assertTrue(process.terminated)
+            self.assertGreaterEqual(process.wait_calls, 1)
+
+    def test_ocr_nonzero_exit_is_privacy_safe(self):
+        image, tool, tessdata = self.ocr_paths()
+        process = self.ocr_process(stderr=b"private source text", returncode=2)
+        with patch("lectures.content.subprocess.Popen", return_value=process), self.assertRaisesRegex(RuntimeError, "failed safely") as raised:
+            _ocr_image(image, tool, tessdata)
+        self.assertNotIn("private", str(raised.exception))
+        self.assertGreaterEqual(process.wait_calls, 1)
+
+    def test_malformed_tsv_is_privacy_safe(self):
+        image, tool, tessdata = self.ocr_paths()
+        tsv = b"block_num\tpar_num\tline_num\tconf\ttext\n1\t1\t1\tprivate-value\tprivate source text\n"
+        process = self.ocr_process(stdout=tsv)
+        with patch("lectures.content.subprocess.Popen", return_value=process), self.assertRaisesRegex(RuntimeError, "invalid output") as raised:
+            _ocr_image(image, tool, tessdata)
+        self.assertNotIn("private", str(raised.exception))
+
+    def test_valid_tsv_at_stdout_boundary(self):
+        image, tool, tessdata = self.ocr_paths()
+        tsv = b"block_num\tpar_num\tline_num\tconf\ttext\n1\t1\t1\t99\tbounded\n"
+        process = self.ocr_process(stdout=tsv)
+        with override_settings(CONTENT_MAX_OCR_STDOUT_BYTES=len(tsv)), patch("lectures.content.subprocess.Popen", return_value=process):
+            self.assertEqual(_ocr_image(image, tool, tessdata), ("bounded", 99.0))
+
+    def test_pdf_inspection_timeout_malformed_excessive_and_parser_failure(self):
+        source = Path(self.tmp.name, "input.pdf")
+        response = Path(self.tmp.name, "response.json")
+        source.write_bytes(b"%PDF-synthetic")
+        class Process:
+            def __init__(self, payload=None, alive=False, stubborn=False):
+                self.payload, self.alive, self.stubborn = payload, alive, stubborn
+                self.exitcode = None if alive else 0
+                self.terminated = False
+                self.killed = False
+                self.joins = 0
+            def start(self):
+                if self.payload is not None: response.write_bytes(self.payload)
+            def join(self, timeout=None): self.joins += 1
+            def is_alive(self): return self.alive
+            def terminate(self):
+                self.terminated = True
+                if not self.stubborn: self.alive = False
+            def kill(self): self.killed = True; self.alive = False
+        cases = [
+            (Process(alive=True, stubborn=True), 32, "time limit"),
+            (Process(b"not-json"), 32, "unsafe response"),
+            (Process(b"x" * 33), 32, "unsafe response"),
+            (Process(b'{"ok":false}'), 32, "unsupported PDF"),
+            (Process(b'{"ok":true,"page_count":1,"dimensions":[[NaN,72]]}'), 64, "unsafe response"),
+        ]
+        for process, limit, message in cases:
+            response.unlink(missing_ok=True)
+            context = type("Context", (), {"Process": lambda *args, **kwargs: process})()
+            with self.subTest(message=message), override_settings(CONTENT_PDF_INSPECTION_TIMEOUT_SECONDS=0, CONTENT_MAX_PDF_INSPECTION_RESPONSE_BYTES=limit), patch("lectures.content.multiprocessing.get_context", return_value=context), self.assertRaisesRegex(ValidationError, message):
+                _inspect_pdf_bounded(source, response)
+            if message == "time limit":
+                self.assertTrue(process.terminated)
+                self.assertTrue(process.killed)
+                self.assertGreaterEqual(process.joins, 3)
+
+    def test_cleanup_rejects_parent_and_out_of_scope_paths(self):
+        parent = Path(self.tmp.name, "staging")
+        parent.mkdir()
+        outside = Path(self.tmp.name, "outside")
+        outside.mkdir()
+        for target in (parent, outside):
+            with self.subTest(target=target), self.assertRaisesRegex(RuntimeError, "unsafe cleanup"):
+                _remove_known_tree(target, parent)
+
+    def test_selection_rejects_malformed_json_and_source_ids(self):
+        self.client.force_login(self.teacher)
+        url = "/api/content-selection/"
+        for body in (
+            b"{",
+            json.dumps([]),
+            json.dumps({"source_ids": "1"}),
+            json.dumps({"source_ids": [True]}),
+            json.dumps({"source_ids": [{}]}),
+            json.dumps({"source_ids": [0]}),
+            json.dumps({"source_ids": [-1]}),
+            json.dumps({"source_ids": [1.0]}),
+            json.dumps({"source_ids": [" 1"]}),
+            json.dumps({"source_ids": ["1.0"]}),
+        ):
+            with self.subTest(body=body):
+                self.assertEqual(self.client.post(url, data=body, content_type="application/json").status_code, 400)
 
     def test_render_timeout_terminates_isolated_worker(self):
         class Process:

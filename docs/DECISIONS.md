@@ -91,3 +91,9 @@ Do not rewrite old decisions. Add a new superseding decision when the project ch
 - **Status:** Accepted for T021 review
 - **Decision:** Register only rights-confirmed institutional or teacher-owned PDF/PNG/JPG sources. Institutional content is visible to administrators and the assigned course teacher; teacher uploads are owner/admin private. Store immutable originals and separately versioned page text beneath ignored local storage. Validate names, containment, size, signatures and decoder integrity. Extract PDF text with pypdf and use explicit project-local Tesseract 5.4.0 with official `tessdata_fast` 4.1.0 `urd+eng` and `osd` for scanned pages. Preserve file/page hashes, methods, confidence and review state.
 - **Reason:** T022 needs claim-to-page traceability without exposing private material. OCR is advisory: equations, diagrams, RTL layout and complex pages remain subject to teacher review against the retained original page.
+
+## D016 — Sequential Phase-1 content extraction
+
+- **Status:** Accepted for T021 review; narrows D006 for extraction operations
+- **Decision:** Run T021 registration and extraction sequentially through one application worker while the Phase-1 pilot uses SQLite. Do not operate concurrent extraction workers or treat SQLite row locks as a production concurrency guarantee. Before concurrent multi-teacher production use, migrate this workflow to PostgreSQL and introduce a controlled background queue with explicit claiming, retry and idempotency behavior under T030 or another separately authorized task.
+- **Reason:** T021 uses database transactions, version allocation and atomic local-file promotion, but SQLite does not provide the row-level locking semantics needed to coordinate concurrent workers safely. A single worker is appropriate for the approved single-PC pilot and avoids prematurely implementing T030.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -52,7 +53,19 @@ def content_sources(request):
 def content_selection(request):
     try:
         body = json.loads(request.body or "{}")
-        requested = {int(value) for value in body.get("source_ids", [])}
+        if not isinstance(body, dict):
+            raise ValueError
+        source_ids = body.get("source_ids", [])
+        if not isinstance(source_ids, list) or any(
+            isinstance(value, bool)
+            or not isinstance(value, (int, str))
+            or (isinstance(value, str) and re.fullmatch(r"[1-9][0-9]*", value) is None)
+            for value in source_ids
+        ):
+            raise ValueError
+        requested = {int(value) for value in source_ids}
+        if any(value <= 0 for value in requested):
+            raise ValueError
     except (ValueError, TypeError, json.JSONDecodeError):
         return JsonResponse({"error": "Invalid source selection."}, status=400)
     visible = sources_visible_to(request.user).filter(

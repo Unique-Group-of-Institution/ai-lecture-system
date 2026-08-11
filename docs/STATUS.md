@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-07
+**Updated:** 2026-08-11
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T021 authorized content-library review corrections are in REVIEW
+**Overall status:** T021 second independent-review corrections are in REVIEW
 
 ## Completed
 
@@ -93,6 +93,10 @@
 - Independent-review corrections add bounded/isolated PDF extraction and rendering, decompression-bomb and cumulative resource ceilings, mandatory teacher approval for every OCR page, database-enforced review provenance, read-only admin provenance, atomic staging/promotion with failure cleanup, a final original-integrity gate, and collision-retrying extraction-version allocation.
 - The T021 extraction lock is complete for the three verified Windows content wheels; a full cross-platform application transitive lock is documented as deferred in docs/CONTENT_TOOLS.md.
 - Review-correction verification passed with synthetic fixtures and a process-scoped key: workspace check and 19 non-Django tests; 46 Django tests; clean migrations; Django and migration-consistency checks; compilation; pip check; task/dashboard validation; content-library/tool ignore validation; and git diff --check.
+- Second-review corrections incrementally bound OCR stdout/stderr, terminate and reap OCR on timeout/overflow/failure, validate bounded TSV without exposing content in errors, and move PDF upload inspection into a timeout/output-bounded spawn-safe worker with strictly validated responses.
+- Regression coverage now includes oversized OCR streams, OCR timeout/nonzero/malformed output, malformed/excessive/non-finite PDF worker responses, malformed selections, cleanup parent/out-of-scope rejection and valid boundary inputs.
+- SQLite extraction is explicitly single-worker/sequential for the Phase-1 pilot. Concurrent multi-teacher production requires PostgreSQL plus a controlled background queue in a separately authorized task; T030 was not implemented.
+- Second-review verification passed using synthetic fixtures and a new process-scoped temp root beneath ignored `data/content-tools/tmp`: focused 41 T021 tests; 19 non-Django tests; 54 Django tests; clean migrations; Django system and migration checks; compilation; pip, workspace, task/dashboard, privacy/ignore and diff validation.
 
 ## Current quality rule
 
