@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-11T12:27:13Z",
+  "updated_at": "2026-08-11T12:51:07Z",
   "tasks": [
     {
       "id": "T001",
@@ -509,8 +509,13 @@
         {
           "at": "2026-08-11T12:27:13Z",
           "actor": "codex",
-          "evidence": "Synthetic-only T030 verification: 15 focused tests, 85 complete Django tests and 19 complete repository tests passed; workspace, Django system and migration-drift checks, clean disposable SQLite migration through 0006, compilation, dependency, task/dashboard, privacy/ignore and diff checks passed. SQLite is explicitly sequential/single-worker; PostgreSQL plus controlled workers is mandatory before concurrency. No real content, media, transcript, database, upload, credential or private artifact was accessed."
-        }
+        "evidence": "Synthetic-only T030 verification: 15 focused tests, 85 complete Django tests and 19 complete repository tests passed; workspace, Django system and migration-drift checks, clean disposable SQLite migration through 0006, compilation, dependency, task/dashboard, privacy/ignore and diff checks passed. SQLite is explicitly sequential/single-worker; PostgreSQL plus controlled workers is mandatory before concurrency. No real content, media, transcript, database, upload, credential or private artifact was accessed."
+      },
+      {
+        "at": "2026-08-11T12:51:07Z",
+        "actor": "codex",
+        "evidence": "Final reviewed T030 verification: 18 focused tests, 88 complete Django tests and 19 repository tests passed; commit eac9ff4 pushed through the active hook; draft PR #6 targets main; fresh workspace-ci passed in run 31493136559, job 93784209685. T030 remains REVIEW and SQLite remains sequential/single-worker."
+      }
       ],
       "history": [
         {
