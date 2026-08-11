@@ -12,7 +12,11 @@ def ensure_roles() -> tuple[Group, Group]:
 
     teacher_permissions = Permission.objects.filter(
         content_type__app_label="lectures",
-        codename__in=("add_lecturerequest", "view_lecturerequest", "view_course", "view_chapter"),
+        codename__in=(
+            "add_lecturerequest", "view_lecturerequest", "view_course", "view_chapter",
+            "add_contentsource", "view_contentsource", "view_contentfile",
+            "view_extractionversion", "view_extractedpage", "change_extractedpage",
+        ),
     )
     administrator_permissions = Permission.objects.filter(content_type__app_label="lectures") | (
         Permission.objects.filter(

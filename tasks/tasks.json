@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-06T12:20:58Z",
+  "updated_at": "2026-08-11T06:29:36Z",
   "tasks": [
     {
       "id": "T001",
@@ -326,8 +326,8 @@
       "id": "T021",
       "title": "Build authorized chapter-content library and source-page extraction",
       "priority": 6,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "DONE",
+      "owner": "codex",
       "dependencies": [
         "T010"
       ],
@@ -341,8 +341,81 @@
         "Extracted content retains file and page provenance",
         "Private source content is never uploaded externally"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-06T13:32:10Z",
+          "actor": "codex",
+          "evidence": "Synthetic-only verification: workspace check passed; 19 non-Django and 25 Django tests passed; clean migrations, Django check, migration consistency, compilation, pip check, task/dashboard validation, privacy ignore check and diff check passed; explicit local Tesseract 5.4.0 produced intact Urdu/English Unicode and TSV provenance for synthetic PNG/JPG/PDF-rendered pages and orientation-corrected a rotated fixture; no real content or external upload."
+        },
+        {
+          "at": "2026-08-07T05:13:58Z",
+          "actor": "codex",
+          "evidence": "Synthetic-only review fixes: 19 non-Django and 46 Django tests passed; clean migrations, Django checks, compilation, pip check, task/dashboard validation, privacy ignore validation and diff check passed; content-runtime lock assessed and broader cross-platform lock deferral documented"
+        },
+        {
+          "at": "2026-08-11T04:46:03Z",
+          "actor": "codex",
+          "evidence": "Synthetic-only second-review verification: focused 41 T021 tests, 19 non-Django tests and 54 Django tests passed; clean migrations, Django system and migration checks, full compilation, pip check, workspace check, task/dashboard validation, privacy/ignore checks and git diff --check passed under unique process-scoped temp roots beneath ignored data/content-tools/tmp; T030 not implemented"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-06T12:36:17Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Build the authorized local chapter-content library with institutional textbook/Unique notes selection, teacher-owned PDF/image uploads, local extraction/OCR, provenance and private access controls"
+        },
+        {
+          "at": "2026-08-06T12:37:30Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implement the human-authorized local chapter-content library, secure uploads, extraction, OCR foundation, provenance, and access controls"
+        },
+        {
+          "at": "2026-08-06T13:32:10Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Authorized local content library and synthetic extraction/OCR foundation complete; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-07T04:26:37Z",
+          "actor": "codex",
+          "from": "REVIEW",
+          "to": "IN_PROGRESS",
+          "note": "Implement independent-review corrections for PR #4 covering resource limits, mandatory OCR review, provenance/admin invariants, transactional cleanup, integrity ordering, concurrency, and security tests"
+        },
+        {
+          "at": "2026-08-07T05:13:58Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Independent-review corrections complete; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-07T06:57:22Z",
+          "actor": "codex",
+          "from": "REVIEW",
+          "to": "IN_PROGRESS",
+          "note": "Implement second independent-review corrections for bounded OCR subprocess output, isolated PDF upload inspection, SQLite concurrency limits, and regression coverage"
+        },
+        {
+          "at": "2026-08-11T04:46:03Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Second independent-review corrections complete; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-11T06:29:36Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner reviewed and approved PR #4; authorized local content library, privacy controls, OCR review gates and documented Phase-1 limitations accepted"
+        }
+      ]
     },
     {
       "id": "T022",

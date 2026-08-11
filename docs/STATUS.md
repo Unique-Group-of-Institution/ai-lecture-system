@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-06
+**Updated:** 2026-08-11
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** Script-first Phase-1 workflow approved; T020 approved and complete
+**Overall status:** T021 is DONE after product-owner approval of PR #4
 
 ## Completed
 
@@ -26,10 +26,11 @@
 - T003 was approved by the product owner through PR #1 and moved to DONE by a human.
 - T010 was approved by the product owner through PR #2 and moved to DONE by a human.
 - T020 was approved by the product owner through PR #3 and moved from REVIEW to DONE by a human.
+- T021 was approved by the product owner through PR #4 and moved from REVIEW to DONE by a human.
 
 ## Latest completed task
 
-- T020 is DONE under `codex` on `task/t020-local-whisper-audio-qc` after the product owner approved PR #3 and performed the `REVIEW` to `DONE` transition. The local decoder/Whisper pipeline was benchmarked while the authorized source remained private and immutable. CPU processing is too slow for the primary workflow and automatic Urdu/Hindi script detection is unreliable. Full Urdu transcription and further model testing are explicitly deferred; no further teacher-audio processing is authorized for T020.
+- T021 is DONE under `codex` on `task/t021-content-library` after the product owner approved PR #4 and performed the `REVIEW` to `DONE` transition. The approved local content library and source-page extraction implementation was verified with synthetic fixtures only; no real teacher or institutional content was processed or committed. The product owner accepted SQLite's sequential, single-worker Phase-1 limitation. PostgreSQL plus a controlled background queue is required before concurrent production use.
 
 ## Approved Phase-1 workflow
 
@@ -56,7 +57,6 @@
 
 ## Proposed backlog — not yet implemented
 
-- T021: authorized chapter-content library and source-page extraction.
 - T022: source-grounded slide and per-slide narration-script generation.
 - T030: workflow/job queue and approval states.
 - T040: teacher slide-by-slide recording portal.
@@ -83,6 +83,22 @@
 - The 8 GB RAM and low-memory legacy GPUs constrain render choices. T020 confirms local full-audio Whisper is too slow for the primary workflow.
 - Urdu/Hindi automatic script selection is unreliable with the tested model; full Urdu transcription and further model testing are deferred.
 - The current GitHub plan does not support server-side branch protection for this private repository. The paid upgrade is deferred; local hooks must be installed on every clone and are not equivalent to server-side enforcement.
+
+## T021 implementation
+
+- Rights-confirmed institutional and teacher-owned sources have enforced access scopes plus class, subject, course and chapter context.
+- Immutable originals and versioned derived UTF-8 page text retain source-file, extraction, page, method, hash, confidence and review provenance.
+- Validation permits only PDF/PNG/JPG/JPEG and checks safe names/paths, size, signatures, strict PDF parsing and Pillow decoding.
+- Text PDFs use local pypdf. Scans/images use explicit local Tesseract `urd+eng`, orientation-aware segmentation and TSV confidence. No cloud OCR or external transfer exists.
+- All binaries, models, real sources and derived content remain ignored. Only synthetic fixtures were used.
+- Independent-review corrections add bounded/isolated PDF extraction and rendering, decompression-bomb and cumulative resource ceilings, mandatory teacher approval for every OCR page, database-enforced review provenance, read-only admin provenance, atomic staging/promotion with failure cleanup, a final original-integrity gate, and collision-retrying extraction-version allocation.
+- The T021 extraction lock is complete for the three verified Windows content wheels; a full cross-platform application transitive lock is documented as deferred in docs/CONTENT_TOOLS.md.
+- Review-correction verification passed with synthetic fixtures and a process-scoped key: workspace check and 19 non-Django tests; 46 Django tests; clean migrations; Django and migration-consistency checks; compilation; pip check; task/dashboard validation; content-library/tool ignore validation; and git diff --check.
+- Second-review corrections incrementally bound OCR stdout/stderr, terminate and reap OCR on timeout/overflow/failure, validate bounded TSV without exposing content in errors, and move PDF upload inspection into a timeout/output-bounded spawn-safe worker with strictly validated responses.
+- Regression coverage now includes oversized OCR streams, OCR timeout/nonzero/malformed output, malformed/excessive/non-finite PDF worker responses, malformed selections, cleanup parent/out-of-scope rejection and valid boundary inputs.
+- SQLite extraction is explicitly single-worker/sequential for the Phase-1 pilot. Concurrent multi-teacher production requires PostgreSQL plus a controlled background queue in a separately authorized task; T030 was not implemented.
+- Second-review verification passed using synthetic fixtures and a new process-scoped temp root beneath ignored `data/content-tools/tmp`: focused 41 T021 tests; 19 non-Django tests; 54 Django tests; clean migrations; Django system and migration checks; compilation; pip, workspace, task/dashboard, privacy/ignore and diff validation.
+- The product owner approved PR #4 and moved T021 from REVIEW to DONE. The SQLite sequential/single-worker limitation is accepted for Phase 1; PostgreSQL plus a controlled queue remains mandatory before concurrent production. No real content was processed or committed.
 
 ## Current quality rule
 

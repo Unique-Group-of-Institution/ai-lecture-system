@@ -24,6 +24,8 @@ venv/
 data/uploads/*
 data/lectures/*
 data/exports/*
+data/content-tools/*
+data/content-library/*
 data/lectures/t020-local/
 uploader/
 youtube-uploader/
