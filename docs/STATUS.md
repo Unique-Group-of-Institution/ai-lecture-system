@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T022 source-grounded slide and narration foundation approved; PR #5 finalization in progress
+**Overall status:** T030 workflow queue and approval foundation implemented; validation passed and review publication is in progress
 
 ## Completed
 
@@ -58,7 +58,6 @@
 
 ## Proposed backlog — not yet implemented
 
-- T030: workflow/job queue and approval states.
 - T040: teacher slide-by-slide recording portal.
 - T050: admin video assembly, AI-assisted edit, teacher review and export.
 - T060: separately deferred consented voice-clone option.
@@ -96,7 +95,7 @@
 - Review-correction verification passed with synthetic fixtures and a process-scoped key: workspace check and 19 non-Django tests; 46 Django tests; clean migrations; Django and migration-consistency checks; compilation; pip check; task/dashboard validation; content-library/tool ignore validation; and git diff --check.
 - Second-review corrections incrementally bound OCR stdout/stderr, terminate and reap OCR on timeout/overflow/failure, validate bounded TSV without exposing content in errors, and move PDF upload inspection into a timeout/output-bounded spawn-safe worker with strictly validated responses.
 - Regression coverage now includes oversized OCR streams, OCR timeout/nonzero/malformed output, malformed/excessive/non-finite PDF worker responses, malformed selections, cleanup parent/out-of-scope rejection and valid boundary inputs.
-- SQLite extraction is explicitly single-worker/sequential for the Phase-1 pilot. Concurrent multi-teacher production requires PostgreSQL plus a controlled background queue in a separately authorized task; T030 was not implemented.
+- SQLite extraction is explicitly single-worker/sequential for the Phase-1 pilot. At the T021 review point, concurrent multi-teacher production still required the then-unimplemented T030 PostgreSQL-portable queue foundation.
 - Second-review verification passed using synthetic fixtures and a new process-scoped temp root beneath ignored `data/content-tools/tmp`: focused 41 T021 tests; 19 non-Django tests; 54 Django tests; clean migrations; Django system and migration checks; compilation; pip, workspace, task/dashboard, privacy/ignore and diff validation.
 - The product owner approved PR #4 and moved T021 from REVIEW to DONE. The SQLite sequential/single-worker limitation is accepted for Phase 1; PostgreSQL plus a controlled queue remains mandatory before concurrent production. No real content was processed or committed.
 
@@ -114,3 +113,15 @@ Keep the repository private under `Unique-Group-of-Institution`. Changes must us
 - Synthetic-only verification passed: 16 focused T022 tests, all 70 Django tests and all 19 non-Django tests; workspace validation; Django system and migration-consistency checks; clean disposable SQLite migration; scoped Python compilation; pip dependency check; task/dashboard validation; privacy/ignore scans; and diff checks. Windows sandbox-created inaccessible temp directories were left untouched; successful temp-dependent runs used unique ignored workspace-local roots without ACL changes.
 - T022 is DONE after an independent APPROVE review and the product owner's exact human `REVIEW` to `DONE` transition. The deterministic extractive Phase-1 generator limitation is accepted; CRM integration and stronger AI-provider evaluation remain deferred.
 - Implementation commit `0c96607` and reviewed evidence head `99be0fc` were pushed through the active local hook. PR #5 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/5`. Complete implementation CI passed on reviewed head `99be0fc` in Actions run `31470738204`, job `93713275733`; a fresh run is required on the approval/status finalization commit before merge.
+
+## T030 implementation
+
+- A provider-independent `WorkflowActorContext` carries teacher, administrator or system-worker type, opaque identity reference, internal actor mapping, permitted course IDs and explicit capabilities. The Django role adapter is outside the domain; CRM sessions/tables remain deferred.
+- `LectureWorkflow` implements the explicit source-ready through export-ready state graph. Current-state versions, allowlisted reason codes and unique transition idempotency keys reject stale, duplicate, backward and skipped transitions.
+- Teacher slide/narration approval fingerprints every current T022 revision. A later teacher revision transaction invalidates the approval, clears downstream readiness/approval references, returns the workflow to draft and writes an immutable audit event.
+- Assigned-teacher slide/narration and video approvals cannot be replaced by administrators. Teacher video approval is mandatory before final administrator approval; only final administrator approval plus a successful export-readiness job permits export-ready state.
+- `WorkflowJob` is a database-backed, PostgreSQL-portable coordination queue with four exact bounded payload schemas, payload hashes, idempotent submission/completion, atomic claim, attempt limits, leases, expiry recovery, bounded retries, privacy-safe failure codes/messages, pending-only cancellation, timestamps and immutable job events. It stores no commands, credentials or filesystem paths and executes no processor.
+- SQLite is explicitly sequential/single-worker and rejects claims if that setting is disabled. Concurrent production requires PostgreSQL plus controlled workers; the PostgreSQL path uses transactional row locking and `SKIP LOCKED` where supported.
+- Migration `0006` adds workflows, immutable workflow audits, jobs and immutable job events with protected relationships, unique constraints, retry/attempt checks and portable indexes. Minimal scoped JSON APIs and read-only Django admin inspection cover workflow, transition, audit and queue worker primitives.
+- T040 recording UI, T050 video processing, T060 voice cloning, T070 export/upload execution, CRM integration, paid services, Redis/Celery/cloud queues and stronger AI providers were not implemented.
+- Synthetic-only verification passed: 18 focused T030 tests, all 88 Django tests and all 19 repository tests; workspace validation; Django system and migration-consistency checks; clean disposable SQLite migration; compilation; dependency, task/dashboard, privacy/ignore and diff checks. No real content, media, transcript, database, upload, credential or private artifact was accessed.

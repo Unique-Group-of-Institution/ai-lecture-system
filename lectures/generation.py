@@ -22,6 +22,7 @@ from .models import (
     GenerationPageSnapshot,
     GenerationRequest,
     GenerationSourceSnapshot,
+    LectureWorkflow,
     NarrationStatement,
     SlideClaim,
     SlideDraft,
@@ -300,6 +301,9 @@ def _parse_revision_items(raw, field):
 
 @transaction.atomic
 def revise_slide(*, actor: GenerationActorContext, slide_id: int, title, claims, narration) -> SlideRevision:
+    workflow = LectureWorkflow.objects.select_for_update().filter(
+        generation__slides__pk=slide_id
+    ).first()
     slide = SlideDraft.objects.select_for_update().select_related("generation__chapter").get(pk=slide_id)
     if (
         not actor.can_review
@@ -316,6 +320,14 @@ def revise_slide(*, actor: GenerationActorContext, slide_id: int, title, claims,
     slide.current_version = version
     slide.approved_revision = None
     slide.save(update_fields=("current_version", "approved_revision"))
+    from .workflow import invalidate_workflow_for_slide_revision
+
+    invalidate_workflow_for_slide_revision(
+        workflow=workflow,
+        actor_identity_reference=f"user:{actor.actor_id}",
+        slide_id=slide.pk,
+        revision_version=version,
+    )
     _refresh_generation_status(slide.generation_id)
     return revision
 

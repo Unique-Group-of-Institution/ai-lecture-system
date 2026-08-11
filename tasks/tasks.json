@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-11T08:57:14Z",
+  "updated_at": "2026-08-11T12:27:13Z",
   "tasks": [
     {
       "id": "T001",
@@ -488,8 +488,8 @@
       "id": "T030",
       "title": "Implement workflow job queue and approval states",
       "priority": 8,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "REVIEW",
+      "owner": "codex",
       "dependencies": [
         "T010"
       ],
@@ -505,8 +505,36 @@
         "State changes are auditable",
         "Approval-gated transitions cannot be bypassed"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-11T12:27:13Z",
+          "actor": "codex",
+          "evidence": "Synthetic-only T030 verification: 15 focused tests, 85 complete Django tests and 19 complete repository tests passed; workspace, Django system and migration-drift checks, clean disposable SQLite migration through 0006, compilation, dependency, task/dashboard, privacy/ignore and diff checks passed. SQLite is explicitly sequential/single-worker; PostgreSQL plus controlled workers is mandatory before concurrency. No real content, media, transcript, database, upload, credential or private artifact was accessed."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-11T11:10:37Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Implement the Phase-1 local workflow queue, auditable state transitions, teacher review and non-bypassable admin approval gates"
+        },
+        {
+          "at": "2026-08-11T11:17:48Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implement the human-authorized provider-independent Phase-1 workflow queue, audit history, and non-bypassable approval gates"
+        },
+        {
+          "at": "2026-08-11T12:27:13Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Provider-independent workflow queue, immutable audit history, and non-bypassable teacher/admin approval gates implemented; ready for independent or human review"
+        }
+      ]
     },
     {
       "id": "T040",
