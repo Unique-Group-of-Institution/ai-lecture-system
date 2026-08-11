@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T021 second independent-review corrections are in REVIEW
+**Overall status:** T021 is DONE after product-owner approval of PR #4
 
 ## Completed
 
@@ -26,10 +26,11 @@
 - T003 was approved by the product owner through PR #1 and moved to DONE by a human.
 - T010 was approved by the product owner through PR #2 and moved to DONE by a human.
 - T020 was approved by the product owner through PR #3 and moved from REVIEW to DONE by a human.
+- T021 was approved by the product owner through PR #4 and moved from REVIEW to DONE by a human.
 
 ## Latest completed task
 
-- T020 is DONE under `codex` on `task/t020-local-whisper-audio-qc` after the product owner approved PR #3 and performed the `REVIEW` to `DONE` transition. The local decoder/Whisper pipeline was benchmarked while the authorized source remained private and immutable. CPU processing is too slow for the primary workflow and automatic Urdu/Hindi script detection is unreliable. Full Urdu transcription and further model testing are explicitly deferred; no further teacher-audio processing is authorized for T020.
+- T021 is DONE under `codex` on `task/t021-content-library` after the product owner approved PR #4 and performed the `REVIEW` to `DONE` transition. The approved local content library and source-page extraction implementation was verified with synthetic fixtures only; no real teacher or institutional content was processed or committed. The product owner accepted SQLite's sequential, single-worker Phase-1 limitation. PostgreSQL plus a controlled background queue is required before concurrent production use.
 
 ## Approved Phase-1 workflow
 
@@ -97,6 +98,7 @@
 - Regression coverage now includes oversized OCR streams, OCR timeout/nonzero/malformed output, malformed/excessive/non-finite PDF worker responses, malformed selections, cleanup parent/out-of-scope rejection and valid boundary inputs.
 - SQLite extraction is explicitly single-worker/sequential for the Phase-1 pilot. Concurrent multi-teacher production requires PostgreSQL plus a controlled background queue in a separately authorized task; T030 was not implemented.
 - Second-review verification passed using synthetic fixtures and a new process-scoped temp root beneath ignored `data/content-tools/tmp`: focused 41 T021 tests; 19 non-Django tests; 54 Django tests; clean migrations; Django system and migration checks; compilation; pip, workspace, task/dashboard, privacy/ignore and diff validation.
+- The product owner approved PR #4 and moved T021 from REVIEW to DONE. The SQLite sequential/single-worker limitation is accepted for Phase 1; PostgreSQL plus a controlled queue remains mandatory before concurrent production. No real content was processed or committed.
 
 ## Current quality rule
 

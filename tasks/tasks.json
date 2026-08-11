@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-11T04:46:03Z",
+  "updated_at": "2026-08-11T06:29:36Z",
   "tasks": [
     {
       "id": "T001",
@@ -326,7 +326,7 @@
       "id": "T021",
       "title": "Build authorized chapter-content library and source-page extraction",
       "priority": 6,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [
         "T010"
@@ -407,6 +407,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Second independent-review corrections complete; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-11T06:29:36Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner reviewed and approved PR #4; authorized local content library, privacy controls, OCR review gates and documented Phase-1 limitations accepted"
         }
       ]
     },
