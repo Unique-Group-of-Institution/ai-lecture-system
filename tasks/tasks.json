@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-11T06:29:36Z",
+  "updated_at": "2026-08-11T07:36:20Z",
   "tasks": [
     {
       "id": "T001",
@@ -421,8 +421,8 @@
       "id": "T022",
       "title": "Generate source-grounded slides and narration scripts",
       "priority": 7,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "REVIEW",
+      "owner": "codex",
       "dependencies": [
         "T021"
       ],
@@ -436,8 +436,41 @@
         "Teacher can revise and approve slides and scripts before recording",
         "Approved narration is the caption/transcript source"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-11T07:32:49Z",
+          "actor": "codex",
+          "evidence": "2026-08-11 synthetic-only T022 verification: 13 focused tests, 67 complete Django tests and 19 complete non-Django tests passed; workspace check, Django system and migration checks, clean SQLite migration, scoped compilation, pip check, task/dashboard validation, privacy/ignore checks and diff checks passed; no real content, external service, model or new dependency used"
+        },
+        {
+          "at": "2026-08-11T07:36:20Z",
+          "actor": "codex",
+          "evidence": "Final pre-staging hardening verification: 16 focused T022 tests, 70 complete Django tests and 19 complete non-Django tests passed; request-body limits, course-capability rechecks and immutable history records covered; workspace check passed"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-11T07:04:02Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Source-grounded slide and per-slide narration generation approved; CRM integration deferred and generation must remain authentication-provider independent"
+        },
+        {
+          "at": "2026-08-11T07:10:55Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implement the human-authorized authentication-provider-independent source-grounded slide and narration workflow using synthetic verification only"
+        },
+        {
+          "at": "2026-08-11T07:32:49Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Source-grounded slide and canonical narration foundation implemented with teacher-only revision and approval; ready for independent or human review"
+        }
+      ]
     },
     {
       "id": "T030",

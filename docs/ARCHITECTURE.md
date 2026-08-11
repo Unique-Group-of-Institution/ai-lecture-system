@@ -4,17 +4,17 @@
 
 ```mermaid
 flowchart TD
-    A["Syllabus and lecture request"] --> B["AI scene script and draft slides"]
-    B --> C{"Teacher approves scenes?"}
+    A["Authorized reviewed chapter sources and teacher guidelines"] --> B["Grounded slide and narration drafts"]
+    B --> C{"Teacher approves every slide and narration?"}
     C -- No --> B
     C -- Yes --> D["Teacher records audio per scene"]
-    D --> E["Local Whisper transcript and audio QC"]
-    E --> F{"Teacher approves audio?"}
+    D --> E["Technical audio cleanup and optional QC"]
+    E --> F{"Teacher accepts recording?"}
     F -- Patch or retake --> D
     F -- Yes --> G["Final timing, PPTX, captions and MP4"]
     G --> H{"Admin final approval"}
     H -- Revise scene --> B
-    H -- Approve --> I["Local LMS and YouTube watch folders"]
+    H -- Approve --> I["Local YouTube-ready package"]
 ```
 
 ## Components
@@ -30,6 +30,15 @@ flowchart TD
 | Audio engine | Format conversion, mild cleanup, Whisper transcript, QC flags and patch assembly |
 | Render engine | Slide images, approved scene audio, captions and FFmpeg video composition |
 | Distribution | Local output package and watched folders; no automatic publication without approval |
+
+## T022 generation boundary
+
+The current Django authentication adapter converts the signed-in teacher and T021 visibility rules
+into an internal actor context. The generation domain consumes only that context, bounded guidelines
+and immutable reviewed-page snapshots. Its replaceable provider returns structured text plus exact
+source ranges; the domain validates those ranges before storing revisions or allowing approval.
+See [SLIDE_GENERATION.md](SLIDE_GENERATION.md) for the model, APIs and future CRM/SSO and AI-provider
+boundaries.
 
 ## Trust boundaries
 
@@ -50,4 +59,3 @@ Claude Code and Codex do not rely on each other's chat history. They coordinate 
 - status and handoff documents;
 - the project MCP server;
 - separate task ownership and later separate Git branches/worktrees.
-

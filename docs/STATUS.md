@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T021 is DONE after product-owner approval of PR #4
+**Overall status:** T022 source-grounded slide and narration foundation is ready for review
 
 ## Completed
 
@@ -103,3 +103,13 @@
 ## Current quality rule
 
 Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.
+
+## T022 implementation
+
+- A provider-independent generation domain receives only an internal actor ID, permitted course/source IDs and explicit capabilities; the current Django adapter enforces T010 roles and T021 visibility. CRM/SSO integration remains deferred.
+- `deterministic-extractive-v1` runs fully locally with no new dependency or network call. It deterministically selects bounded exact spans from fully reviewed synthetic source pages and fails closed on unsupported output.
+- Immutable generation/source/page snapshots retain extraction version, source/page hashes and reviewed UTF-8 text. Every slide claim and narration statement stores an exact page-snapshot character range and hash.
+- Ordered slide revisions are append-only. Only the requesting course teacher can revise or approve; edits invalidate the current approval, administrators cannot substitute approval, and captions are returned only from the current approved canonical narration snapshot.
+- Migration `0005` adds PostgreSQL-portable generation, snapshot, slide, revision, claim, narration, reference and canonical-caption records with protected relationships, constraints and indexes. Minimal JSON APIs and read-only Django admin inspection are included; no production frontend, queue, recording, render, voice or upload work was added.
+- Synthetic-only verification passed: 16 focused T022 tests, all 70 Django tests and all 19 non-Django tests; workspace validation; Django system and migration-consistency checks; clean disposable SQLite migration; scoped Python compilation; pip dependency check; task/dashboard validation; privacy/ignore scans; and diff checks. Windows sandbox-created inaccessible temp directories were left untouched; successful temp-dependent runs used unique ignored workspace-local roots without ACL changes.
+- T022 is on `task/t022-source-grounded-slides` in REVIEW pending independent or human approval. It must not move to DONE until that review succeeds.
