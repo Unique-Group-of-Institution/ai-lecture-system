@@ -40,6 +40,13 @@ python manage.py check
 python manage.py test
 ```
 
+T022 needs no additional dependency or model download. Its local deterministic generator uses the
+reviewed T021 text under `AI_LECTURE_CONTENT_ROOT`. Optional generation resource ceilings are
+`AI_LECTURE_GENERATION_MAX_SOURCES`, `AI_LECTURE_GENERATION_MAX_CHARACTERS`,
+`AI_LECTURE_GENERATION_MAX_PAGE_CHARACTERS`, `AI_LECTURE_GENERATION_MAX_PAGE_BYTES`,
+`AI_LECTURE_GENERATION_MAX_CLAIMS`, and `AI_LECTURE_GENERATION_MAX_REQUEST_BYTES`; conservative
+defaults are defined in `lecture_system/settings.py`.
+
 `AI_LECTURE_SECRET_KEY` is required and must be supplied through the process environment. The
 example above is a placeholder, not a production secret. Choose a private local value and set it
 again in each new PowerShell session. Do not put a real value in tracked files or commit a populated

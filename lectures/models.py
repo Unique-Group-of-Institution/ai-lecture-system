@@ -238,3 +238,179 @@ class ExtractedPage(models.Model):
         indexes = [
             models.Index(fields=("source_file", "page_number"), name="content_file_page_idx")
         ]
+
+
+class GenerationRequest(models.Model):
+    class Status(models.TextChoices):
+        GENERATED = "GENERATED", "Generated draft"
+        PARTIALLY_APPROVED = "PARTIALLY_APPROVED", "Partially approved"
+        APPROVED = "APPROVED", "Teacher approved"
+
+    chapter = models.ForeignKey(Chapter, on_delete=models.PROTECT, related_name="generation_requests")
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="generation_requests"
+    )
+    guidelines = models.JSONField()
+    generator_key = models.CharField(max_length=64)
+    input_sha256 = models.CharField(max_length=64)
+    status = models.CharField(max_length=24, choices=Status, default=Status.GENERATED)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at", "pk")
+        indexes = [
+            models.Index(fields=("requested_by", "status"), name="generation_actor_status_idx"),
+            models.Index(fields=("chapter", "created_at"), name="generation_chapter_time_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            previous = GenerationRequest.objects.filter(pk=self.pk).values(
+                "chapter_id", "requested_by_id", "guidelines", "generator_key", "input_sha256"
+            ).first()
+            current = {name: getattr(self, name) for name in previous} if previous else None
+            if previous is not None and current != previous:
+                raise ValueError("Generation input records are immutable.")
+        return super().save(*args, **kwargs)
+
+
+class ImmutableGenerationRecord(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError("Generation history records are immutable.")
+        return super().save(*args, **kwargs)
+
+
+class GenerationSourceSnapshot(ImmutableGenerationRecord):
+    generation = models.ForeignKey(GenerationRequest, on_delete=models.PROTECT, related_name="source_snapshots")
+    source = models.ForeignKey(ContentSource, on_delete=models.PROTECT, related_name="generation_snapshots")
+    extraction = models.ForeignKey(ExtractionVersion, on_delete=models.PROTECT, related_name="generation_snapshots")
+    source_file_sha256 = models.CharField(max_length=64)
+    extraction_version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    source_title = models.CharField(max_length=200)
+
+    class Meta:
+        ordering = ("generation", "source_id")
+        constraints = [
+            models.UniqueConstraint(fields=("generation", "source"), name="unique_generation_source_snapshot")
+        ]
+
+
+class GenerationPageSnapshot(ImmutableGenerationRecord):
+    source_snapshot = models.ForeignKey(
+        GenerationSourceSnapshot, on_delete=models.PROTECT, related_name="pages"
+    )
+    extracted_page = models.ForeignKey(ExtractedPage, on_delete=models.PROTECT, related_name="generation_snapshots")
+    page_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    text = models.TextField()
+    text_sha256 = models.CharField(max_length=64)
+
+    class Meta:
+        ordering = ("source_snapshot", "page_number")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("source_snapshot", "page_number"), name="unique_generation_snapshot_page"
+            ),
+            models.CheckConstraint(condition=~Q(text=""), name="generation_snapshot_text_not_empty"),
+        ]
+
+
+class SlideDraft(models.Model):
+    generation = models.ForeignKey(GenerationRequest, on_delete=models.PROTECT, related_name="slides")
+    position = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    current_version = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    approved_revision = models.ForeignKey(
+        "SlideRevision", on_delete=models.PROTECT, null=True, blank=True, related_name="approved_for_slides"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("generation", "position")
+        constraints = [
+            models.UniqueConstraint(fields=("generation", "position"), name="unique_generation_slide_position")
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk:
+            previous = SlideDraft.objects.filter(pk=self.pk).values("generation_id", "position").first()
+            if previous is not None and (
+                previous["generation_id"] != self.generation_id or previous["position"] != self.position
+            ):
+                raise ValueError("Slide identity and order are immutable.")
+        return super().save(*args, **kwargs)
+
+
+class SlideRevision(ImmutableGenerationRecord):
+    slide = models.ForeignKey(SlideDraft, on_delete=models.PROTECT, related_name="revisions")
+    version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    title = models.CharField(max_length=200)
+    created_by_actor_id = models.PositiveBigIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("slide", "version")
+        constraints = [
+            models.UniqueConstraint(fields=("slide", "version"), name="unique_slide_revision_version")
+        ]
+
+
+class SlideClaim(ImmutableGenerationRecord):
+    revision = models.ForeignKey(SlideRevision, on_delete=models.PROTECT, related_name="claims")
+    position = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    text = models.TextField()
+
+    class Meta:
+        ordering = ("revision", "position")
+        constraints = [
+            models.UniqueConstraint(fields=("revision", "position"), name="unique_revision_claim_position"),
+            models.CheckConstraint(condition=~Q(text=""), name="slide_claim_text_not_empty"),
+        ]
+
+
+class NarrationStatement(ImmutableGenerationRecord):
+    revision = models.ForeignKey(SlideRevision, on_delete=models.PROTECT, related_name="narration_statements")
+    position = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    text = models.TextField()
+
+    class Meta:
+        ordering = ("revision", "position")
+        constraints = [
+            models.UniqueConstraint(fields=("revision", "position"), name="unique_revision_narration_position"),
+            models.CheckConstraint(condition=~Q(text=""), name="narration_statement_text_not_empty"),
+        ]
+
+
+class SourceReference(ImmutableGenerationRecord):
+    claim = models.ForeignKey(SlideClaim, on_delete=models.PROTECT, null=True, blank=True, related_name="references")
+    narration_statement = models.ForeignKey(
+        NarrationStatement, on_delete=models.PROTECT, null=True, blank=True, related_name="references"
+    )
+    page_snapshot = models.ForeignKey(GenerationPageSnapshot, on_delete=models.PROTECT, related_name="references")
+    start_offset = models.PositiveIntegerField()
+    end_offset = models.PositiveIntegerField()
+    supported_text_sha256 = models.CharField(max_length=64)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(Q(claim__isnull=False, narration_statement__isnull=True) | Q(claim__isnull=True, narration_statement__isnull=False)),
+                name="source_reference_exactly_one_target",
+            ),
+            models.CheckConstraint(condition=Q(end_offset__gt=models.F("start_offset")), name="source_reference_valid_offsets"),
+        ]
+        indexes = [models.Index(fields=("page_snapshot", "start_offset"), name="source_ref_page_offset_idx")]
+
+
+class CanonicalNarrationSnapshot(ImmutableGenerationRecord):
+    revision = models.OneToOneField(SlideRevision, on_delete=models.PROTECT, related_name="canonical_narration")
+    text = models.TextField()
+    text_sha256 = models.CharField(max_length=64)
+    approved_by_actor_id = models.PositiveBigIntegerField()
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("revision", "approved_at", "pk")

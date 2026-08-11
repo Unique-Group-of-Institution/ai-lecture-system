@@ -16,6 +16,11 @@ def ensure_roles() -> tuple[Group, Group]:
             "add_lecturerequest", "view_lecturerequest", "view_course", "view_chapter",
             "add_contentsource", "view_contentsource", "view_contentfile",
             "view_extractionversion", "view_extractedpage", "change_extractedpage",
+            "add_generationrequest", "view_generationrequest",
+            "view_generationsourcesnapshot", "view_generationpagesnapshot",
+            "view_slidedraft", "change_slidedraft", "view_sliderevision",
+            "view_slideclaim", "view_narrationstatement", "view_sourcereference",
+            "view_canonicalnarrationsnapshot",
         ),
     )
     administrator_permissions = Permission.objects.filter(content_type__app_label="lectures") | (

@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T021 is DONE after product-owner approval of PR #4
+**Overall status:** T022 source-grounded slide and narration foundation approved; PR #5 finalization in progress
 
 ## Completed
 
@@ -27,10 +27,11 @@
 - T010 was approved by the product owner through PR #2 and moved to DONE by a human.
 - T020 was approved by the product owner through PR #3 and moved from REVIEW to DONE by a human.
 - T021 was approved by the product owner through PR #4 and moved from REVIEW to DONE by a human.
+- T022 was approved by the product owner through PR #5 after an independent APPROVE review and moved from REVIEW to DONE by a human.
 
 ## Latest completed task
 
-- T021 is DONE under `codex` on `task/t021-content-library` after the product owner approved PR #4 and performed the `REVIEW` to `DONE` transition. The approved local content library and source-page extraction implementation was verified with synthetic fixtures only; no real teacher or institutional content was processed or committed. The product owner accepted SQLite's sequential, single-worker Phase-1 limitation. PostgreSQL plus a controlled background queue is required before concurrent production use.
+- T022 is DONE under `codex` on `task/t022-source-grounded-slides` after an independent review returned APPROVE and the product owner approved PR #5 and performed the `REVIEW` to `DONE` transition. The deterministic, local-only extractive Phase-1 generator and its documented limitations are accepted. CRM integration and stronger AI-provider evaluation remain deferred and require separate authorization.
 
 ## Approved Phase-1 workflow
 
@@ -57,7 +58,6 @@
 
 ## Proposed backlog — not yet implemented
 
-- T022: source-grounded slide and per-slide narration-script generation.
 - T030: workflow/job queue and approval states.
 - T040: teacher slide-by-slide recording portal.
 - T050: admin video assembly, AI-assisted edit, teacher review and export.
@@ -103,3 +103,14 @@
 ## Current quality rule
 
 Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.
+
+## T022 implementation
+
+- A provider-independent generation domain receives only an internal actor ID, permitted course/source IDs and explicit capabilities; the current Django adapter enforces T010 roles and T021 visibility. CRM/SSO integration remains deferred.
+- `deterministic-extractive-v1` runs fully locally with no new dependency or network call. It deterministically selects bounded exact spans from fully reviewed synthetic source pages and fails closed on unsupported output.
+- Immutable generation/source/page snapshots retain extraction version, source/page hashes and reviewed UTF-8 text. Every slide claim and narration statement stores an exact page-snapshot character range and hash.
+- Ordered slide revisions are append-only. Only the requesting course teacher can revise or approve; edits invalidate the current approval, administrators cannot substitute approval, and captions are returned only from the current approved canonical narration snapshot.
+- Migration `0005` adds PostgreSQL-portable generation, snapshot, slide, revision, claim, narration, reference and canonical-caption records with protected relationships, constraints and indexes. Minimal JSON APIs and read-only Django admin inspection are included; no production frontend, queue, recording, render, voice or upload work was added.
+- Synthetic-only verification passed: 16 focused T022 tests, all 70 Django tests and all 19 non-Django tests; workspace validation; Django system and migration-consistency checks; clean disposable SQLite migration; scoped Python compilation; pip dependency check; task/dashboard validation; privacy/ignore scans; and diff checks. Windows sandbox-created inaccessible temp directories were left untouched; successful temp-dependent runs used unique ignored workspace-local roots without ACL changes.
+- T022 is DONE after an independent APPROVE review and the product owner's exact human `REVIEW` to `DONE` transition. The deterministic extractive Phase-1 generator limitation is accepted; CRM integration and stronger AI-provider evaluation remain deferred.
+- Implementation commit `0c96607` and reviewed evidence head `99be0fc` were pushed through the active local hook. PR #5 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/5`. Complete implementation CI passed on reviewed head `99be0fc` in Actions run `31470738204`, job `93713275733`; a fresh run is required on the approval/status finalization commit before merge.

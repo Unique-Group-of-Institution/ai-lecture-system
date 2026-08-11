@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from .models import Chapter, ContentFile, ContentSource, ExtractedPage, ExtractionVersion, Course, LectureRequest
+from .models import (
+    CanonicalNarrationSnapshot, Chapter, ContentFile, ContentSource, Course, ExtractedPage,
+    ExtractionVersion, GenerationPageSnapshot, GenerationRequest, GenerationSourceSnapshot,
+    LectureRequest, NarrationStatement, SlideClaim, SlideDraft, SlideRevision, SourceReference,
+)
 
 
 @admin.register(Course)
@@ -85,3 +89,32 @@ class ExtractedPageAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+class ReadOnlyGenerationAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(GenerationRequest)
+class GenerationRequestAdmin(ReadOnlyGenerationAdmin):
+    list_display = ("id", "chapter", "requested_by", "status", "generator_key", "created_at")
+    list_filter = ("status", "generator_key")
+
+
+@admin.register(SlideDraft)
+class SlideDraftAdmin(ReadOnlyGenerationAdmin):
+    list_display = ("id", "generation", "position", "current_version", "approved_revision")
+
+
+for generation_model in (
+    GenerationSourceSnapshot, GenerationPageSnapshot, SlideRevision, SlideClaim,
+    NarrationStatement, SourceReference, CanonicalNarrationSnapshot,
+):
+    admin.site.register(generation_model, ReadOnlyGenerationAdmin)
