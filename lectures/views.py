@@ -16,7 +16,7 @@ from .models import (
 )
 from .workflow import (
     WorkflowConflict, cancel_job, claim_job, complete_job, create_workflow, fail_job,
-    jobs_visible_to, submit_job, system_worker_context, transition_workflow,
+    jobs_visible_to, submit_job, transition_workflow,
     workflow_actor_for_user, workflows_visible_to,
 )
 
@@ -128,14 +128,10 @@ def _job_payload(job):
     }
 
 
-def _system_actor_from_admin(request, worker_identity):
-    admin_actor = workflow_actor_for_user(request.user)
-    if admin_actor.actor_type != "ADMINISTRATOR":
-        raise PermissionDenied("System-worker operations require an administrator adapter.")
-    return system_worker_context(
-        identity_reference=worker_identity,
-        permitted_course_ids=admin_actor.permitted_course_ids,
-    )
+def _trusted_http_worker_actor():
+    """Fail closed until a server-authenticated worker adapter is separately configured."""
+
+    raise PermissionDenied("Trusted HTTP worker authentication is not configured.")
 
 
 def _revision_payload(revision):
@@ -346,11 +342,9 @@ def workflow_transition(request, workflow_id):
         _exact_fields(
             body,
             {"target_state", "reason_code", "expected_version", "idempotency_key"},
-            {"job_id", "artifact_reference", "worker_identity_reference"},
+            {"job_id", "artifact_reference"},
         )
         actor = workflow_actor_for_user(request.user)
-        if "worker_identity_reference" in body:
-            actor = _system_actor_from_admin(request, body["worker_identity_reference"])
         workflow = transition_workflow(
             actor=actor,
             workflow_id=workflow_id,
@@ -428,9 +422,9 @@ def workflow_jobs(request):
 def workflow_job_claim(request):
     try:
         body = _workflow_body(request)
-        _exact_fields(body, {"worker_identity_reference", "lease_seconds"}, {"job_types"})
+        _exact_fields(body, {"lease_seconds"}, {"job_types"})
         job = claim_job(
-            actor=_system_actor_from_admin(request, body["worker_identity_reference"]),
+            actor=_trusted_http_worker_actor(),
             lease_seconds=body["lease_seconds"],
             job_types=body.get("job_types"),
         )
@@ -444,9 +438,9 @@ def workflow_job_claim(request):
 def workflow_job_complete(request, job_id):
     try:
         body = _workflow_body(request)
-        _exact_fields(body, {"worker_identity_reference", "completion_idempotency_key", "result"})
+        _exact_fields(body, {"completion_idempotency_key", "result"})
         job = complete_job(
-            actor=_system_actor_from_admin(request, body["worker_identity_reference"]),
+            actor=_trusted_http_worker_actor(),
             job_id=job_id,
             completion_idempotency_key=body["completion_idempotency_key"],
             result=body["result"],
@@ -463,11 +457,11 @@ def workflow_job_fail(request, job_id):
         body = _workflow_body(request)
         _exact_fields(
             body,
-            {"worker_identity_reference", "reason_code", "message", "retryable"},
+            {"reason_code", "message", "retryable"},
             {"retry_delay_seconds"},
         )
         job = fail_job(
-            actor=_system_actor_from_admin(request, body["worker_identity_reference"]),
+            actor=_trusted_http_worker_actor(),
             job_id=job_id,
             reason_code=body["reason_code"],
             message=body["message"],

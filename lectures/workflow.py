@@ -424,12 +424,14 @@ def _validate_transition_actor(actor: WorkflowActorContext, target: str) -> None
         raise PermissionDenied("This transition requires a system worker.")
 
 
-def _validate_transition_job(workflow: LectureWorkflow, target: str, job_id) -> WorkflowJob | None:
+def _validate_transition_job(
+    workflow: LectureWorkflow, target: str, job_id
+) -> tuple[WorkflowJob | None, str]:
     required_type = JOB_REQUIRED_BY_TARGET.get(target)
     if required_type is None:
         if job_id is not None:
             raise ValidationError("This transition does not accept a job reference.")
-        return None
+        return None, ""
     job_id = _positive_int(job_id, "job identifier")
     job = WorkflowJob.objects.select_for_update().filter(pk=job_id, workflow=workflow).first()
     if job is None or job.job_type != required_type or job.status != WorkflowJob.Status.SUCCEEDED:
@@ -437,7 +439,9 @@ def _validate_transition_job(workflow: LectureWorkflow, target: str, job_id) -> 
     if job.workflow_version != workflow.version:
         raise ValidationError("The successful workflow job belongs to a stale state version.")
     validate_job_payload(job.job_type, job.payload, workflow)
-    return job
+    clean_result, _ = validate_job_result(job, job.result)
+    artifact_key = RESULT_ARTIFACT_KEY.get(job.job_type)
+    return job, clean_result[artifact_key] if artifact_key else ""
 
 
 @transaction.atomic
@@ -477,7 +481,9 @@ def transition_workflow(
     if reason_code not in ({allowed_reason} if isinstance(allowed_reason, str) else allowed_reason):
         raise ValidationError("Invalid workflow reason code.")
     _validate_transition_actor(actor, target_state)
-    _validate_transition_job(workflow, target_state, job_id)
+    transition_job, authorized_artifact_reference = _validate_transition_job(
+        workflow, target_state, job_id
+    )
 
     if workflow.state not in {
         LectureWorkflow.State.SOURCE_CONTENT_READY,
@@ -503,6 +509,10 @@ def transition_workflow(
         LectureWorkflow.State.EXPORT_READY,
     }:
         raise ValidationError("This transition does not accept an artifact reference.")
+    if transition_job is not None and authorized_artifact_reference:
+        if artifact_reference != authorized_artifact_reference:
+            raise ValidationError("Artifact reference does not match the completed workflow job.")
+        artifact_reference = authorized_artifact_reference
 
     previous = workflow.state
     workflow.state = target_state
@@ -810,12 +820,40 @@ def _validate_running_lease(job: WorkflowJob, actor: WorkflowActorContext, now) 
         raise PermissionDenied("The active job lease is unavailable to this worker.")
 
 
-def _validate_result(result) -> tuple[dict, str]:
+RESULT_ARTIFACT_KEY = {
+    WorkflowJob.JobType.RECORDING_READINESS: "recording_reference",
+    WorkflowJob.JobType.DRAFT_VIDEO_READINESS: "draft_video_reference",
+    WorkflowJob.JobType.EXPORT_READINESS: "export_reference",
+}
+
+
+def validate_job_result(job: WorkflowJob, result) -> tuple[dict, str]:
+    """Validate a bounded completion result against its locked job context."""
+
     result, digest = _bounded_json(result, "job result")
-    if set(result) - {"artifact_reference"}:
-        raise ValidationError("Invalid job result.")
-    if "artifact_reference" in result:
-        _safe_reference(result["artifact_reference"], "artifact reference")
+    common_fields = {"job_id", "job_type", "workflow_id", "workflow_version"}
+    if job.job_type == WorkflowJob.JobType.SLIDE_NARRATION_DRAFT:
+        if set(result) != common_fields | {"generation_id"}:
+            raise ValidationError("Invalid job result.")
+        generation_id = _positive_int(result["generation_id"], "generation identifier")
+        if generation_id != job.workflow.generation_id:
+            raise ValidationError("Job result does not match its workflow context.")
+    else:
+        artifact_key = RESULT_ARTIFACT_KEY.get(job.job_type)
+        if artifact_key is None or set(result) != common_fields | {artifact_key}:
+            raise ValidationError("Invalid job result.")
+        _safe_reference(result[artifact_key], "artifact reference")
+    job_id = _positive_int(result.get("job_id"), "job identifier")
+    if result.get("job_type") != job.job_type:
+        raise ValidationError("Job result does not match its workflow context.")
+    workflow_id = _positive_int(result.get("workflow_id"), "workflow identifier")
+    workflow_version = _positive_int(result.get("workflow_version"), "workflow version")
+    if (
+        job_id != job.pk
+        or workflow_id != job.workflow_id
+        or workflow_version != job.workflow_version
+    ):
+        raise ValidationError("Job result does not match its workflow context.")
     return result, digest
 
 
@@ -830,9 +868,10 @@ def complete_job(
 ) -> WorkflowJob:
     job_id = _positive_int(job_id, "job identifier")
     completion_idempotency_key = _safe_token(completion_idempotency_key, "completion idempotency key")
-    clean_result, _ = _validate_result(result)
     now = now or timezone.now()
-    job = WorkflowJob.objects.select_for_update().get(pk=job_id)
+    job = WorkflowJob.objects.select_for_update().select_related(
+        "workflow__generation__chapter__course"
+    ).get(pk=job_id)
     _validate_actor(actor)
     if (
         actor.actor_type != ACTOR_SYSTEM_WORKER
@@ -841,6 +880,7 @@ def complete_job(
         or job.lease_owner != actor.identity_reference
     ):
         raise PermissionDenied("Job completion is unavailable to this worker.")
+    clean_result, _ = validate_job_result(job, result)
     if job.status == WorkflowJob.Status.SUCCEEDED:
         if job.completion_idempotency_key == completion_idempotency_key and job.result == clean_result:
             return job

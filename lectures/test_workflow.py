@@ -127,7 +127,25 @@ class WorkflowQueueApprovalTests(TestCase):
             artifact_reference=reference,
         )
 
-    def submit_complete(self, workflow, job_type, payload, key):
+    def completion_result(self, job, *, artifact_reference=None):
+        result = {
+            "job_id": job.pk,
+            "job_type": job.job_type,
+            "workflow_id": job.workflow_id,
+            "workflow_version": job.workflow_version,
+        }
+        artifact_keys = {
+            WorkflowJob.JobType.RECORDING_READINESS: "recording_reference",
+            WorkflowJob.JobType.DRAFT_VIDEO_READINESS: "draft_video_reference",
+            WorkflowJob.JobType.EXPORT_READINESS: "export_reference",
+        }
+        if job.job_type == WorkflowJob.JobType.SLIDE_NARRATION_DRAFT:
+            result["generation_id"] = job.workflow.generation_id
+        else:
+            result[artifact_keys[job.job_type]] = artifact_reference or f"artifact:job-{job.pk}"
+        return result
+
+    def submit_complete(self, workflow, job_type, payload, key, *, artifact_reference=None):
         job = submit_job(
             actor=self.teacher_actor,
             workflow_id=workflow.pk,
@@ -141,8 +159,75 @@ class WorkflowQueueApprovalTests(TestCase):
             actor=self.worker,
             job_id=job.pk,
             completion_idempotency_key=f"complete:{key}",
-            result={"artifact_reference": f"result:{key}"},
+            result=self.completion_result(job, artifact_reference=artifact_reference),
         )
+
+    def complete_with_result_schema_regressions(self, job, *, artifact_reference=None):
+        claimed = claim_job(actor=self.worker, lease_seconds=60)
+        self.assertEqual(claimed.pk, job.pk)
+        valid = self.completion_result(job, artifact_reference=artifact_reference)
+        alternate_key = (
+            "recording_reference"
+            if job.job_type != WorkflowJob.JobType.RECORDING_READINESS
+            else "export_reference"
+        )
+        invalid_results = (
+            {},
+            {
+                "workflow_id": job.workflow_id,
+                "workflow_version": job.workflow_version,
+                alternate_key: "artifact:wrong-job-type",
+            },
+            {**valid, "workflow_id": job.workflow_id + 1},
+            {**valid, "workflow_version": job.workflow_version + 1},
+            {**valid, "job_id": job.pk + 1},
+            {**valid, "job_type": "OTHER_JOB_TYPE"},
+        )
+        for index, result in enumerate(invalid_results):
+            with self.subTest(job_type=job.job_type, invalid_result=index), self.assertRaises(
+                ValidationError
+            ):
+                complete_job(
+                    actor=self.worker,
+                    job_id=job.pk,
+                    completion_idempotency_key=f"complete:invalid:{job.pk}:{index}",
+                    result=result,
+                )
+        return complete_job(
+            actor=self.worker,
+            job_id=job.pk,
+            completion_idempotency_key=f"complete:valid:{job.pk}",
+            result=valid,
+        )
+
+    def assert_transition_rejects_invalid_stored_results(
+        self, workflow, job, target, reason, *, reference=""
+    ):
+        valid = job.result
+        invalid_results = (
+            {},
+            {"artifact_reference": "artifact:legacy-untyped-result"},
+            {**valid, "workflow_id": job.workflow_id + 1},
+            {**valid, "workflow_version": job.workflow_version + 1},
+            {**valid, "job_id": job.pk + 1},
+            {**valid, "job_type": "OTHER_JOB_TYPE"},
+        )
+        for index, result in enumerate(invalid_results):
+            WorkflowJob.objects.filter(pk=job.pk).update(result=result)
+            job.refresh_from_db()
+            with self.subTest(job_type=job.job_type, stored_result=index), self.assertRaises(
+                ValidationError
+            ):
+                self.transition(
+                    workflow,
+                    target,
+                    reason,
+                    self.worker,
+                    job=job,
+                    reference=reference,
+                )
+        WorkflowJob.objects.filter(pk=job.pk).update(result=valid)
+        job.refresh_from_db()
 
     def reach_draft(self, workflow):
         job = self.submit_complete(
@@ -179,6 +264,7 @@ class WorkflowQueueApprovalTests(TestCase):
             WorkflowJob.JobType.RECORDING_READINESS,
             {"approved_slide_revision_ids": revisions},
             f"job:recording:{workflow.pk}",
+            artifact_reference=f"recording:synthetic-{workflow.pk}",
         )
         return self.transition(
             workflow,
@@ -186,7 +272,7 @@ class WorkflowQueueApprovalTests(TestCase):
             "RECORDING_REFERENCE_READY",
             self.worker,
             job=job,
-            reference=f"recording:synthetic-{workflow.pk}",
+            reference=job.result["recording_reference"],
         )
 
     def reach_video_ready(self, workflow, *, suffix="first"):
@@ -204,6 +290,7 @@ class WorkflowQueueApprovalTests(TestCase):
             WorkflowJob.JobType.DRAFT_VIDEO_READINESS,
             {"recording_reference": workflow.recording_reference},
             f"job:video:{workflow.pk}:{suffix}",
+            artifact_reference=f"video:synthetic-{workflow.pk}-{suffix}",
         )
         return self.transition(
             workflow,
@@ -211,7 +298,7 @@ class WorkflowQueueApprovalTests(TestCase):
             "VIDEO_REFERENCE_READY",
             self.worker,
             job=job,
-            reference=f"video:synthetic-{workflow.pk}-{suffix}",
+            reference=job.result["draft_video_reference"],
         )
 
     def test_complete_valid_state_path_requires_jobs_and_creates_audit_for_every_change(self):
@@ -235,6 +322,7 @@ class WorkflowQueueApprovalTests(TestCase):
             WorkflowJob.JobType.EXPORT_READINESS,
             {"draft_video_reference": workflow.draft_video_reference},
             "job:export:primary",
+            artifact_reference="export:synthetic-primary",
         )
         self.transition(
             workflow,
@@ -242,7 +330,7 @@ class WorkflowQueueApprovalTests(TestCase):
             "EXPORT_HANDOFF_READY",
             self.worker,
             job=job,
-            reference="export:synthetic-primary",
+            reference=job.result["export_reference"],
         )
         workflow.refresh_from_db()
         self.assertEqual(workflow.state, LectureWorkflow.State.EXPORT_READY)
@@ -251,6 +339,189 @@ class WorkflowQueueApprovalTests(TestCase):
             list(workflow.audit_events.values_list("sequence", flat=True)),
             list(range(1, workflow.version + 1)),
         )
+
+    def test_every_job_transition_requires_its_exact_validated_completion_result(self):
+        workflow = self.create(key="workflow:result-binding")
+        draft_job = submit_job(
+            actor=self.teacher_actor,
+            workflow_id=workflow.pk,
+            job_type=WorkflowJob.JobType.SLIDE_NARRATION_DRAFT,
+            payload={"generation_id": workflow.generation_id},
+            idempotency_key="job:result-binding:draft",
+        )
+        draft_job = self.complete_with_result_schema_regressions(draft_job)
+        self.assert_transition_rejects_invalid_stored_results(
+            workflow,
+            draft_job,
+            LectureWorkflow.State.SLIDE_NARRATION_DRAFT,
+            "DRAFT_AVAILABLE",
+        )
+        with self.assertRaises(ValidationError):
+            self.transition(
+                workflow,
+                LectureWorkflow.State.SLIDE_NARRATION_DRAFT,
+                "DRAFT_AVAILABLE",
+                self.worker,
+                job=draft_job,
+                reference="draft:caller-substitution",
+            )
+        self.transition(
+            workflow,
+            LectureWorkflow.State.SLIDE_NARRATION_DRAFT,
+            "DRAFT_AVAILABLE",
+            self.worker,
+            job=draft_job,
+        )
+        self.transition(
+            workflow,
+            LectureWorkflow.State.TEACHER_SLIDE_NARRATION_APPROVED,
+            "TEACHER_APPROVED_CURRENT_DRAFT",
+            self.teacher_actor,
+        )
+        self.transition(
+            workflow,
+            LectureWorkflow.State.RECORDING_PENDING,
+            "RECORDING_SCHEDULED",
+            self.worker,
+        )
+
+        workflow.refresh_from_db()
+        recording_job = submit_job(
+            actor=self.teacher_actor,
+            workflow_id=workflow.pk,
+            job_type=WorkflowJob.JobType.RECORDING_READINESS,
+            payload={
+                "approved_slide_revision_ids": list(
+                    workflow.generation.slides.order_by("pk").values_list(
+                        "approved_revision_id", flat=True
+                    )
+                )
+            },
+            idempotency_key="job:result-binding:recording",
+        )
+        recording_job = self.complete_with_result_schema_regressions(
+            recording_job, artifact_reference="recording:bound-result"
+        )
+        self.assert_transition_rejects_invalid_stored_results(
+            workflow,
+            recording_job,
+            LectureWorkflow.State.RECORDING_READY,
+            "RECORDING_REFERENCE_READY",
+            reference=recording_job.result["recording_reference"],
+        )
+        with self.assertRaises(ValidationError):
+            self.transition(
+                workflow,
+                LectureWorkflow.State.RECORDING_READY,
+                "RECORDING_REFERENCE_READY",
+                self.worker,
+                job=recording_job,
+                reference="recording:caller-substitution",
+            )
+        self.transition(
+            workflow,
+            LectureWorkflow.State.RECORDING_READY,
+            "RECORDING_REFERENCE_READY",
+            self.worker,
+            job=recording_job,
+            reference=recording_job.result["recording_reference"],
+        )
+        workflow.refresh_from_db()
+        self.assertEqual(workflow.recording_reference, recording_job.result["recording_reference"])
+
+        self.transition(
+            workflow,
+            LectureWorkflow.State.DRAFT_VIDEO_PENDING,
+            "VIDEO_DRAFT_SCHEDULED",
+            self.worker,
+        )
+        workflow.refresh_from_db()
+        video_job = submit_job(
+            actor=self.teacher_actor,
+            workflow_id=workflow.pk,
+            job_type=WorkflowJob.JobType.DRAFT_VIDEO_READINESS,
+            payload={"recording_reference": workflow.recording_reference},
+            idempotency_key="job:result-binding:video",
+        )
+        video_job = self.complete_with_result_schema_regressions(
+            video_job, artifact_reference="video:bound-result"
+        )
+        self.assert_transition_rejects_invalid_stored_results(
+            workflow,
+            video_job,
+            LectureWorkflow.State.DRAFT_VIDEO_READY,
+            "VIDEO_REFERENCE_READY",
+            reference=video_job.result["draft_video_reference"],
+        )
+        with self.assertRaises(ValidationError):
+            self.transition(
+                workflow,
+                LectureWorkflow.State.DRAFT_VIDEO_READY,
+                "VIDEO_REFERENCE_READY",
+                self.worker,
+                job=video_job,
+                reference="video:caller-substitution",
+            )
+        self.transition(
+            workflow,
+            LectureWorkflow.State.DRAFT_VIDEO_READY,
+            "VIDEO_REFERENCE_READY",
+            self.worker,
+            job=video_job,
+            reference=video_job.result["draft_video_reference"],
+        )
+        workflow.refresh_from_db()
+        self.assertEqual(workflow.draft_video_reference, video_job.result["draft_video_reference"])
+
+        self.transition(
+            workflow,
+            LectureWorkflow.State.TEACHER_VIDEO_APPROVED,
+            "TEACHER_APPROVED_VIDEO",
+            self.teacher_actor,
+        )
+        self.transition(
+            workflow,
+            LectureWorkflow.State.FINAL_ADMIN_APPROVED,
+            "ADMIN_APPROVED_FINAL",
+            self.admin_actor,
+        )
+        workflow.refresh_from_db()
+        export_job = submit_job(
+            actor=self.admin_actor,
+            workflow_id=workflow.pk,
+            job_type=WorkflowJob.JobType.EXPORT_READINESS,
+            payload={"draft_video_reference": workflow.draft_video_reference},
+            idempotency_key="job:result-binding:export",
+        )
+        export_job = self.complete_with_result_schema_regressions(
+            export_job, artifact_reference="export:bound-result"
+        )
+        self.assert_transition_rejects_invalid_stored_results(
+            workflow,
+            export_job,
+            LectureWorkflow.State.EXPORT_READY,
+            "EXPORT_HANDOFF_READY",
+            reference=export_job.result["export_reference"],
+        )
+        with self.assertRaises(ValidationError):
+            self.transition(
+                workflow,
+                LectureWorkflow.State.EXPORT_READY,
+                "EXPORT_HANDOFF_READY",
+                self.worker,
+                job=export_job,
+                reference="export:caller-substitution",
+            )
+        self.transition(
+            workflow,
+            LectureWorkflow.State.EXPORT_READY,
+            "EXPORT_HANDOFF_READY",
+            self.worker,
+            job=export_job,
+            reference=export_job.result["export_reference"],
+        )
+        workflow.refresh_from_db()
+        self.assertEqual(workflow.export_reference, export_job.result["export_reference"])
 
     def test_skipped_backward_and_duplicate_or_stale_transitions_fail_closed(self):
         workflow = self.create()
@@ -526,6 +797,7 @@ class WorkflowQueueApprovalTests(TestCase):
             WorkflowJob.JobType.DRAFT_VIDEO_READINESS,
             {"recording_reference": workflow.recording_reference},
             f"job:video:{workflow.pk}:revision-2",
+            artifact_reference=f"video:synthetic-{workflow.pk}-revision-2",
         )
         self.transition(
             workflow,
@@ -533,7 +805,7 @@ class WorkflowQueueApprovalTests(TestCase):
             "VIDEO_REFERENCE_READY",
             self.worker,
             job=job,
-            reference=f"video:synthetic-{workflow.pk}-revision-2",
+            reference=job.result["draft_video_reference"],
         )
         self.transition(
             workflow,
@@ -624,7 +896,7 @@ class WorkflowQueueApprovalTests(TestCase):
             "actor": self.worker,
             "job_id": first.pk,
             "completion_idempotency_key": "complete:idempotent",
-            "result": {"artifact_reference": "result:idempotent"},
+            "result": self.completion_result(first),
         }
         with self.assertRaises(PermissionDenied):
             complete_job(**{**complete, "actor": other_worker})
@@ -633,7 +905,11 @@ class WorkflowQueueApprovalTests(TestCase):
         with self.assertRaises(PermissionDenied):
             complete_job(**{**complete, "actor": other_worker})
         with self.assertRaises(WorkflowConflict):
-            complete_job(**{**complete, "result": {"artifact_reference": "result:different"}})
+            complete_job(**{**complete, "completion_idempotency_key": "complete:different"})
+        with self.assertRaises(ValidationError):
+            complete_job(
+                **{**complete, "result": {**complete["result"], "generation_id": self.generation.pk + 1}}
+            )
 
     def test_atomic_claim_lease_expiry_recovery_and_terminal_expiry(self):
         workflow = self.create()
@@ -805,6 +1081,40 @@ class WorkflowQueueApprovalTests(TestCase):
         )
         self.assertEqual(self.create(actor=direct, key="workflow:provider-independent").generation, self.generation)
 
+    def test_prevalidated_worker_context_enforces_capability_course_and_audit_identity(self):
+        workflow = self.create(key="workflow:trusted-worker-boundary")
+        job = submit_job(
+            actor=self.teacher_actor,
+            workflow_id=workflow.pk,
+            job_type=WorkflowJob.JobType.SLIDE_NARRATION_DRAFT,
+            payload={"generation_id": workflow.generation_id},
+            idempotency_key="job:trusted-worker-boundary",
+        )
+        capabilityless = WorkflowActorContext(
+            ACTOR_SYSTEM_WORKER,
+            "worker:capabilityless",
+            0,
+            frozenset({self.course.pk}),
+            frozenset(),
+        )
+        with self.assertRaises(PermissionDenied):
+            claim_job(actor=capabilityless, lease_seconds=60)
+        other_course = Course.objects.create(
+            code="WORKER-OTHER", title="Worker other course", teacher=self.other_teacher
+        )
+        out_of_scope = WorkflowActorContext(
+            ACTOR_SYSTEM_WORKER,
+            "worker:out-of-scope",
+            0,
+            frozenset({other_course.pk}),
+            self.worker.capabilities,
+        )
+        self.assertIsNone(claim_job(actor=out_of_scope, lease_seconds=60))
+        self.assertEqual(claim_job(actor=self.worker, lease_seconds=60).pk, job.pk)
+        job.refresh_from_db()
+        self.assertEqual(job.lease_owner, self.worker.identity_reference)
+        self.assertEqual(job.events.last().actor_identity_reference, self.worker.identity_reference)
+
     def test_minimal_apis_are_scoped_and_reject_malformed_or_unexpected_json(self):
         self.client.force_login(self.teacher)
         response = self.client.post(
@@ -847,25 +1157,91 @@ class WorkflowQueueApprovalTests(TestCase):
         self.assertEqual(submitted.status_code, 201, submitted.content)
         job_id = submitted.json()["id"]
         self.client.force_login(self.administrator)
-        claimed = self.client.post(
+        forged_claim = self.client.post(
             "/api/workflow-jobs/claim/",
             data=json.dumps({"worker_identity_reference": "worker:api", "lease_seconds": 60}),
             content_type="application/json",
         )
-        self.assertEqual(claimed.status_code, 200, claimed.content)
-        self.assertEqual(claimed.json()["job"]["id"], job_id)
-        completed = self.client.post(
+        self.assertEqual(forged_claim.status_code, 400, forged_claim.content)
+        disabled_claim = self.client.post(
+            "/api/workflow-jobs/claim/?worker_identity_reference=worker:query-forged",
+            data=json.dumps({"lease_seconds": 60}),
+            content_type="application/json",
+            HTTP_X_WORKER_IDENTITY_REFERENCE="worker:header-forged",
+        )
+        self.assertEqual(disabled_claim.status_code, 403, disabled_claim.content)
+        self.assertEqual(
+            disabled_claim.json()["error"], "Trusted HTTP worker authentication is not configured."
+        )
+        disabled_complete = self.client.post(
             f"/api/workflow-jobs/{job_id}/complete/",
             data=json.dumps(
                 {
-                    "worker_identity_reference": "worker:api",
                     "completion_idempotency_key": "api:complete",
-                    "result": {"artifact_reference": "result:api"},
+                    "result": {
+                        "job_id": job_id,
+                        "job_type": WorkflowJob.JobType.SLIDE_NARRATION_DRAFT,
+                        "workflow_id": workflow_id,
+                        "workflow_version": 1,
+                        "generation_id": self.generation.pk,
+                    },
                 }
             ),
             content_type="application/json",
         )
-        self.assertEqual(completed.status_code, 200, completed.content)
-        self.assertEqual(completed.json()["status"], WorkflowJob.Status.SUCCEEDED)
+        self.assertEqual(disabled_complete.status_code, 403, disabled_complete.content)
+        disabled_fail = self.client.post(
+            f"/api/workflow-jobs/{job_id}/fail/",
+            data=json.dumps(
+                {
+                    "reason_code": "WORKER_ERROR",
+                    "message": "Synthetic controlled failure.",
+                    "retryable": False,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(disabled_fail.status_code, 403, disabled_fail.content)
+        forged_transition = self.client.post(
+            f"/api/workflows/{workflow_id}/transition/",
+            data=json.dumps(
+                {
+                    "target_state": LectureWorkflow.State.SLIDE_NARRATION_DRAFT,
+                    "reason_code": "DRAFT_AVAILABLE",
+                    "expected_version": 1,
+                    "idempotency_key": "api:forged-transition",
+                    "job_id": job_id,
+                    "worker_identity_reference": "worker:transition-forged",
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(forged_transition.status_code, 400, forged_transition.content)
+        admin_system_transition = self.client.post(
+            f"/api/workflows/{workflow_id}/transition/",
+            data=json.dumps(
+                {
+                    "target_state": LectureWorkflow.State.SLIDE_NARRATION_DRAFT,
+                    "reason_code": "DRAFT_AVAILABLE",
+                    "expected_version": 1,
+                    "idempotency_key": "api:admin-system-transition",
+                    "job_id": job_id,
+                }
+            ),
+            content_type="application/json",
+        )
+        self.assertEqual(admin_system_transition.status_code, 403, admin_system_transition.content)
+        job = WorkflowJob.objects.get(pk=job_id)
+        self.assertEqual(job.status, WorkflowJob.Status.PENDING)
+        self.assertEqual(job.events.count(), 1)
+        cancelled = self.client.post(
+            f"/api/workflow-jobs/{job_id}/cancel/",
+            data=json.dumps({}),
+            content_type="application/json",
+        )
+        self.assertEqual(cancelled.status_code, 200, cancelled.content)
+        job.refresh_from_db()
+        self.assertEqual(job.events.last().actor_identity_reference, f"user:{self.administrator.pk}")
+        self.assertNotEqual(job.events.last().actor_identity_reference, "worker:api")
         self.client.force_login(self.other_teacher)
         self.assertEqual(self.client.get(f"/api/workflows/{workflow_id}/").status_code, 403)

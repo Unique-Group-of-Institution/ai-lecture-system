@@ -7,10 +7,14 @@ audit history. It does not record audio, render video, create exports, clone voi
 anything. T040, T050, T060 and T070 remain separate tasks. Payload text is treated only as data;
 jobs never contain executable commands, arbitrary code, credentials or filesystem paths.
 
-The domain receives a frozen `WorkflowActorContext` containing an actor type, an opaque identity
-reference, an internal actor mapping, permitted course IDs and explicit capabilities. Django group
-and user lookup occurs only in the current application adapter. CRM sessions, CRM tables and
-provider tokens are not domain dependencies; CRM integration remains deferred.
+The domain receives a frozen, prevalidated `WorkflowActorContext` containing an actor type, an
+opaque identity reference, an internal actor mapping, permitted course IDs and explicit
+capabilities. Django group and user lookup occurs only in the current teacher/administrator
+application adapter. No trusted HTTP system-worker authentication adapter exists in Phase 1, so
+HTTP claim, complete, fail and system-only transition operations fail closed. Worker identity,
+course scope and capabilities are never accepted from request JSON, headers or query parameters.
+CRM sessions, CRM tables and provider tokens are not domain dependencies; CRM integration remains
+deferred.
 
 ## State machine and gates
 
@@ -69,10 +73,28 @@ payload is hashed and bound to the exact workflow version that accepted it.
 `(workflow, job_type, idempotency_key)` is unique; the same submission returns the existing job
 only when its payload hash, workflow version and retry policy match.
 
+Successful completion results also have exact job-type-specific schemas. Every result includes the
+exact `job_id`, `job_type`, `workflow_id` and `workflow_version`, plus only the following output:
+
+| Job type | Exact completion output |
+|---|---|
+| `SLIDE_NARRATION_DRAFT` | `generation_id` matching the workflow generation |
+| `RECORDING_READINESS` | one bounded safe `recording_reference` |
+| `DRAFT_VIDEO_READINESS` | one bounded safe `draft_video_reference` |
+| `EXPORT_READINESS` | one bounded safe `export_reference` |
+
+Missing fields, unexpected fields, legacy untyped artifact results, path-like values, and results
+for another job, job type, workflow or version are rejected. A job-driven transition locks and
+revalidates the successful job, payload and completion result in the workflow transaction. For
+recording, video and export readiness, the transition-supplied artifact must exactly equal the
+typed completion reference; the value taken from the validated job result is the value persisted
+in workflow state. Caller substitution therefore cannot change the job evidence.
+
 Jobs move through `PENDING`, `RUNNING`, `SUCCEEDED`, `FAILED` or `CANCELLED`. Claiming is
 transactional, increments the bounded attempt count and assigns a bounded worker identity plus a
 30-to-3600-second lease. PostgreSQL uses row locks with `SKIP LOCKED` when supported. Completion
-requires the active unexpired lease and is idempotent for the same completion key and result.
+requires the active unexpired lease and is idempotent for the same completion key and strictly
+validated result.
 
 Retryable failure returns a job to `PENDING` only while attempts remain. Retry delay is bounded;
 reason codes are allowlisted and messages reject path/credential-like data. An expired lease is
@@ -96,14 +118,16 @@ approval.
 
 - `GET|POST /api/workflows/` inspects scoped workflows or creates one from a T022 generation.
 - `GET /api/workflows/<id>/` inspects current safe state and references.
-- `POST /api/workflows/<id>/transition/` requests a versioned permitted transition.
+- `POST /api/workflows/<id>/transition/` requests a versioned teacher or administrator transition;
+  HTTP system-only transitions fail closed until a trusted worker adapter exists.
 - `GET /api/workflows/<id>/audit/` inspects immutable transition history.
 - `GET|POST /api/workflow-jobs/` inspects scoped jobs or submits a validated job.
-- `POST /api/workflow-jobs/claim/` provides the privileged local worker claim primitive.
-- `POST /api/workflow-jobs/<id>/complete/` completes an actively leased job idempotently.
-- `POST /api/workflow-jobs/<id>/fail/` records bounded retryable or terminal failure.
+- `POST /api/workflow-jobs/claim/`, `/complete/` and `/fail/` are reserved for a future trusted
+  server-authenticated worker adapter and currently return a controlled forbidden response.
 - `POST /api/workflow-jobs/<id>/cancel/` cancels a pending job.
 
-The current HTTP worker adapter requires an authenticated administrator before constructing a
-system-worker context. This is an administration foundation, not a processing engine or a claim
-that Django login is the only future authentication provider.
+Administrators retain scoped inspection, submission, cancellation and explicit administrator
+approval operations. They are never converted into system workers and cannot claim, complete,
+fail or perform system-only transitions. Future local worker integration must authenticate at a
+trusted server-side boundary and pass a prevalidated `WorkflowActorContext` directly to the domain;
+adding that adapter requires separate authorization.
