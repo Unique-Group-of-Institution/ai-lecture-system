@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-12T07:45:05Z",
+  "updated_at": "2026-08-13T07:51:21Z",
   "tasks": [
     {
       "id": "T001",
@@ -488,7 +488,7 @@
       "id": "T030",
       "title": "Implement workflow job queue and approval states",
       "priority": 8,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [
         "T010"
@@ -557,6 +557,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "The two authorized HIGH PR #6 review corrections are implemented and validated; T030 remains ready for independent or human review"
+        },
+        {
+          "at": "2026-08-13T07:51:21Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner approved PR #6 after targeted re-review confirmed both HIGH findings were corrected"
         }
       ]
     },

@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-12
+**Updated:** 2026-08-13
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T030 remains in REVIEW; two HIGH review corrections are validated and review publication is in progress
+**Overall status:** T030 is DONE after product-owner approval and an APPROVE targeted re-review; PR #6 approval synchronization is being finalized for merge
 
 ## Completed
 
@@ -28,10 +28,11 @@
 - T020 was approved by the product owner through PR #3 and moved from REVIEW to DONE by a human.
 - T021 was approved by the product owner through PR #4 and moved from REVIEW to DONE by a human.
 - T022 was approved by the product owner through PR #5 after an independent APPROVE review and moved from REVIEW to DONE by a human.
+- T030 was approved by the product owner through PR #6 after an APPROVE targeted re-review and moved from REVIEW to DONE by a human.
 
 ## Latest completed task
 
-- T022 is DONE under `codex` on `task/t022-source-grounded-slides` after an independent review returned APPROVE and the product owner approved PR #5 and performed the `REVIEW` to `DONE` transition. The deterministic, local-only extractive Phase-1 generator and its documented limitations are accepted. CRM integration and stronger AI-provider evaluation remain deferred and require separate authorization.
+- T030 is DONE under `codex` on `task/t030-workflow-queue-approvals` after the targeted re-review returned APPROVE and the product owner approved PR #6 and performed the exact human `REVIEW` to `DONE` transition. The trusted HTTP worker adapter remains intentionally unconfigured and worker HTTP operations fail closed; the internal prevalidated `WorkflowActorContext` boundary remains. SQLite remains sequential/single-worker, while PostgreSQL plus controlled trusted workers is required for concurrent production. CRM, recording UI, actual rendering, voice cloning, export processing and YouTube upload remain deferred.
 
 ## Approved Phase-1 workflow
 
@@ -125,4 +126,4 @@ Keep the repository private under `Unique-Group-of-Institution`. Changes must us
 - Migration `0006` adds workflows, immutable workflow audits, jobs and immutable job events with protected relationships, unique constraints, retry/attempt checks and portable indexes. Minimal scoped JSON APIs and read-only Django admin inspection cover workflow, transition and audit inspection. Administrative inspection/submission/cancellation remain available, while HTTP worker primitives are reserved and fail closed until a separately authorized trusted server-side adapter exists.
 - T040 recording UI, T050 video processing, T060 voice cloning, T070 export/upload execution, CRM integration, paid services, Redis/Celery/cloud queues and stronger AI providers were not implemented.
 - Synthetic-only HIGH-review correction verification passed: 20 focused T030 tests, all 90 Django tests and all 19 repository tests; workspace validation; Django system and migration-consistency checks; clean disposable SQLite migration; compilation; dependency, task/dashboard, privacy/ignore and diff checks. Regression coverage includes every job-driven transition's matching, missing, malformed, cross-job/type/workflow/version and substituted result cases; administrator worker-minting attempts; fail-closed HTTP system operations; prevalidated worker capability/course restrictions; and non-forgeable HTTP audit attribution. No real content, media, transcript, production database, upload, credential or private artifact was accessed.
-- Review-correction implementation commit `de1142c` was pushed through the active hook on `task/t030-workflow-queue-approvals`. Draft PR #6 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/6`. Fresh `workspace-ci` passed on exact implementation head `de1142cf6905cbd696e462894da8aca5802cecb0` in Actions run `31576450455`, job `94049547417`; the final evidence-only head requires its own fresh successful run. T030 remains REVIEW.
+- Review-correction implementation commit `de1142c` and reviewed evidence commit `47a246306d9c45c71b738a1fdaccbcb098d8261a` were pushed through the active hook on `task/t030-workflow-queue-approvals`. PR #6 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/6`. `workspace-ci` passed on the exact reviewed implementation head in Actions run `31576595399`, job `94050001606`. T030 is DONE after the product owner's exact human `REVIEW` to `DONE` transition; the approval/status finalization commit requires its own fresh successful run before merge.

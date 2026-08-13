@@ -2,7 +2,7 @@
 
 - **Task:** T030 — Implement the Phase-1 workflow job queue and approval states
 - **Owner:** codex
-- **Status:** REVIEW — implementation and complete local validation passed; independent or human review is required
+- **Status:** DONE — the targeted re-review returned APPROVE and the product owner performed the exact human `REVIEW` to `DONE` transition
 - **Branch/PR:** `task/t030-workflow-queue-approvals`; draft PR #6 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/6`
 - **Architecture:** Authentication-provider-independent, prevalidated `WorkflowActorContext` with explicit teacher, administrator and system-worker capabilities. Django currently authenticates teacher/administrator operations only; CRM/SSO sessions and tables remain deferred.
 - **State machine:** Explicit source/content-ready, slide/narration draft and teacher approval, recording pending/ready, draft-video pending/ready, teacher revision/approval, final administrator approval and export-ready states. Current-version checks, allowlisted reasons and idempotency keys reject stale, duplicate, backward or skipped transitions.
@@ -14,4 +14,4 @@
 - **Models/APIs:** Migration `0006` adds `LectureWorkflow`, `WorkflowAuditEvent`, `WorkflowJob` and `WorkflowJobEvent`. Minimal scoped workflow/transition/audit and queue submit/inspect/cancel JSON APIs remain active; worker HTTP routes are reserved but disabled; Django admin paths are read-only.
 - **Scope exclusions:** No recording UI, audio/video processing, voice clone, export generation, uploader action, CRM integration, paid dependency, Redis/Celery/cloud queue, stronger AI provider or real/private artifact access.
 - **Verification:** Synthetic-only 20 focused T030 tests, 90 complete Django tests and 19 complete repository tests passed. Workspace, system, migration drift, clean disposable migration, compilation, dependency, task/dashboard, privacy/ignore and diff checks passed. No real or private artifact was accessed.
-- **Publication:** Review-correction implementation commit `de1142c` was pushed through the active hook. Fresh `workspace-ci` passed on exact implementation head `de1142cf6905cbd696e462894da8aca5802cecb0` in run `31576450455`, job `94049547417`. The final evidence-only head must receive its own fresh successful run. Keep PR #6 draft and T030 in REVIEW; do not approve, mark ready, merge or self-complete T030.
+- **Publication:** Review-correction implementation commit `de1142c` and reviewed evidence commit `47a246306d9c45c71b738a1fdaccbcb098d8261a` were pushed through the active hook. `workspace-ci` passed on the exact reviewed implementation head in run `31576595399`, job `94050001606`. Product-owner approval and the human T030 transition are recorded; the approval/status finalization commit must receive a fresh successful run before PR #6 is merged normally into `main`. Retain the task branch after merge.
