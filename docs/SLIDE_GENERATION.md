@@ -45,6 +45,11 @@ Only the teacher who owns the selected course and generation request may revise 
 revision clears the slide's prior approval and recalculates the request state. Administrators have
 read-only inspection in Django admin and cannot substitute their approval for the teacher's.
 
+When a T030 `LectureWorkflow` exists, the same revision transaction also invalidates its stored
+slide-approval fingerprint, clears downstream readiness/approval references, returns the workflow
+to `SLIDE_NARRATION_DRAFT`, and writes an immutable audit event. Recording and later transitions
+therefore cannot rely on a stale T022 approval.
+
 Approval revalidates every claim and narration reference, points the slide at the approved current
 revision, and writes an immutable `CanonicalNarrationSnapshot` with approver, time and content hash.
 Older canonical snapshots remain as history after a later edit. The caption API returns text only
@@ -89,4 +94,6 @@ separate privacy and provider authorization before any content leaves the local 
 
 This task does not include a production frontend, background queue, recording portal, PPTX/video
 rendering, voice cloning, CRM integration or upload. SQLite remains suitable for sequential Phase-1
-use. PostgreSQL and a controlled queue are required before concurrent multi-teacher processing.
+use. T030 now supplies the separately documented queue/state foundation in
+`docs/WORKFLOW_QUEUE.md`; PostgreSQL and controlled workers remain required before concurrent
+multi-teacher processing.

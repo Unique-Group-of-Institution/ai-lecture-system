@@ -4,6 +4,7 @@ from .models import (
     CanonicalNarrationSnapshot, Chapter, ContentFile, ContentSource, Course, ExtractedPage,
     ExtractionVersion, GenerationPageSnapshot, GenerationRequest, GenerationSourceSnapshot,
     LectureRequest, NarrationStatement, SlideClaim, SlideDraft, SlideRevision, SourceReference,
+    LectureWorkflow, WorkflowAuditEvent, WorkflowJob, WorkflowJobEvent,
 )
 
 
@@ -118,3 +119,21 @@ for generation_model in (
     NarrationStatement, SourceReference, CanonicalNarrationSnapshot,
 ):
     admin.site.register(generation_model, ReadOnlyGenerationAdmin)
+
+
+@admin.register(LectureWorkflow)
+class LectureWorkflowAdmin(ReadOnlyGenerationAdmin):
+    list_display = ("id", "generation", "state", "version", "updated_at")
+    list_filter = ("state",)
+
+
+@admin.register(WorkflowJob)
+class WorkflowJobAdmin(ReadOnlyGenerationAdmin):
+    list_display = (
+        "id", "workflow", "workflow_version", "job_type", "status", "attempts", "max_attempts"
+    )
+    list_filter = ("job_type", "status")
+
+
+admin.site.register(WorkflowAuditEvent, ReadOnlyGenerationAdmin)
+admin.site.register(WorkflowJobEvent, ReadOnlyGenerationAdmin)

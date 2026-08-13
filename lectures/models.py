@@ -4,6 +4,13 @@ from django.db import models
 from django.db.models import Q
 
 
+WORKFLOW_ACTOR_CHOICES = (
+    ("TEACHER", "Teacher"),
+    ("ADMINISTRATOR", "Administrator"),
+    ("SYSTEM_WORKER", "System worker"),
+)
+
+
 class Course(models.Model):
     code = models.CharField(max_length=32, unique=True)
     title = models.CharField(max_length=200)
@@ -414,3 +421,213 @@ class CanonicalNarrationSnapshot(ImmutableGenerationRecord):
 
     class Meta:
         ordering = ("revision", "approved_at", "pk")
+
+
+class LectureWorkflow(models.Model):
+    class State(models.TextChoices):
+        SOURCE_CONTENT_READY = "SOURCE_CONTENT_READY", "Source and content ready"
+        SLIDE_NARRATION_DRAFT = "SLIDE_NARRATION_DRAFT", "Slide and narration draft"
+        TEACHER_SLIDE_NARRATION_APPROVED = (
+            "TEACHER_SLIDE_NARRATION_APPROVED",
+            "Teacher approved current slides and narration",
+        )
+        RECORDING_PENDING = "RECORDING_PENDING", "Recording pending"
+        RECORDING_READY = "RECORDING_READY", "Recording ready"
+        DRAFT_VIDEO_PENDING = "DRAFT_VIDEO_PENDING", "Draft video pending"
+        DRAFT_VIDEO_READY = "DRAFT_VIDEO_READY", "Draft video ready"
+        TEACHER_VIDEO_REVISION_REQUESTED = (
+            "TEACHER_VIDEO_REVISION_REQUESTED",
+            "Teacher requested video revision",
+        )
+        TEACHER_VIDEO_APPROVED = "TEACHER_VIDEO_APPROVED", "Teacher approved video"
+        FINAL_ADMIN_APPROVED = "FINAL_ADMIN_APPROVED", "Final administrator approval"
+        EXPORT_READY = "EXPORT_READY", "Export-ready handoff"
+
+    generation = models.OneToOneField(
+        GenerationRequest,
+        on_delete=models.PROTECT,
+        related_name="lecture_workflow",
+    )
+    state = models.CharField(max_length=48, choices=State, default=State.SOURCE_CONTENT_READY)
+    version = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    slide_approval_fingerprint = models.CharField(max_length=64, blank=True)
+    recording_reference = models.CharField(max_length=128, blank=True)
+    draft_video_reference = models.CharField(max_length=128, blank=True)
+    export_reference = models.CharField(max_length=128, blank=True)
+    teacher_video_approved_by = models.CharField(max_length=128, blank=True)
+    teacher_video_approved_at = models.DateTimeField(null=True, blank=True)
+    final_admin_approved_by = models.CharField(max_length=128, blank=True)
+    final_admin_approved_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at", "pk")
+        constraints = [
+            models.CheckConstraint(condition=Q(version__gte=1), name="workflow_version_positive")
+        ]
+        indexes = [
+            models.Index(fields=("state", "updated_at"), name="workflow_state_time_idx"),
+            models.Index(fields=("generation", "version"), name="workflow_generation_ver_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and LectureWorkflow.objects.filter(pk=self.pk).exists() and not getattr(
+            self, "_domain_service_write", False
+        ):
+            raise ValueError("Workflow state may change only through the workflow domain service.")
+        return super().save(*args, **kwargs)
+
+
+class ImmutableWorkflowRecord(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError("Workflow audit records are immutable.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Workflow audit records cannot be deleted.")
+
+
+class WorkflowAuditEvent(ImmutableWorkflowRecord):
+    workflow = models.ForeignKey(
+        LectureWorkflow,
+        on_delete=models.PROTECT,
+        related_name="audit_events",
+    )
+    sequence = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    actor_type = models.CharField(max_length=24, choices=WORKFLOW_ACTOR_CHOICES)
+    actor_identity_reference = models.CharField(max_length=128)
+    previous_state = models.CharField(max_length=48, choices=LectureWorkflow.State, blank=True)
+    new_state = models.CharField(max_length=48, choices=LectureWorkflow.State)
+    reason_code = models.CharField(max_length=64)
+    idempotency_key = models.CharField(max_length=128)
+    occurred_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("workflow", "sequence")
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(sequence__gte=1), name="workflow_audit_sequence_positive"
+            ),
+            models.UniqueConstraint(
+                fields=("workflow", "sequence"),
+                name="unique_workflow_audit_sequence",
+            ),
+            models.UniqueConstraint(
+                fields=("workflow", "idempotency_key"),
+                name="unique_workflow_transition_key",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("workflow", "occurred_at"), name="workflow_audit_time_idx")
+        ]
+
+
+class WorkflowJob(models.Model):
+    class JobType(models.TextChoices):
+        SLIDE_NARRATION_DRAFT = "SLIDE_NARRATION_DRAFT", "Slide and narration draft coordination"
+        RECORDING_READINESS = "RECORDING_READINESS", "Recording readiness coordination"
+        DRAFT_VIDEO_READINESS = "DRAFT_VIDEO_READINESS", "Draft-video readiness coordination"
+        EXPORT_READINESS = "EXPORT_READINESS", "Export handoff readiness coordination"
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        RUNNING = "RUNNING", "Running"
+        SUCCEEDED = "SUCCEEDED", "Succeeded"
+        FAILED = "FAILED", "Terminal failure"
+        CANCELLED = "CANCELLED", "Cancelled"
+
+    workflow = models.ForeignKey(
+        LectureWorkflow,
+        on_delete=models.PROTECT,
+        related_name="jobs",
+    )
+    job_type = models.CharField(max_length=32, choices=JobType)
+    payload = models.JSONField(default=dict)
+    payload_sha256 = models.CharField(max_length=64)
+    idempotency_key = models.CharField(max_length=128)
+    workflow_version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    status = models.CharField(max_length=16, choices=Status, default=Status.PENDING)
+    attempts = models.PositiveIntegerField(default=0)
+    max_attempts = models.PositiveIntegerField(default=3, validators=[MinValueValidator(1)])
+    available_at = models.DateTimeField()
+    leased_until = models.DateTimeField(null=True, blank=True)
+    lease_owner = models.CharField(max_length=128, blank=True)
+    completion_idempotency_key = models.CharField(max_length=128, blank=True)
+    result = models.JSONField(default=dict, blank=True)
+    failure_reason_code = models.CharField(max_length=64, blank=True)
+    failure_message = models.CharField(max_length=300, blank=True)
+    created_by_actor_type = models.CharField(max_length=24, choices=WORKFLOW_ACTOR_CHOICES)
+    created_by_identity_reference = models.CharField(max_length=128)
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("created_at", "pk")
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(workflow_version__gte=1), name="workflow_job_version_positive"
+            ),
+            models.UniqueConstraint(
+                fields=("workflow", "job_type", "idempotency_key"),
+                name="unique_workflow_job_key",
+            ),
+            models.CheckConstraint(
+                condition=Q(max_attempts__gte=1) & Q(max_attempts__lte=5),
+                name="workflow_job_retry_bounds",
+            ),
+            models.CheckConstraint(
+                condition=Q(attempts__gte=0) & Q(attempts__lte=models.F("max_attempts")),
+                name="workflow_job_attempt_bounds",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("status", "available_at", "created_at"),
+                name="workflow_job_claim_idx",
+            ),
+            models.Index(fields=("leased_until", "status"), name="workflow_job_lease_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and WorkflowJob.objects.filter(pk=self.pk).exists() and not getattr(
+            self, "_domain_service_write", False
+        ):
+            raise ValueError("Workflow jobs may change only through the queue domain service.")
+        return super().save(*args, **kwargs)
+
+
+class WorkflowJobEvent(ImmutableWorkflowRecord):
+    job = models.ForeignKey(
+        WorkflowJob,
+        on_delete=models.PROTECT,
+        related_name="events",
+    )
+    sequence = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    actor_type = models.CharField(max_length=24, choices=WORKFLOW_ACTOR_CHOICES)
+    actor_identity_reference = models.CharField(max_length=128)
+    previous_status = models.CharField(max_length=16, choices=WorkflowJob.Status, blank=True)
+    new_status = models.CharField(max_length=16, choices=WorkflowJob.Status)
+    reason_code = models.CharField(max_length=64)
+    occurred_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("job", "sequence")
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(sequence__gte=1), name="workflow_job_event_sequence_positive"
+            ),
+            models.UniqueConstraint(
+                fields=("job", "sequence"),
+                name="unique_workflow_job_event_sequence",
+            )
+        ]
+        indexes = [
+            models.Index(fields=("job", "occurred_at"), name="workflow_job_event_time_idx")
+        ]

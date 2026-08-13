@@ -11,7 +11,14 @@ from django.views.decorators.http import require_http_methods
 
 from .content import register_upload, sources_visible_to
 from .generation import actor_context_for_user, approve_slide, caption_for_slide, create_generation, revise_slide
-from .models import Chapter, ContentSource, GenerationRequest, SlideDraft
+from .models import (
+    Chapter, ContentSource, GenerationRequest, LectureWorkflow, SlideDraft, WorkflowJob,
+)
+from .workflow import (
+    WorkflowConflict, cancel_job, claim_job, complete_job, create_workflow, fail_job,
+    jobs_visible_to, submit_job, transition_workflow,
+    workflow_actor_for_user, workflows_visible_to,
+)
 
 
 def _safe_json(payload, *, status=200):
@@ -33,6 +40,98 @@ def _body(request):
         return value
     except (ValueError, TypeError, json.JSONDecodeError) as exc:
         raise ValidationError("Invalid bounded JSON request.") from exc
+
+
+def _workflow_body(request):
+    try:
+        if int(request.headers.get("Content-Length", "0") or 0) > settings.WORKFLOW_MAX_REQUEST_BYTES:
+            raise ValueError
+        raw = request.body
+        if len(raw) > settings.WORKFLOW_MAX_REQUEST_BYTES:
+            raise ValueError
+        value = json.loads(raw or "{}")
+        if not isinstance(value, dict):
+            raise ValueError
+        return value
+    except (ValueError, TypeError, json.JSONDecodeError) as exc:
+        raise ValidationError("Invalid bounded JSON request.") from exc
+
+
+def _validation_message(exc):
+    if isinstance(exc, ValidationError):
+        return exc.messages[0] if exc.messages else "Invalid workflow request."
+    return "Workflow record is unavailable."
+
+
+def _workflow_error(exc):
+    if isinstance(exc, PermissionDenied):
+        return _safe_json({"error": str(exc)}, status=403)
+    if isinstance(exc, WorkflowConflict):
+        return _safe_json({"error": _validation_message(exc)}, status=409)
+    if isinstance(exc, ValidationError):
+        return _safe_json({"error": _validation_message(exc)}, status=400)
+    return _safe_json({"error": "Workflow record is unavailable."}, status=404)
+
+
+def _exact_fields(body, required, optional=()):
+    if not isinstance(body, dict) or not set(required).issubset(body) or set(body) - set(required) - set(optional):
+        raise ValidationError("Unexpected or missing request fields.")
+
+
+def _workflow_payload(workflow):
+    return {
+        "id": workflow.pk,
+        "generation_id": workflow.generation_id,
+        "course_id": workflow.generation.chapter.course_id,
+        "state": workflow.state,
+        "version": workflow.version,
+        "recording_reference": workflow.recording_reference,
+        "draft_video_reference": workflow.draft_video_reference,
+        "export_reference": workflow.export_reference,
+        "teacher_video_approved": bool(workflow.teacher_video_approved_at),
+        "final_admin_approved": bool(workflow.final_admin_approved_at),
+        "created_at": workflow.created_at.isoformat(),
+        "updated_at": workflow.updated_at.isoformat(),
+    }
+
+
+def _job_payload(job):
+    return {
+        "id": job.pk,
+        "workflow_id": job.workflow_id,
+        "job_type": job.job_type,
+        "workflow_version": job.workflow_version,
+        "payload": job.payload,
+        "status": job.status,
+        "attempts": job.attempts,
+        "max_attempts": job.max_attempts,
+        "available_at": job.available_at.isoformat(),
+        "leased_until": job.leased_until.isoformat() if job.leased_until else None,
+        "failure_reason_code": job.failure_reason_code,
+        "failure_message": job.failure_message,
+        "result": job.result,
+        "created_at": job.created_at.isoformat(),
+        "started_at": job.started_at.isoformat() if job.started_at else None,
+        "finished_at": job.finished_at.isoformat() if job.finished_at else None,
+        "events": [
+            {
+                "sequence": event.sequence,
+                "actor_type": event.actor_type,
+                "actor_identity_reference": event.actor_identity_reference,
+                "previous_status": event.previous_status,
+                "new_status": event.new_status,
+                "reason_code": event.reason_code,
+                "occurred_at": event.occurred_at.isoformat(),
+            }
+            for event in job.events.all()
+        ],
+    }
+
+
+def _trusted_http_worker_actor():
+    """Fail closed until a server-authenticated worker adapter is separately configured."""
+
+    raise PermissionDenied("Trusted HTTP worker authentication is not configured.")
 
 
 def _revision_payload(revision):
@@ -201,3 +300,186 @@ def slide_caption(request, slide_id):
         return _safe_json({"error": str(exc)}, status=403)
     except SlideDraft.DoesNotExist:
         return _safe_json({"error": "Slide is unavailable."}, status=403)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def workflows(request):
+    actor = workflow_actor_for_user(request.user)
+    if request.method == "GET":
+        rows = workflows_visible_to(actor).select_related("generation__chapter__course")
+        return _safe_json({"workflows": [_workflow_payload(row) for row in rows]})
+    try:
+        body = _workflow_body(request)
+        _exact_fields(body, {"generation_id", "idempotency_key"})
+        workflow = create_workflow(
+            actor=actor,
+            generation_id=body["generation_id"],
+            idempotency_key=body["idempotency_key"],
+        )
+        workflow = LectureWorkflow.objects.select_related("generation__chapter__course").get(pk=workflow.pk)
+        return _safe_json(_workflow_payload(workflow), status=201)
+    except (PermissionDenied, ValidationError, GenerationRequest.DoesNotExist) as exc:
+        return _workflow_error(exc)
+
+
+@login_required
+@require_http_methods(["GET"])
+def workflow_detail(request, workflow_id):
+    workflow = workflows_visible_to(workflow_actor_for_user(request.user)).select_related(
+        "generation__chapter__course"
+    ).filter(pk=workflow_id).first()
+    if workflow is None:
+        return _safe_json({"error": "Workflow record is unavailable."}, status=403)
+    return _safe_json(_workflow_payload(workflow))
+
+
+@login_required
+@require_http_methods(["POST"])
+def workflow_transition(request, workflow_id):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(
+            body,
+            {"target_state", "reason_code", "expected_version", "idempotency_key"},
+            {"job_id", "artifact_reference"},
+        )
+        actor = workflow_actor_for_user(request.user)
+        workflow = transition_workflow(
+            actor=actor,
+            workflow_id=workflow_id,
+            target_state=body["target_state"],
+            reason_code=body["reason_code"],
+            expected_version=body["expected_version"],
+            idempotency_key=body["idempotency_key"],
+            job_id=body.get("job_id"),
+            artifact_reference=body.get("artifact_reference", ""),
+        )
+        workflow = LectureWorkflow.objects.select_related("generation__chapter__course").get(pk=workflow.pk)
+        return _safe_json(_workflow_payload(workflow))
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist, WorkflowJob.DoesNotExist) as exc:
+        return _workflow_error(exc)
+
+
+@login_required
+@require_http_methods(["GET"])
+def workflow_audit(request, workflow_id):
+    workflow = workflows_visible_to(workflow_actor_for_user(request.user)).filter(pk=workflow_id).first()
+    if workflow is None:
+        return _safe_json({"error": "Workflow record is unavailable."}, status=403)
+    return _safe_json(
+        {
+            "events": [
+                {
+                    "sequence": event.sequence,
+                    "actor_type": event.actor_type,
+                    "actor_identity_reference": event.actor_identity_reference,
+                    "previous_state": event.previous_state,
+                    "new_state": event.new_state,
+                    "reason_code": event.reason_code,
+                    "occurred_at": event.occurred_at.isoformat(),
+                }
+                for event in workflow.audit_events.all()
+            ]
+        }
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def workflow_jobs(request):
+    actor = workflow_actor_for_user(request.user)
+    if request.method == "GET":
+        rows = jobs_visible_to(actor)
+        workflow_id = request.GET.get("workflow_id")
+        if workflow_id:
+            if not workflow_id.isdecimal() or int(workflow_id) <= 0:
+                return _safe_json({"error": "Invalid workflow identifier."}, status=400)
+            rows = rows.filter(workflow_id=int(workflow_id))
+        return _safe_json({"jobs": [_job_payload(row) for row in rows]})
+    try:
+        body = _workflow_body(request)
+        _exact_fields(
+            body,
+            {"workflow_id", "job_type", "payload", "idempotency_key"},
+            {"max_attempts"},
+        )
+        job = submit_job(
+            actor=actor,
+            workflow_id=body["workflow_id"],
+            job_type=body["job_type"],
+            payload=body["payload"],
+            idempotency_key=body["idempotency_key"],
+            max_attempts=body.get("max_attempts", 3),
+        )
+        return _safe_json(_job_payload(job), status=201)
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _workflow_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def workflow_job_claim(request):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(body, {"lease_seconds"}, {"job_types"})
+        job = claim_job(
+            actor=_trusted_http_worker_actor(),
+            lease_seconds=body["lease_seconds"],
+            job_types=body.get("job_types"),
+        )
+        return _safe_json({"job": _job_payload(job) if job else None})
+    except (PermissionDenied, ValidationError) as exc:
+        return _workflow_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def workflow_job_complete(request, job_id):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(body, {"completion_idempotency_key", "result"})
+        job = complete_job(
+            actor=_trusted_http_worker_actor(),
+            job_id=job_id,
+            completion_idempotency_key=body["completion_idempotency_key"],
+            result=body["result"],
+        )
+        return _safe_json(_job_payload(job))
+    except (PermissionDenied, ValidationError, WorkflowJob.DoesNotExist) as exc:
+        return _workflow_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def workflow_job_fail(request, job_id):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(
+            body,
+            {"reason_code", "message", "retryable"},
+            {"retry_delay_seconds"},
+        )
+        job = fail_job(
+            actor=_trusted_http_worker_actor(),
+            job_id=job_id,
+            reason_code=body["reason_code"],
+            message=body["message"],
+            retryable=body["retryable"],
+            retry_delay_seconds=body.get("retry_delay_seconds", 0),
+        )
+        return _safe_json(_job_payload(job))
+    except (PermissionDenied, ValidationError, WorkflowJob.DoesNotExist) as exc:
+        return _workflow_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def workflow_job_cancel(request, job_id):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(body, set())
+        job = cancel_job(actor=workflow_actor_for_user(request.user), job_id=job_id)
+        return _safe_json(_job_payload(job))
+    except (PermissionDenied, ValidationError, WorkflowJob.DoesNotExist) as exc:
+        return _workflow_error(exc)

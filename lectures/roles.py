@@ -21,6 +21,8 @@ def ensure_roles() -> tuple[Group, Group]:
             "view_slidedraft", "change_slidedraft", "view_sliderevision",
             "view_slideclaim", "view_narrationstatement", "view_sourcereference",
             "view_canonicalnarrationsnapshot",
+            "view_lectureworkflow", "view_workflowauditevent",
+            "view_workflowjob", "view_workflowjobevent",
         ),
     )
     administrator_permissions = Permission.objects.filter(content_type__app_label="lectures") | (

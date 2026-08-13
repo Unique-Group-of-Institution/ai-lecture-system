@@ -113,3 +113,8 @@ GENERATION_MAX_PAGE_CHARACTERS = int(os.environ.get("AI_LECTURE_GENERATION_MAX_P
 GENERATION_MAX_PAGE_TEXT_BYTES = int(os.environ.get("AI_LECTURE_GENERATION_MAX_PAGE_BYTES", 200_000))
 GENERATION_MAX_CLAIMS = int(os.environ.get("AI_LECTURE_GENERATION_MAX_CLAIMS", 120))
 GENERATION_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_GENERATION_MAX_REQUEST_BYTES", 256_000))
+
+# T030 stores only bounded identifiers and coordination metadata. SQLite is an
+# explicitly sequential Phase-1 queue; controlled concurrent workers require PostgreSQL.
+WORKFLOW_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_WORKFLOW_MAX_REQUEST_BYTES", 64_000))
+WORKFLOW_SQLITE_SINGLE_WORKER = True
