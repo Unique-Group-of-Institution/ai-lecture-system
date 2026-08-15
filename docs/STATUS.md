@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-13
+**Updated:** 2026-08-15
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T030 is DONE after product-owner approval and an APPROVE targeted re-review; PR #6 approval synchronization is being finalized for merge
+**Overall status:** T030 is merged and DONE; T040 teacher slide-by-slide recording portal is IN_PROGRESS on its dedicated task branch
 
 ## Completed
 
@@ -57,9 +57,11 @@
 - Implementation commit `835742a` was pushed on `task/t020-local-whisper-audio-qc` through the active hook. Draft PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`. `workspace-ci` passed in Actions run `31091173324`, job `92582267539`.
 - Benchmark conclusion: preserve the local tools/evidence as optional future QC research, but stop diagnostics and full-audio reruns. The approved narration script replaces Whisper output as the primary caption/transcript source.
 
-## Proposed backlog — not yet implemented
+## Current task
 
-- T040: teacher slide-by-slide recording portal.
+- T040 is IN_PROGRESS under `codex` on `task/t040-teacher-recording-portal`. The approved scope is class/subject/chapter selection, current slide and narration review, per-slide browser recording, immutable raw takes, slide-level retakes, and teacher recording completion. Recording remains local; video assembly and Remotion integration remain deferred to T050.
+
+## Proposed backlog — not yet implemented
 - T050: admin video assembly, AI-assisted edit, teacher review and export.
 - T060: separately deferred consented voice-clone option.
 - T070: separately gated local YouTube-ready handoff and upload.
@@ -126,4 +128,4 @@ Keep the repository private under `Unique-Group-of-Institution`. Changes must us
 - Migration `0006` adds workflows, immutable workflow audits, jobs and immutable job events with protected relationships, unique constraints, retry/attempt checks and portable indexes. Minimal scoped JSON APIs and read-only Django admin inspection cover workflow, transition and audit inspection. Administrative inspection/submission/cancellation remain available, while HTTP worker primitives are reserved and fail closed until a separately authorized trusted server-side adapter exists.
 - T040 recording UI, T050 video processing, T060 voice cloning, T070 export/upload execution, CRM integration, paid services, Redis/Celery/cloud queues and stronger AI providers were not implemented.
 - Synthetic-only HIGH-review correction verification passed: 20 focused T030 tests, all 90 Django tests and all 19 repository tests; workspace validation; Django system and migration-consistency checks; clean disposable SQLite migration; compilation; dependency, task/dashboard, privacy/ignore and diff checks. Regression coverage includes every job-driven transition's matching, missing, malformed, cross-job/type/workflow/version and substituted result cases; administrator worker-minting attempts; fail-closed HTTP system operations; prevalidated worker capability/course restrictions; and non-forgeable HTTP audit attribution. No real content, media, transcript, production database, upload, credential or private artifact was accessed.
-- Review-correction implementation commit `de1142c` and reviewed evidence commit `47a246306d9c45c71b738a1fdaccbcb098d8261a` were pushed through the active hook on `task/t030-workflow-queue-approvals`. PR #6 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/6`. `workspace-ci` passed on the exact reviewed implementation head in Actions run `31576595399`, job `94050001606`. T030 is DONE after the product owner's exact human `REVIEW` to `DONE` transition; the approval/status finalization commit requires its own fresh successful run before merge.
+- Review-correction implementation commit `de1142c` and reviewed evidence commit `47a246306d9c45c71b738a1fdaccbcb098d8261a` were pushed through the active hook on `task/t030-workflow-queue-approvals`. PR #6 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/6`. `workspace-ci` passed on the exact reviewed implementation head in Actions run `31576595399`, job `94050001606`. Finalization commit `bcab4403f6bab8cb2ac315e31967d2b79b9d10c6` passed fresh CI in run `31679941510`; PR #6 merged normally into `main` as `a5358fd17d9bfdb9e0d278c59c747d96c9d48e80`. T030 is DONE after the product owner's exact human `REVIEW` to `DONE` transition.
