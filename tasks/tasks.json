@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-13T07:51:21Z",
+  "updated_at": "2026-08-15T06:07:35Z",
   "tasks": [
     {
       "id": "T001",
@@ -571,8 +571,8 @@
       "id": "T040",
       "title": "Build teacher slide-by-slide recording portal",
       "priority": 9,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "IN_PROGRESS",
+      "owner": "codex",
       "dependencies": [
         "T022",
         "T030"
@@ -590,7 +590,22 @@
         "A slide can be retaken without re-recording the lecture"
       ],
       "verification": [],
-      "history": []
+      "history": [
+        {
+          "at": "2026-08-15T06:07:35Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Teacher slide-by-slide recording portal approved for T040; keep recording local, preserve immutable raw takes, and defer video assembly and Remotion integration to T050"
+        },
+        {
+          "at": "2026-08-15T06:07:35Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Claim T040 to implement the approved local-first teacher slide-by-slide recording portal with synthetic verification"
+        }
+      ]
     },
     {
       "id": "T050",
