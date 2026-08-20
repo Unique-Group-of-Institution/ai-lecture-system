@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T030 is merged and DONE; T040 teacher slide-by-slide recording portal is implemented and in REVIEW on its dedicated task branch
+**Overall status:** T040 teacher slide-by-slide recording portal is approved and DONE; PR #7 finalization is in progress on its dedicated task branch
 
 ## Completed
 
@@ -29,10 +29,11 @@
 - T021 was approved by the product owner through PR #4 and moved from REVIEW to DONE by a human.
 - T022 was approved by the product owner through PR #5 after an independent APPROVE review and moved from REVIEW to DONE by a human.
 - T030 was approved by the product owner through PR #6 after an APPROVE targeted re-review and moved from REVIEW to DONE by a human.
+- T040 was approved by the product owner through PR #7 after an APPROVE targeted review and moved from REVIEW to DONE by a human.
 
 ## Latest completed task
 
-- T030 is DONE under `codex` on `task/t030-workflow-queue-approvals` after the targeted re-review returned APPROVE and the product owner approved PR #6 and performed the exact human `REVIEW` to `DONE` transition. The trusted HTTP worker adapter remains intentionally unconfigured and worker HTTP operations fail closed; the internal prevalidated `WorkflowActorContext` boundary remains. SQLite remains sequential/single-worker, while PostgreSQL plus controlled trusted workers is required for concurrent production. CRM, recording UI, actual rendering, voice cloning, export processing and YouTube upload remain deferred.
+- T040 is DONE under `codex` on `task/t040-teacher-recording-portal` after the targeted review returned APPROVE and the product owner authorized PR #7 finalization, push and merge and performed the exact human `REVIEW` to `DONE` transition. Reviewed implementation head `44ef36435096258da1d7f7bec284b24b12ba615d` passed CI in run `32363723243`. The synchronization-only finalization commit must receive fresh successful exact-head CI before PR #7 is merged normally. Video assembly and Remotion integration remain deferred to T050.
 
 ## Approved Phase-1 workflow
 
@@ -59,7 +60,7 @@
 
 ## Current task
 
-- T040 is REVIEW under `codex` on `task/t040-teacher-recording-portal`. The implemented scope is class/subject/chapter selection, current slide and narration review, per-slide browser recording, immutable raw takes, slide-level retakes, teacher-selected takes, and teacher recording completion. Recording remains local; video assembly and Remotion integration remain deferred to T050.
+- No implementation task is claimed. T040 is DONE and PR #7 is being finalized; T050 remains unmodified in BACKLOG.
 
 ## Proposed backlog — not yet implemented
 - T050: admin video assembly, AI-assisted edit, teacher review and export.
@@ -115,6 +116,7 @@ Keep the repository private under `Unique-Group-of-Institution`. Changes must us
 - Completion locks and revalidates the workflow version, approval fingerprint, exact ordered current revision list and selected teacher-owned take for every slide. It creates an immutable completion bundle before the auditable teacher-only transition to `RECORDING_READY`. A later slide revision invalidates downstream readiness while preserving historical raw takes and audit records.
 - Migration `0007` adds PostgreSQL-portable take, selection, selection-event, completion and completion-item records. Read-only admin inspection, local login/portal pages, responsive CSS, browser recording JavaScript and Windows operation/recovery guidance are included. No rendering, Remotion, export, CRM, voice cloning, external upload, paid API or YouTube implementation was added.
 - Synthetic-only verification passed on 2026-08-20: 9 focused T040 tests, all 99 Django tests and all 19 repository tests; workspace validation; Django system and migration-consistency checks; a clean SQLite migration through `0007`; compilation; dependency, task/dashboard, privacy/ignore and diff checks. The complete Windows suites required an approved unsandboxed process because the managed filesystem sandbox denied Python-created temporary directories; no ACL was weakened and no inaccessible temp tree was deleted.
+- Targeted review approved reviewed implementation head `44ef36435096258da1d7f7bec284b24b12ba615d`; CI run `32363723243` passed on that head. The product owner moved T040 from REVIEW to DONE as actor `human` and authorized the synchronization-only finalization, push and normal merge of PR #7, subject to fresh successful CI on the exact finalization commit.
 
 ## T022 implementation
 

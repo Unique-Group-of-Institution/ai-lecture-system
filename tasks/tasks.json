@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-20T10:40:19Z",
+  "updated_at": "2026-08-20T12:12:38Z",
   "tasks": [
     {
       "id": "T001",
@@ -571,7 +571,7 @@
       "id": "T040",
       "title": "Build teacher slide-by-slide recording portal",
       "priority": 9,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [
         "T022",
@@ -617,6 +617,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Teacher slide-by-slide recording portal implemented with immutable local raw takes, audited retakes and selections, current-approval gates, teacher-scoped media access, completion snapshots, Windows documentation, and synthetic verification; ready for independent or human review"
+        },
+        {
+          "at": "2026-08-20T12:12:38Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner approved PR #7 after targeted security and workflow review"
         }
       ]
     },
