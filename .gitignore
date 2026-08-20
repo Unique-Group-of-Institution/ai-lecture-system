@@ -26,6 +26,7 @@ data/lectures/*
 data/exports/*
 data/content-tools/*
 data/content-library/*
+data/recordings/*
 data/lectures/t020-local/
 uploader/
 youtube-uploader/
@@ -33,6 +34,7 @@ input_folder/
 !data/uploads/.gitkeep
 !data/lectures/.gitkeep
 !data/exports/.gitkeep
+!data/recordings/.gitkeep
 logs/*
 !logs/.gitkeep
 

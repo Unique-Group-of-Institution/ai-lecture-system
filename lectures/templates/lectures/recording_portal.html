@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Teacher recording portal</title>
+  <link rel="stylesheet" href="{% static 'lectures/recording.css' %}">
+</head>
+<body>
+  <header class="site-header">
+    <div><span class="eyebrow">AI Lecture System</span><h1>Teacher recording portal</h1></div>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary" type="submit">Sign out</button></form>
+  </header>
+  <main class="page-shell">
+    <section class="intro" aria-labelledby="portal-heading">
+      <div><p class="kicker">Local recording · مقامی ریکارڈنگ</p><h2 id="portal-heading">Choose an approved lecture</h2></div>
+      <p>Record one slide at a time. Raw takes stay on this computer and every retake remains available for audit.</p>
+    </section>
+    <div class="course-grid">
+      {% for workflow in workflows %}
+        <article class="course-card">
+          <div class="meta-row"><span>{{ workflow.generation.chapter.course.class_name|default:"Class not set" }}</span><span>{{ workflow.generation.chapter.course.subject_name|default:"Subject not set" }}</span></div>
+          <h3>{{ workflow.generation.chapter.course.code }} · {{ workflow.generation.chapter.course.title }}</h3>
+          <p>Chapter {{ workflow.generation.chapter.number }} — {{ workflow.generation.chapter.title }}</p>
+          <p class="state-pill">{{ workflow.get_state_display }}</p>
+          <a class="button-link" href="{% url 'teacher-recording-detail' workflow.pk %}">Open recording</a>
+        </article>
+      {% empty %}
+        <div class="empty-state"><h3>No assigned recording workflows</h3><p>Ask an administrator to verify the course assignment and approved slide workflow.</p></div>
+      {% endfor %}
+    </div>
+  </main>
+</body>
+</html>

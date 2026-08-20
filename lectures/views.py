@@ -4,15 +4,20 @@ import json
 import re
 
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, HttpResponse, JsonResponse
+from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
 
 from .content import register_upload, sources_visible_to
 from .generation import actor_context_for_user, approve_slide, caption_for_slide, create_generation, revise_slide
 from .models import (
-    Chapter, ContentSource, GenerationRequest, LectureWorkflow, SlideDraft, WorkflowJob,
+    Chapter, ContentSource, GenerationRequest, LectureWorkflow, RecordingTake, SlideDraft, WorkflowJob,
+)
+from .recording import (
+    RecordingConflict, complete_recording, create_take, open_recording, recording_path,
+    recordings_visible_to, select_take,
 )
 from .workflow import (
     WorkflowConflict, cancel_job, claim_job, complete_job, create_workflow, fail_job,
@@ -71,6 +76,16 @@ def _workflow_error(exc):
     if isinstance(exc, ValidationError):
         return _safe_json({"error": _validation_message(exc)}, status=400)
     return _safe_json({"error": "Workflow record is unavailable."}, status=404)
+
+
+def _recording_error(exc):
+    if isinstance(exc, PermissionDenied):
+        return _safe_json({"error": "Recording operation is not authorized."}, status=403)
+    if isinstance(exc, (RecordingConflict, WorkflowConflict)):
+        return _safe_json({"error": _validation_message(exc)}, status=409)
+    if isinstance(exc, ValidationError):
+        return _safe_json({"error": _validation_message(exc)}, status=400)
+    return _safe_json({"error": "Recording record is unavailable."}, status=404)
 
 
 def _exact_fields(body, required, optional=()):
@@ -483,3 +498,211 @@ def workflow_job_cancel(request, job_id):
         return _safe_json(_job_payload(job))
     except (PermissionDenied, ValidationError, WorkflowJob.DoesNotExist) as exc:
         return _workflow_error(exc)
+
+
+def _take_payload(take, *, selected=False):
+    return {
+        "id": take.pk,
+        "take_number": take.take_number,
+        "slide_revision_id": take.slide_revision_id,
+        "media_type": take.media_type,
+        "byte_size": take.byte_size,
+        "duration_ms": take.duration_ms,
+        "created_at": take.created_at.isoformat(),
+        "selected": selected,
+        "media_url": f"/teacher/recording-takes/{take.pk}/media/",
+    }
+
+
+def _recording_workflow_payload(workflow):
+    selections = {
+        item.slide_id: item
+        for item in workflow.recording_selections.select_related("current_take").all()
+    }
+    slides = []
+    for slide in workflow.generation.slides.select_related(
+        "approved_revision__canonical_narration"
+    ).prefetch_related("approved_revision__recording_takes").order_by("position"):
+        revision = slide.approved_revision
+        current = revision is not None and revision.version == slide.current_version
+        narration = ""
+        if current:
+            try:
+                narration = revision.canonical_narration.text
+            except ObjectDoesNotExist:
+                current = False
+        selection = selections.get(slide.pk)
+        selected_id = selection.current_take_id if selection else None
+        takes = list(
+            RecordingTake.objects.filter(workflow=workflow, slide_revision=revision).order_by("take_number")
+        ) if revision else []
+        slides.append(
+            {
+                "id": slide.pk,
+                "position": slide.position,
+                "current_version": slide.current_version,
+                "approved_revision_id": revision.pk if current else None,
+                "title": revision.title if current else "Approval required",
+                "narration": narration,
+                "eligible": current and workflow.state == LectureWorkflow.State.RECORDING_PENDING,
+                "selected_take_id": selected_id if any(t.pk == selected_id for t in takes) else None,
+                "takes": [_take_payload(take, selected=take.pk == selected_id) for take in takes],
+            }
+        )
+    return {
+        "id": workflow.pk,
+        "state": workflow.state,
+        "version": workflow.version,
+        "class_name": workflow.generation.chapter.course.class_name,
+        "subject_name": workflow.generation.chapter.course.subject_name,
+        "course_code": workflow.generation.chapter.course.code,
+        "course_title": workflow.generation.chapter.course.title,
+        "chapter_number": workflow.generation.chapter.number,
+        "chapter_title": workflow.generation.chapter.title,
+        "can_open": workflow.state == LectureWorkflow.State.TEACHER_SLIDE_NARRATION_APPROVED,
+        "can_record": workflow.state == LectureWorkflow.State.RECORDING_PENDING,
+        "completed": workflow.state not in {
+            LectureWorkflow.State.SOURCE_CONTENT_READY,
+            LectureWorkflow.State.SLIDE_NARRATION_DRAFT,
+            LectureWorkflow.State.TEACHER_SLIDE_NARRATION_APPROVED,
+            LectureWorkflow.State.RECORDING_PENDING,
+        },
+        "slides": slides,
+    }
+
+
+@login_required
+@require_http_methods(["GET"])
+def teacher_recording_portal(request):
+    actor = workflow_actor_for_user(request.user)
+    workflows = list(recordings_visible_to(actor).order_by(
+        "generation__chapter__course__class_name",
+        "generation__chapter__course__subject_name",
+        "generation__chapter__course__code",
+        "generation__chapter__number",
+    ))
+    return render(request, "lectures/recording_portal.html", {"workflows": workflows})
+
+
+@login_required
+@require_http_methods(["GET"])
+def teacher_recording_detail(request, workflow_id):
+    actor = workflow_actor_for_user(request.user)
+    workflow = recordings_visible_to(actor).filter(pk=workflow_id).first()
+    if workflow is None:
+        return render(request, "lectures/recording_unavailable.html", status=404)
+    payload = _recording_workflow_payload(workflow)
+    return render(
+        request,
+        "lectures/recording_detail.html",
+        {"workflow": workflow, "recording_payload": payload},
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def recording_open_api(request, workflow_id):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(body, {"expected_version"})
+        workflow = open_recording(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            expected_version=body["expected_version"],
+        )
+        return _safe_json(_recording_workflow_payload(workflow))
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _recording_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def recording_take_upload_api(request, workflow_id, slide_id):
+    try:
+        try:
+            content_length = int(request.headers.get("Content-Length", "0") or 0)
+        except (TypeError, ValueError) as exc:
+            raise ValidationError("Invalid recording request size.") from exc
+        if content_length <= 0 or content_length > settings.RECORDING_MAX_REQUEST_BYTES:
+            raise ValidationError("Recording request size is outside the allowed range.")
+        if set(request.POST) != {"expected_revision_id", "duration_ms"} or set(request.FILES) != {"audio"}:
+            raise ValidationError("Unexpected or missing recording fields.")
+        upload = request.FILES["audio"]
+        media_type = (upload.content_type or "").split(";", 1)[0].strip().lower()
+        take = create_take(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            slide_id=slide_id,
+            expected_revision_id=request.POST["expected_revision_id"],
+            upload=upload,
+            duration_ms=request.POST["duration_ms"],
+            filename=upload.name,
+            media_type=media_type,
+        )
+        return _safe_json(_take_payload(take, selected=True), status=201)
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist, SlideDraft.DoesNotExist, OSError) as exc:
+        return _recording_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def recording_take_select_api(request, workflow_id, slide_id):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(body, {"take_id", "expected_revision_id"})
+        selection = select_take(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            slide_id=slide_id,
+            take_id=body["take_id"],
+            expected_revision_id=body["expected_revision_id"],
+        )
+        return _safe_json(
+            {"slide_id": slide_id, "selected_take_id": selection.current_take_id, "version": selection.version}
+        )
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist, SlideDraft.DoesNotExist) as exc:
+        return _recording_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def recording_complete_api(request, workflow_id):
+    try:
+        body = _workflow_body(request)
+        _exact_fields(body, {"expected_version", "expected_revision_ids"})
+        completion = complete_recording(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            expected_version=body["expected_version"],
+            expected_revision_ids=body["expected_revision_ids"],
+        )
+        completion.workflow.refresh_from_db()
+        return _safe_json(
+            {
+                "reference": completion.reference,
+                "completed_at": completion.completed_at.isoformat(),
+                "workflow": _recording_workflow_payload(completion.workflow),
+            }
+        )
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _recording_error(exc)
+
+
+@login_required
+@require_http_methods(["GET"])
+def recording_take_media(request, take_id):
+    try:
+        actor = workflow_actor_for_user(request.user)
+        take = RecordingTake.objects.select_related(
+            "workflow__generation__chapter__course"
+        ).get(pk=take_id)
+        if not recordings_visible_to(actor).filter(pk=take.workflow_id).exists():
+            raise PermissionDenied
+        path = recording_path(take)
+        response = FileResponse(path.open("rb"), content_type=take.media_type)
+        response["Content-Disposition"] = f'inline; filename="slide-take-{take.take_number}{take.extension}"'
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+    except (PermissionDenied, ValidationError, RecordingTake.DoesNotExist, OSError):
+        return _safe_json({"error": "Recording media is unavailable."}, status=404)

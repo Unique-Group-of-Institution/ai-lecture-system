@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-13
+**Updated:** 2026-08-20
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T030 is DONE after product-owner approval and an APPROVE targeted re-review; PR #6 approval synchronization is being finalized for merge
+**Overall status:** T040 teacher slide-by-slide recording portal is approved and DONE; PR #7 finalization is in progress on its dedicated task branch
 
 ## Completed
 
@@ -29,10 +29,11 @@
 - T021 was approved by the product owner through PR #4 and moved from REVIEW to DONE by a human.
 - T022 was approved by the product owner through PR #5 after an independent APPROVE review and moved from REVIEW to DONE by a human.
 - T030 was approved by the product owner through PR #6 after an APPROVE targeted re-review and moved from REVIEW to DONE by a human.
+- T040 was approved by the product owner through PR #7 after an APPROVE targeted review and moved from REVIEW to DONE by a human.
 
 ## Latest completed task
 
-- T030 is DONE under `codex` on `task/t030-workflow-queue-approvals` after the targeted re-review returned APPROVE and the product owner approved PR #6 and performed the exact human `REVIEW` to `DONE` transition. The trusted HTTP worker adapter remains intentionally unconfigured and worker HTTP operations fail closed; the internal prevalidated `WorkflowActorContext` boundary remains. SQLite remains sequential/single-worker, while PostgreSQL plus controlled trusted workers is required for concurrent production. CRM, recording UI, actual rendering, voice cloning, export processing and YouTube upload remain deferred.
+- T040 is DONE under `codex` on `task/t040-teacher-recording-portal` after the targeted review returned APPROVE and the product owner authorized PR #7 finalization, push and merge and performed the exact human `REVIEW` to `DONE` transition. Reviewed implementation head `44ef36435096258da1d7f7bec284b24b12ba615d` passed CI in run `32363723243`. The synchronization-only finalization commit must receive fresh successful exact-head CI before PR #7 is merged normally. Video assembly and Remotion integration remain deferred to T050.
 
 ## Approved Phase-1 workflow
 
@@ -57,9 +58,11 @@
 - Implementation commit `835742a` was pushed on `task/t020-local-whisper-audio-qc` through the active hook. Draft PR #3 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/3`. `workspace-ci` passed in Actions run `31091173324`, job `92582267539`.
 - Benchmark conclusion: preserve the local tools/evidence as optional future QC research, but stop diagnostics and full-audio reruns. The approved narration script replaces Whisper output as the primary caption/transcript source.
 
-## Proposed backlog — not yet implemented
+## Current task
 
-- T040: teacher slide-by-slide recording portal.
+- No implementation task is claimed. T040 is DONE and PR #7 is being finalized; T050 remains unmodified in BACKLOG.
+
+## Proposed backlog — not yet implemented
 - T050: admin video assembly, AI-assisted edit, teacher review and export.
 - T060: separately deferred consented voice-clone option.
 - T070: separately gated local YouTube-ready handoff and upload.
@@ -104,6 +107,17 @@
 
 Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.
 
+## T040 implementation
+
+- The assigned course teacher can list recording workflows by class, subject, course and chapter, review the exact current approved slide revision and canonical narration, and explicitly open the recording stage. Administrators, unassigned teachers, anonymous users and cross-course requests cannot substitute this access.
+- Browser audio is accepted only in bounded WebM/Opus, Ogg/Opus, MP4/M4A or WAV containers with a safe filename, matching media type/extension and container signature, declared size, measured streamed size and bounded teacher-supplied duration. Requests are CSRF protected and media responses are authenticated, course scoped, private and non-cacheable.
+- Every accepted raw take has a unique generated project-local storage key, take number, immutable database record, SHA-256 digest, exact slide revision, canonical narration snapshot and teacher identity. Retakes create new files and audit events; selection changes never overwrite or delete earlier takes.
+- Staged writes are promoted without overwriting an existing path. Interrupted streams and validation failures remove staging files; a database or automatic-selection failure after promotion rolls back the take and removes only that operation-owned promoted file. Accepted source recordings have no delete workflow.
+- Completion locks and revalidates the workflow version, approval fingerprint, exact ordered current revision list and selected teacher-owned take for every slide. It creates an immutable completion bundle before the auditable teacher-only transition to `RECORDING_READY`. A later slide revision invalidates downstream readiness while preserving historical raw takes and audit records.
+- Migration `0007` adds PostgreSQL-portable take, selection, selection-event, completion and completion-item records. Read-only admin inspection, local login/portal pages, responsive CSS, browser recording JavaScript and Windows operation/recovery guidance are included. No rendering, Remotion, export, CRM, voice cloning, external upload, paid API or YouTube implementation was added.
+- Synthetic-only verification passed on 2026-08-20: 9 focused T040 tests, all 99 Django tests and all 19 repository tests; workspace validation; Django system and migration-consistency checks; a clean SQLite migration through `0007`; compilation; dependency, task/dashboard, privacy/ignore and diff checks. The complete Windows suites required an approved unsandboxed process because the managed filesystem sandbox denied Python-created temporary directories; no ACL was weakened and no inaccessible temp tree was deleted.
+- Targeted review approved reviewed implementation head `44ef36435096258da1d7f7bec284b24b12ba615d`; CI run `32363723243` passed on that head. The product owner moved T040 from REVIEW to DONE as actor `human` and authorized the synchronization-only finalization, push and normal merge of PR #7, subject to fresh successful CI on the exact finalization commit.
+
 ## T022 implementation
 
 - A provider-independent generation domain receives only an internal actor ID, permitted course/source IDs and explicit capabilities; the current Django adapter enforces T010 roles and T021 visibility. CRM/SSO integration remains deferred.
@@ -126,4 +140,4 @@ Keep the repository private under `Unique-Group-of-Institution`. Changes must us
 - Migration `0006` adds workflows, immutable workflow audits, jobs and immutable job events with protected relationships, unique constraints, retry/attempt checks and portable indexes. Minimal scoped JSON APIs and read-only Django admin inspection cover workflow, transition and audit inspection. Administrative inspection/submission/cancellation remain available, while HTTP worker primitives are reserved and fail closed until a separately authorized trusted server-side adapter exists.
 - T040 recording UI, T050 video processing, T060 voice cloning, T070 export/upload execution, CRM integration, paid services, Redis/Celery/cloud queues and stronger AI providers were not implemented.
 - Synthetic-only HIGH-review correction verification passed: 20 focused T030 tests, all 90 Django tests and all 19 repository tests; workspace validation; Django system and migration-consistency checks; clean disposable SQLite migration; compilation; dependency, task/dashboard, privacy/ignore and diff checks. Regression coverage includes every job-driven transition's matching, missing, malformed, cross-job/type/workflow/version and substituted result cases; administrator worker-minting attempts; fail-closed HTTP system operations; prevalidated worker capability/course restrictions; and non-forgeable HTTP audit attribution. No real content, media, transcript, production database, upload, credential or private artifact was accessed.
-- Review-correction implementation commit `de1142c` and reviewed evidence commit `47a246306d9c45c71b738a1fdaccbcb098d8261a` were pushed through the active hook on `task/t030-workflow-queue-approvals`. PR #6 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/6`. `workspace-ci` passed on the exact reviewed implementation head in Actions run `31576595399`, job `94050001606`. T030 is DONE after the product owner's exact human `REVIEW` to `DONE` transition; the approval/status finalization commit requires its own fresh successful run before merge.
+- Review-correction implementation commit `de1142c` and reviewed evidence commit `47a246306d9c45c71b738a1fdaccbcb098d8261a` were pushed through the active hook on `task/t030-workflow-queue-approvals`. PR #6 targets `main`: `https://github.com/Unique-Group-of-Institution/ai-lecture-system/pull/6`. `workspace-ci` passed on the exact reviewed implementation head in Actions run `31576595399`, job `94050001606`. Finalization commit `bcab4403f6bab8cb2ac315e31967d2b79b9d10c6` passed fresh CI in run `31679941510`; PR #6 merged normally into `main` as `a5358fd17d9bfdb9e0d278c59c747d96c9d48e80`. T030 is DONE after the product owner's exact human `REVIEW` to `DONE` transition.

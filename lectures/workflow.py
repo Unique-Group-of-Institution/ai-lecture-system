@@ -364,6 +364,101 @@ def _require_current_slide_approval(workflow: LectureWorkflow, *, lock: bool = F
     return fingerprint
 
 
+def recording_approval_fingerprint(workflow: LectureWorkflow, *, lock: bool = False) -> str:
+    """Public T040 gate for the exact current T022 approval snapshot."""
+
+    return _require_current_slide_approval(workflow, lock=lock)
+
+
+@transaction.atomic
+def open_teacher_recording_workflow(
+    *, actor: WorkflowActorContext, workflow_id: int, expected_version: int, idempotency_key: str
+) -> LectureWorkflow:
+    """Enter recording without exposing or impersonating the T030 worker HTTP boundary."""
+
+    workflow_id = _positive_int(workflow_id, "workflow identifier")
+    expected_version = _positive_int(expected_version, "workflow version")
+    idempotency_key = _safe_token(idempotency_key, "idempotency key")
+    workflow = LectureWorkflow.objects.select_for_update().select_related(
+        "generation__chapter__course"
+    ).get(pk=workflow_id)
+    _require_course(actor, workflow, CAP_TEACHER_APPROVAL)
+    if actor.actor_type != ACTOR_TEACHER:
+        raise PermissionDenied("This recording operation requires the assigned teacher.")
+    existing = workflow.audit_events.filter(idempotency_key=idempotency_key).first()
+    if existing is not None:
+        if existing.new_state == LectureWorkflow.State.RECORDING_PENDING:
+            return workflow
+        raise WorkflowConflict("Duplicate workflow transition.")
+    if workflow.version != expected_version:
+        raise WorkflowConflict("Stale workflow version.")
+    if workflow.state != LectureWorkflow.State.TEACHER_SLIDE_NARRATION_APPROVED:
+        raise WorkflowConflict("Recording is not available in the current workflow state.")
+    fingerprint = _require_current_slide_approval(workflow, lock=True)
+    if fingerprint != workflow.slide_approval_fingerprint:
+        raise ValidationError("Stored teacher approval is stale for the current slide revision.")
+    previous = workflow.state
+    workflow.state = LectureWorkflow.State.RECORDING_PENDING
+    workflow.version += 1
+    _save_workflow(workflow)
+    _workflow_event(
+        workflow,
+        actor=actor,
+        previous_state=previous,
+        new_state=workflow.state,
+        reason_code="TEACHER_OPENED_RECORDING",
+        idempotency_key=idempotency_key,
+    )
+    return workflow
+
+
+@transaction.atomic
+def complete_teacher_recording_workflow(
+    *,
+    actor: WorkflowActorContext,
+    workflow_id: int,
+    expected_version: int,
+    idempotency_key: str,
+    recording_reference: str,
+    expected_fingerprint: str,
+) -> LectureWorkflow:
+    """Advance only from a T040-validated immutable completion snapshot."""
+
+    workflow_id = _positive_int(workflow_id, "workflow identifier")
+    expected_version = _positive_int(expected_version, "workflow version")
+    idempotency_key = _safe_token(idempotency_key, "idempotency key")
+    recording_reference = _safe_reference(recording_reference, "recording reference")
+    if not isinstance(expected_fingerprint, str) or not re.fullmatch(r"[0-9a-f]{64}", expected_fingerprint):
+        raise ValidationError("Invalid recording approval fingerprint.")
+    workflow = LectureWorkflow.objects.select_for_update().select_related(
+        "generation__chapter__course"
+    ).get(pk=workflow_id)
+    _require_course(actor, workflow, CAP_TEACHER_APPROVAL)
+    if actor.actor_type != ACTOR_TEACHER:
+        raise PermissionDenied("This recording operation requires the assigned teacher.")
+    if workflow.version != expected_version:
+        raise WorkflowConflict("Stale workflow version.")
+    if workflow.state != LectureWorkflow.State.RECORDING_PENDING:
+        raise WorkflowConflict("Recording completion is unavailable in the current workflow state.")
+    fingerprint = _require_current_slide_approval(workflow, lock=True)
+    if fingerprint != expected_fingerprint or fingerprint != workflow.slide_approval_fingerprint:
+        raise ValidationError("Stored teacher approval is stale for the current slide revision.")
+    previous = workflow.state
+    workflow.state = LectureWorkflow.State.RECORDING_READY
+    workflow.version += 1
+    workflow.recording_reference = recording_reference
+    _save_workflow(workflow)
+    _workflow_event(
+        workflow,
+        actor=actor,
+        previous_state=previous,
+        new_state=workflow.state,
+        reason_code="TEACHER_COMPLETED_RECORDING",
+        idempotency_key=idempotency_key,
+    )
+    return workflow
+
+
 TRANSITIONS = {
     LectureWorkflow.State.SOURCE_CONTENT_READY: {LectureWorkflow.State.SLIDE_NARRATION_DRAFT},
     LectureWorkflow.State.SLIDE_NARRATION_DRAFT: {

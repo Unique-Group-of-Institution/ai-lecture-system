@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from lectures import views
@@ -6,6 +7,15 @@ from lectures import views
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    path("accounts/login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
+    path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("teacher/recordings/", views.teacher_recording_portal, name="teacher-recording-portal"),
+    path("teacher/recordings/<int:workflow_id>/", views.teacher_recording_detail, name="teacher-recording-detail"),
+    path("teacher/recording-takes/<int:take_id>/media/", views.recording_take_media, name="recording-take-media"),
+    path("api/recordings/<int:workflow_id>/open/", views.recording_open_api, name="recording-open"),
+    path("api/recordings/<int:workflow_id>/slides/<int:slide_id>/takes/", views.recording_take_upload_api, name="recording-take-upload"),
+    path("api/recordings/<int:workflow_id>/slides/<int:slide_id>/select/", views.recording_take_select_api, name="recording-take-select"),
+    path("api/recordings/<int:workflow_id>/complete/", views.recording_complete_api, name="recording-complete"),
     path("api/content-sources/", views.content_sources, name="content-sources"),
     path("api/content-selection/", views.content_selection, name="content-selection"),
     path("api/generations/", views.generations, name="generations"),
