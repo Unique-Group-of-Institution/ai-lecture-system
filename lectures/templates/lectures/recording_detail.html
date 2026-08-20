@@ -1,0 +1,71 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ recording_payload.course_code }} recording</title>
+  <link rel="stylesheet" href="{% static 'lectures/recording.css' %}">
+  <script src="{% static 'lectures/recording.js' %}" defer></script>
+</head>
+<body>
+  <header class="site-header compact">
+    <a class="back-link" href="{% url 'teacher-recording-portal' %}">← All lectures</a>
+    <div class="header-title"><span class="eyebrow">{{ recording_payload.class_name }} · {{ recording_payload.subject_name }}</span><h1>{{ recording_payload.course_code }} · Chapter {{ recording_payload.chapter_number }}</h1></div>
+    <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="secondary" type="submit">Sign out</button></form>
+  </header>
+  <main class="page-shell recording-shell">
+    <section class="lecture-banner">
+      <div><p class="kicker">{{ recording_payload.course_title }}</p><h2>{{ recording_payload.chapter_title }}</h2></div>
+      <div class="state-pill" id="workflow-state">{{ workflow.get_state_display }}</div>
+    </section>
+    <div id="global-message" class="notice" role="status" aria-live="polite" hidden></div>
+    <div id="browser-warning" class="notice danger" role="alert" hidden></div>
+    {% if recording_payload.can_open %}
+      <section class="gate-card" id="open-gate">
+        <div><h2>Slides and narration are approved</h2><p>Open this recording session only after reviewing the current approved content below.</p></div>
+        <button id="open-recording" type="button">Begin slide recording</button>
+      </section>
+    {% elif not recording_payload.can_record and not recording_payload.completed %}
+      <section class="gate-card blocked"><div><h2>Recording is locked</h2><p>The current slide and canonical narration approval must be completed again before recording.</p></div></section>
+    {% endif %}
+    <form class="csrf-anchor" aria-hidden="true">{% csrf_token %}</form>
+    <section class="slide-list" aria-label="Approved slides and narration">
+      {% for slide in recording_payload.slides %}
+        <article class="slide-card" data-slide-id="{{ slide.id }}" data-revision-id="{{ slide.approved_revision_id|default:'' }}">
+          <div class="slide-heading"><span class="slide-number">Slide {{ slide.position }}</span><span class="take-status" data-status>{% if slide.selected_take_id %}Take selected{% else %}No take selected{% endif %}</span></div>
+          <h2 dir="auto">{{ slide.title }}</h2>
+          <div class="narration-panel"><span class="label">Canonical narration · منظور شدہ متن</span><p dir="auto">{{ slide.narration|linebreaksbr }}</p></div>
+          <div class="record-controls">
+            <button class="record-button" type="button" data-record {% if not slide.eligible %}disabled{% endif %}>Start recording</button>
+            <button class="stop-button secondary" type="button" data-stop disabled>Stop</button>
+            <button class="retry-button secondary" type="button" data-retry hidden>Retry upload</button>
+            <span class="timer" data-timer aria-live="polite">00:00</span>
+          </div>
+          <p class="slide-message" data-message role="status" aria-live="polite"></p>
+          <div class="takes" data-takes>
+            {% for take in slide.takes %}
+              <div class="take-row" data-take-id="{{ take.id }}">
+                <div><strong>Take {{ take.take_number }}</strong><span>{{ take.duration_ms }} ms · {{ take.media_type }}</span></div>
+                <audio controls preload="none" src="{{ take.media_url }}">Audio playback is unsupported.</audio>
+                <button class="select-take secondary" type="button" data-select="{{ take.id }}" {% if take.selected %}disabled{% endif %}>{% if take.selected %}Selected{% else %}Use this take{% endif %}</button>
+              </div>
+            {% empty %}
+              <p class="no-takes" data-empty>No takes yet. Each retake will appear here as a separate version.</p>
+            {% endfor %}
+          </div>
+        </article>
+      {% endfor %}
+    </section>
+    {% if recording_payload.can_record %}
+      <section class="completion-card" id="completion-card">
+        <div><h2>Complete teacher recording</h2><p>Completion is allowed only when every approved slide has a selected current take.</p></div>
+        <button id="complete-recording" type="button">Mark recording complete</button>
+      </section>
+    {% elif recording_payload.completed %}
+      <section class="completion-card complete"><div><h2>Recording completed</h2><p>The immutable selected-take bundle is ready for the next separately approved workflow stage.</p></div></section>
+    {% endif %}
+  </main>
+  {{ recording_payload|json_script:"recording-data" }}
+</body>
+</html>

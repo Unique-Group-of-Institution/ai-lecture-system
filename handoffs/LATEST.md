@@ -2,13 +2,13 @@
 
 - **Task:** T040 — Build teacher slide-by-slide recording portal
 - **Owner:** codex
-- **Status:** IN_PROGRESS — product owner authorized T040; exact human `BACKLOG` to `READY` and Codex `READY` to `IN_PROGRESS` transitions are recorded
-- **Branch:** `task/t040-teacher-recording-portal`, created from merged `main` commit `a5358fd17d9bfdb9e0d278c59c747d96c9d48e80`
-- **Dependencies:** T022 and T030 are DONE
-- **Approved scope:** Class, subject and chapter selection; current slide and narration review; per-slide browser recording; slide-level retakes; and teacher recording completion
-- **Recording integrity:** Approved slides and narration are required before recording. Every raw take remains immutable; a retake creates a new version and must not overwrite an earlier take.
-- **Authorization:** Only the assigned course teacher may access and record the course workflow. Provider-independent actor context and existing T030 approval gates remain authoritative.
-- **Privacy:** Teacher audio and institutional content remain local. Tests use synthetic media only. No external upload, paid API, credentials, real media or private artifact access is authorized.
-- **Deferred scope:** Video assembly, Remotion rendering, admin edit/review/export, voice cloning and YouTube upload remain outside T040. Remotion remains planned for the separately scoped T050 proof of concept.
-- **T030 baseline:** PR #6 merged into `main` as `a5358fd17d9bfdb9e0d278c59c747d96c9d48e80` after finalization commit `bcab4403f6bab8cb2ac315e31967d2b79b9d10c6` passed CI run `31679941510`. Trusted HTTP worker operations remain fail-closed; SQLite remains sequential/single-worker.
-- **Next action:** Inspect the current Django frontend structure and T022/T030 service boundaries, define the smallest secure T040 implementation slice, add synthetic tests, and keep the task IN_PROGRESS until implementation is ready for REVIEW.
+- **Status:** REVIEW — the implementing agent performed only the authorized `IN_PROGRESS` to `REVIEW` transition; an independent reviewer or the human product owner must decide `DONE`
+- **Branch:** `task/t040-teacher-recording-portal`
+- **Scope delivered:** Teacher-scoped class/subject/chapter portal, current approved slide and canonical narration review, explicit recording open gate, bounded browser-audio uploads, immutable raw takes, audited retakes and selection, private media playback, and immutable teacher completion bundles
+- **Integrity and failure behavior:** Every take binds its workflow, exact approved slide revision, canonical narration snapshot, teacher, sequence, duration, size and SHA-256 digest. Staging and operation-owned promoted files are cleaned if acceptance fails; committed takes are never overwritten or deleted. A later slide revision makes prior takes ineligible without removing history.
+- **Authorization and privacy:** Only the exact assigned/requesting teacher with the existing provider-independent capability and course scope can operate T040. CSRF remains enabled. Audio stays in ignored local storage and is served only through authenticated, course-scoped, private/no-store responses. Tests use synthetic media only.
+- **Verification:** 9 focused T040 tests, 99 complete Django tests and 19 repository tests passed. Workspace, Django system and migration-drift checks, clean SQLite migration through `0007`, Python compilation, dependency, task/dashboard, privacy/ignore and diff checks passed. Managed Windows sandbox temp ACL failures were resolved by running the same synthetic suites in an approved unsandboxed process; no ACL or source data was changed.
+- **Documentation:** `docs/TEACHER_RECORDING_PORTAL.md` contains Windows setup, workflow, browser requirements, local storage, limits, safe failure, backup/recovery and verification instructions.
+- **Deferred scope:** Remotion and all video assembly/rendering, admin edit/export, CRM, voice cloning, external uploads and YouTube remain out of T040 and unimplemented.
+- **Review focus:** Verify non-bypassable teacher/current-approval gates, cross-course media isolation, immutable history, exact completion evidence, filesystem/database failure cleanup, migration portability, and the absence of external endpoints or tracked media.
+- **Next action:** Commit and push only the T040-authorized files, open one draft PR into `main`, and require fresh successful `workspace-ci` before review. Do not mark T040 `DONE`.

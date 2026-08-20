@@ -631,3 +631,152 @@ class WorkflowJobEvent(ImmutableWorkflowRecord):
         indexes = [
             models.Index(fields=("job", "occurred_at"), name="workflow_job_event_time_idx")
         ]
+
+
+class ImmutableRecordingRecord(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError("Recording audit records are immutable.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Recording audit records cannot be deleted.")
+
+
+class RecordingTake(ImmutableRecordingRecord):
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="recording_takes"
+    )
+    slide_revision = models.ForeignKey(
+        SlideRevision, on_delete=models.PROTECT, related_name="recording_takes"
+    )
+    canonical_narration = models.ForeignKey(
+        CanonicalNarrationSnapshot, on_delete=models.PROTECT, related_name="recording_takes"
+    )
+    take_number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    storage_key = models.CharField(max_length=255, unique=True)
+    original_name = models.CharField(max_length=255)
+    extension = models.CharField(max_length=8)
+    media_type = models.CharField(max_length=40)
+    byte_size = models.PositiveBigIntegerField()
+    duration_ms = models.PositiveIntegerField()
+    sha256 = models.CharField(max_length=64)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="recording_takes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("workflow", "slide_revision__slide", "take_number")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("workflow", "slide_revision", "take_number"),
+                name="unique_recording_take_number",
+            ),
+            models.CheckConstraint(condition=Q(take_number__gte=1), name="recording_take_number_positive"),
+            models.CheckConstraint(condition=Q(byte_size__gte=1), name="recording_take_size_positive"),
+            models.CheckConstraint(condition=Q(duration_ms__gte=1), name="recording_take_duration_positive"),
+        ]
+        indexes = [
+            models.Index(fields=("workflow", "slide_revision"), name="recording_workflow_slide_idx"),
+            models.Index(fields=("recorded_by", "created_at"), name="recording_teacher_time_idx"),
+        ]
+
+
+class RecordingSelection(models.Model):
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="recording_selections"
+    )
+    slide = models.ForeignKey(
+        SlideDraft, on_delete=models.PROTECT, related_name="recording_selections"
+    )
+    current_take = models.ForeignKey(
+        RecordingTake, on_delete=models.PROTECT, related_name="current_selections"
+    )
+    version = models.PositiveIntegerField(default=1, validators=[MinValueValidator(1)])
+    selected_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="recording_selections"
+    )
+    selected_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("workflow", "slide__position")
+        constraints = [
+            models.UniqueConstraint(fields=("workflow", "slide"), name="unique_recording_selection"),
+            models.CheckConstraint(condition=Q(version__gte=1), name="recording_selection_version_positive"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and RecordingSelection.objects.filter(pk=self.pk).exists() and not getattr(
+            self, "_domain_service_write", False
+        ):
+            raise ValueError("Recording selection may change only through the recording service.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Recording selections cannot be deleted.")
+
+
+class RecordingSelectionEvent(ImmutableRecordingRecord):
+    selection = models.ForeignKey(
+        RecordingSelection, on_delete=models.PROTECT, related_name="events"
+    )
+    version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    take = models.ForeignKey(RecordingTake, on_delete=models.PROTECT, related_name="selection_events")
+    selected_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="recording_selection_events"
+    )
+    selected_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("selection", "version")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("selection", "version"), name="unique_recording_selection_event_version"
+            ),
+            models.CheckConstraint(
+                condition=Q(version__gte=1), name="recording_selection_event_version_positive"
+            ),
+        ]
+
+
+class RecordingCompletion(ImmutableRecordingRecord):
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="recording_completions"
+    )
+    reference = models.CharField(max_length=128, unique=True)
+    slide_approval_fingerprint = models.CharField(max_length=64)
+    completed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="recording_completions"
+    )
+    completed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("workflow", "completed_at", "pk")
+
+
+class RecordingCompletionItem(ImmutableRecordingRecord):
+    completion = models.ForeignKey(
+        RecordingCompletion, on_delete=models.PROTECT, related_name="items"
+    )
+    position = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    slide_revision = models.ForeignKey(
+        SlideRevision, on_delete=models.PROTECT, related_name="recording_completion_items"
+    )
+    take = models.ForeignKey(
+        RecordingTake, on_delete=models.PROTECT, related_name="completion_items"
+    )
+
+    class Meta:
+        ordering = ("completion", "position")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("completion", "position"), name="unique_recording_completion_position"
+            ),
+            models.CheckConstraint(
+                condition=Q(position__gte=1), name="recording_completion_position_positive"
+            ),
+        ]

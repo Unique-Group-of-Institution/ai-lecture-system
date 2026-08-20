@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-15
+**Updated:** 2026-08-20
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T030 is merged and DONE; T040 teacher slide-by-slide recording portal is IN_PROGRESS on its dedicated task branch
+**Overall status:** T030 is merged and DONE; T040 teacher slide-by-slide recording portal is implemented and in REVIEW on its dedicated task branch
 
 ## Completed
 
@@ -59,7 +59,7 @@
 
 ## Current task
 
-- T040 is IN_PROGRESS under `codex` on `task/t040-teacher-recording-portal`. The approved scope is class/subject/chapter selection, current slide and narration review, per-slide browser recording, immutable raw takes, slide-level retakes, and teacher recording completion. Recording remains local; video assembly and Remotion integration remain deferred to T050.
+- T040 is REVIEW under `codex` on `task/t040-teacher-recording-portal`. The implemented scope is class/subject/chapter selection, current slide and narration review, per-slide browser recording, immutable raw takes, slide-level retakes, teacher-selected takes, and teacher recording completion. Recording remains local; video assembly and Remotion integration remain deferred to T050.
 
 ## Proposed backlog — not yet implemented
 - T050: admin video assembly, AI-assisted edit, teacher review and export.
@@ -105,6 +105,16 @@
 ## Current quality rule
 
 Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.
+
+## T040 implementation
+
+- The assigned course teacher can list recording workflows by class, subject, course and chapter, review the exact current approved slide revision and canonical narration, and explicitly open the recording stage. Administrators, unassigned teachers, anonymous users and cross-course requests cannot substitute this access.
+- Browser audio is accepted only in bounded WebM/Opus, Ogg/Opus, MP4/M4A or WAV containers with a safe filename, matching media type/extension and container signature, declared size, measured streamed size and bounded teacher-supplied duration. Requests are CSRF protected and media responses are authenticated, course scoped, private and non-cacheable.
+- Every accepted raw take has a unique generated project-local storage key, take number, immutable database record, SHA-256 digest, exact slide revision, canonical narration snapshot and teacher identity. Retakes create new files and audit events; selection changes never overwrite or delete earlier takes.
+- Staged writes are promoted without overwriting an existing path. Interrupted streams and validation failures remove staging files; a database or automatic-selection failure after promotion rolls back the take and removes only that operation-owned promoted file. Accepted source recordings have no delete workflow.
+- Completion locks and revalidates the workflow version, approval fingerprint, exact ordered current revision list and selected teacher-owned take for every slide. It creates an immutable completion bundle before the auditable teacher-only transition to `RECORDING_READY`. A later slide revision invalidates downstream readiness while preserving historical raw takes and audit records.
+- Migration `0007` adds PostgreSQL-portable take, selection, selection-event, completion and completion-item records. Read-only admin inspection, local login/portal pages, responsive CSS, browser recording JavaScript and Windows operation/recovery guidance are included. No rendering, Remotion, export, CRM, voice cloning, external upload, paid API or YouTube implementation was added.
+- Synthetic-only verification passed on 2026-08-20: 9 focused T040 tests, all 99 Django tests and all 19 repository tests; workspace validation; Django system and migration-consistency checks; a clean SQLite migration through `0007`; compilation; dependency, task/dashboard, privacy/ignore and diff checks. The complete Windows suites required an approved unsandboxed process because the managed filesystem sandbox denied Python-created temporary directories; no ACL was weakened and no inaccessible temp tree was deleted.
 
 ## T022 implementation
 

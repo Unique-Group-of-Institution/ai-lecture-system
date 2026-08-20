@@ -118,3 +118,20 @@ GENERATION_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_GENERATION_MAX_REQ
 # explicitly sequential Phase-1 queue; controlled concurrent workers require PostgreSQL.
 WORKFLOW_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_WORKFLOW_MAX_REQUEST_BYTES", 64_000))
 WORKFLOW_SQLITE_SINGLE_WORKER = True
+
+# T040 accepts only bounded browser-audio takes and keeps every accepted raw take
+# beneath ignored project-local storage. No media URL or external storage backend is configured.
+RECORDING_STORAGE_ROOT = Path(
+    os.environ.get("AI_LECTURE_RECORDING_ROOT", BASE_DIR / "data" / "recordings")
+)
+RECORDING_MAX_UPLOAD_BYTES = int(
+    os.environ.get("AI_LECTURE_RECORDING_MAX_BYTES", 25 * 1024 * 1024)
+)
+RECORDING_MIN_DURATION_MS = int(os.environ.get("AI_LECTURE_RECORDING_MIN_DURATION_MS", 250))
+RECORDING_MAX_DURATION_MS = int(
+    os.environ.get("AI_LECTURE_RECORDING_MAX_DURATION_MS", 20 * 60 * 1000)
+)
+RECORDING_MAX_REQUEST_BYTES = RECORDING_MAX_UPLOAD_BYTES + 64 * 1024
+
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/teacher/recordings/"

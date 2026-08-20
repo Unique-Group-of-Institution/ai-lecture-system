@@ -1,0 +1,53 @@
+:root { color-scheme: light; --ink:#17223b; --muted:#5b6475; --paper:#f6f3ec; --card:#fffdf8; --blue:#175cd3; --blue-dark:#0f449b; --line:#d9d4c9; --success:#117a55; --danger:#b42318; --shadow:0 16px 40px rgba(36,42,55,.09); }
+* { box-sizing:border-box; }
+body { margin:0; color:var(--ink); background:linear-gradient(145deg,#f8f4eb 0%,#eef3fb 100%); font-family:Inter,"Noto Nastaliq Urdu","Segoe UI",Arial,sans-serif; min-height:100vh; }
+button,input { font:inherit; }
+button,.button-link { border:0; border-radius:.7rem; background:var(--blue); color:white; padding:.75rem 1rem; font-weight:700; cursor:pointer; text-decoration:none; display:inline-flex; align-items:center; justify-content:center; min-height:44px; }
+button:hover,.button-link:hover { background:var(--blue-dark); }
+button:focus-visible,a:focus-visible,input:focus-visible { outline:3px solid #f4b740; outline-offset:3px; }
+button:disabled { opacity:.52; cursor:not-allowed; }
+.secondary { color:var(--ink); background:#e8edf5; }
+.secondary:hover { background:#d9e2f0; }
+.site-header { display:flex; align-items:center; justify-content:space-between; gap:1.5rem; padding:1.2rem clamp(1rem,4vw,4rem); background:rgba(255,253,248,.9); border-bottom:1px solid var(--line); backdrop-filter:blur(12px); }
+.site-header h1 { font-size:clamp(1.2rem,3vw,1.8rem); margin:.15rem 0 0; }
+.site-header.compact { display:grid; grid-template-columns:auto 1fr auto; }
+.header-title { text-align:center; }
+.eyebrow,.kicker,.label { text-transform:uppercase; letter-spacing:.09em; font-size:.74rem; font-weight:800; color:var(--blue); }
+.back-link { color:var(--blue-dark); font-weight:700; text-decoration:none; }
+.page-shell { width:min(1180px,calc(100% - 2rem)); margin:2rem auto 4rem; }
+.intro,.lecture-banner,.gate-card,.completion-card { display:flex; justify-content:space-between; align-items:center; gap:2rem; background:var(--card); border:1px solid var(--line); border-radius:1.2rem; padding:clamp(1.2rem,3vw,2rem); box-shadow:var(--shadow); }
+.intro h2,.lecture-banner h2,.gate-card h2,.completion-card h2 { margin:.25rem 0; }
+.intro>p { max-width:40rem; color:var(--muted); }
+.course-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(270px,1fr)); gap:1rem; margin-top:1.2rem; }
+.course-card,.empty-state { background:var(--card); border:1px solid var(--line); border-radius:1rem; padding:1.3rem; box-shadow:var(--shadow); }
+.course-card h3 { margin:.8rem 0 .3rem; }
+.meta-row { display:flex; flex-wrap:wrap; gap:.5rem; }
+.meta-row span,.state-pill,.take-status { display:inline-flex; padding:.35rem .65rem; border-radius:99px; background:#e7effd; color:#194a9b; font-size:.82rem; font-weight:700; }
+.course-card .button-link { margin-top:.8rem; width:100%; }
+.recording-shell { display:grid; gap:1rem; }
+.notice { padding:.9rem 1rem; border-radius:.8rem; border:1px solid #97b7ed; background:#edf4ff; color:#183b75; }
+.notice.danger,.gate-card.blocked { border-color:#f0aaa5; background:#fff1f0; color:#761c16; }
+.slide-list { display:grid; gap:1rem; }
+.slide-card { background:var(--card); border:1px solid var(--line); border-radius:1.2rem; padding:clamp(1rem,3vw,1.6rem); box-shadow:var(--shadow); }
+.slide-heading { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+.slide-number { font-weight:850; color:var(--blue); }
+.take-status { background:#f0eee8; color:var(--muted); }
+.take-status.ready { background:#e5f6ef; color:var(--success); }
+.narration-panel { border-inline-start:4px solid var(--blue); padding:.8rem 1rem; background:#f4f7fc; border-radius:.4rem .8rem .8rem .4rem; }
+.narration-panel p { white-space:normal; line-height:1.8; margin:.4rem 0 0; font-size:1.05rem; }
+.record-controls { display:flex; align-items:center; flex-wrap:wrap; gap:.65rem; margin-top:1rem; }
+.record-button.recording { background:var(--danger); }
+.timer { font-variant-numeric:tabular-nums; font-weight:800; min-width:4rem; }
+.slide-message { min-height:1.4rem; color:var(--muted); }
+.takes { display:grid; gap:.6rem; }
+.take-row { display:grid; grid-template-columns:minmax(110px,.8fr) minmax(180px,1.5fr) auto; gap:1rem; align-items:center; border-top:1px solid var(--line); padding-top:.7rem; }
+.take-row div { display:flex; flex-direction:column; gap:.2rem; }
+.take-row span,.no-takes { color:var(--muted); font-size:.86rem; }
+audio { width:100%; min-height:40px; }
+.complete { border-color:#9bd7c1; background:#effaf6; }
+.center-card { width:min(480px,calc(100% - 2rem)); margin:10vh auto; background:var(--card); border:1px solid var(--line); border-radius:1.2rem; padding:2rem; box-shadow:var(--shadow); }
+.login-card form { display:grid; gap:.65rem; }
+.login-card input { width:100%; padding:.75rem; border:1px solid #9da7b8; border-radius:.55rem; }
+.csrf-anchor { display:none; }
+@media (max-width:720px) { .site-header.compact { grid-template-columns:1fr auto; }.header-title { grid-column:1/-1; grid-row:2; text-align:left; }.intro,.lecture-banner,.gate-card,.completion-card { align-items:flex-start; flex-direction:column; }.take-row { grid-template-columns:1fr; }.take-row button { width:100%; }.site-header { padding:1rem; }.page-shell { margin-top:1rem; } }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; } }

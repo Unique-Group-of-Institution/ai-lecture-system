@@ -5,6 +5,8 @@ from .models import (
     ExtractionVersion, GenerationPageSnapshot, GenerationRequest, GenerationSourceSnapshot,
     LectureRequest, NarrationStatement, SlideClaim, SlideDraft, SlideRevision, SourceReference,
     LectureWorkflow, WorkflowAuditEvent, WorkflowJob, WorkflowJobEvent,
+    RecordingCompletion, RecordingCompletionItem, RecordingSelection,
+    RecordingSelectionEvent, RecordingTake,
 )
 
 
@@ -137,3 +139,12 @@ class WorkflowJobAdmin(ReadOnlyGenerationAdmin):
 
 admin.site.register(WorkflowAuditEvent, ReadOnlyGenerationAdmin)
 admin.site.register(WorkflowJobEvent, ReadOnlyGenerationAdmin)
+
+for recording_model in (
+    RecordingTake,
+    RecordingSelection,
+    RecordingSelectionEvent,
+    RecordingCompletion,
+    RecordingCompletionItem,
+):
+    admin.site.register(recording_model, ReadOnlyGenerationAdmin)

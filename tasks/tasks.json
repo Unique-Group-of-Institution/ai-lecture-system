@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-15T06:07:35Z",
+  "updated_at": "2026-08-20T10:40:19Z",
   "tasks": [
     {
       "id": "T001",
@@ -571,7 +571,7 @@
       "id": "T040",
       "title": "Build teacher slide-by-slide recording portal",
       "priority": 9,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "owner": "codex",
       "dependencies": [
         "T022",
@@ -589,7 +589,13 @@
         "Each slide has an immutable raw recording",
         "A slide can be retaken without re-recording the lecture"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "at": "2026-08-20T10:40:19Z",
+          "actor": "codex",
+          "evidence": "2026-08-20 synthetic-only verification: 9 focused T040 tests, 99 complete Django tests, and 19 repository tests passed; workspace, Django system and migration-drift checks, clean SQLite migrations through 0007, compilation, dependency, task/dashboard, privacy/ignore, and git diff checks passed. No real media, external service, paid API, credential, rendering, export, CRM, voice cloning, or YouTube work was used."
+        }
+      ],
       "history": [
         {
           "at": "2026-08-15T06:07:35Z",
@@ -604,6 +610,13 @@
           "from": "READY",
           "to": "IN_PROGRESS",
           "note": "Claim T040 to implement the approved local-first teacher slide-by-slide recording portal with synthetic verification"
+        },
+        {
+          "at": "2026-08-20T10:40:19Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Teacher slide-by-slide recording portal implemented with immutable local raw takes, audited retakes and selections, current-approval gates, teacher-scoped media access, completion snapshots, Windows documentation, and synthetic verification; ready for independent or human review"
         }
       ]
     },
