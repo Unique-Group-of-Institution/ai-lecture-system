@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-20T12:12:38Z",
+  "updated_at": "2026-08-20T14:38:50Z",
   "tasks": [
     {
       "id": "T001",
@@ -631,8 +631,8 @@
       "id": "T050",
       "title": "Build admin video assembly edit review and export",
       "priority": 10,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "REVIEW",
+      "owner": "codex",
       "dependencies": [
         "T040"
       ],
@@ -648,8 +648,36 @@
         "Teacher review and admin final approval are recorded",
         "Export remains local and does not trigger upload"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-08-20T14:38:50Z",
+          "actor": "codex",
+          "evidence": "8 focused T050 tests; 107 Django tests; 19 repository tests; clean migration 0008; Remotion lock, TypeScript and synthetic smoke render passed"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-08-20T13:21:28Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "T040 completed; approved local Remotion-first video assembly, admin review and export as the next task"
+        },
+        {
+          "at": "2026-08-20T13:21:28Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implement approved local-first Remotion video assembly and review workflow"
+        },
+        {
+          "at": "2026-08-20T14:38:50Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Implemented deterministic local Remotion video assembly, bounded review/edit workflow and approval-gated local export package"
+        }
+      ]
     },
     {
       "id": "T060",

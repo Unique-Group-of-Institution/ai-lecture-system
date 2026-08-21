@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-20
+**Updated:** 2026-08-21
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T040 teacher slide-by-slide recording portal is approved and DONE; PR #7 finalization is in progress on its dedicated task branch
+**Overall status:** T050 local Remotion video assembly, review and export implementation is complete and in REVIEW on its dedicated task branch
 
 ## Completed
 
@@ -60,10 +60,10 @@
 
 ## Current task
 
-- No implementation task is claimed. T040 is DONE and PR #7 is being finalized; T050 remains unmodified in BACKLOG.
+- T050 is owned by `codex` and is in REVIEW. The complete local-first implementation and synthetic validation evidence are present on `task/t050-remotion-video-assembly`; independent review is required before any human may move it to DONE.
 
 ## Proposed backlog — not yet implemented
-- T050: admin video assembly, AI-assisted edit, teacher review and export.
+
 - T060: separately deferred consented voice-clone option.
 - T070: separately gated local YouTube-ready handoff and upload.
 
@@ -106,6 +106,17 @@
 ## Current quality rule
 
 Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.
+
+## T050 implementation
+
+- A deterministic local Remotion 4.0.514 composition now assembles immutable T022 slide/narration snapshots with exact selected T040 recording takes, bilingual Urdu/English layout, institutional branding, canonical captions and bounded transitions. Every draft is a new immutable render version; raw takes and prior render artifacts are never overwritten or deleted.
+- The Django service snapshots and revalidates the exact current slide approval fingerprint, recording completion, ordered revision/take selection, narration hashes and recording file hashes. Changed or missing evidence fails closed and makes the affected render or export ineligible.
+- Administrators can request drafts and apply only allowlisted branding, caption-layout and transition/hold edits. Spoken-content removal additionally requires exact canonical-transcript evidence, bounded timestamps and the assigned teacher's immutable approval before a derived render can be created.
+- The assigned teacher reviews the exact current draft before an administrator can grant final approval. Export packaging requires both approvals and the exact T030 `DRAFT_VIDEO_READINESS` and `EXPORT_READINESS` job/result gates; the resulting versioned local package contains MP4, SRT captions, metadata, a package manifest and editable PPTX slides, but performs no upload or publication.
+- Rendering authority remains server-side. HTTP cannot mint worker identity or execute rendering. The adapter uses a fixed local composition, codec and concurrency with `shell=False`, bounded output and timeout, exact argument schemas and project-contained ignored paths. It requires both an explicit local adapter switch and the evaluation-only acknowledgement; production use fails closed.
+- Migration `0008` adds PostgreSQL-portable immutable input, edit, review, approval, render-version and export-package evidence. The responsive admin/teacher interface exposes eligible bundles, versions, previews, edits, approval ordering and pending/failed/stale/unsupported states.
+- Official evaluation dependencies are pinned in the dedicated subproject: Remotion packages 4.0.514, React/React DOM 19.2.3, TypeScript 5.9.3 and matching React types. Lock validation found 300 registry.npmjs.org entries with integrity data and exact Remotion-family versions. Remotion-managed Chrome Headless Shell 149.0.7790.0 is local and ignored; no global, paid, cloud or upload dependency is used.
+- Synthetic-only verification passed on 2026-08-20: 8 focused T050 tests, all 107 Django tests and all 19 repository tests; workspace validation; Django system and migration-drift checks; clean SQLite migration through `0008`; compilation; Python dependency, npm lock/version/TypeScript, task/dashboard, privacy/ignore and diff checks. A one-second local synthetic H.264 smoke render succeeded (178,903 bytes; SHA-256 `fca3789e3bd550444f8573fe4aabb7edb992864bbe7e9be91116e72f81878e1f`). Generated media, binaries, caches and `node_modules` remain ignored and untracked.
 
 ## T040 implementation
 

@@ -13,7 +13,8 @@ from django.views.decorators.http import require_http_methods
 from .content import register_upload, sources_visible_to
 from .generation import actor_context_for_user, approve_slide, caption_for_slide, create_generation, revise_slide
 from .models import (
-    Chapter, ContentSource, GenerationRequest, LectureWorkflow, RecordingTake, SlideDraft, WorkflowJob,
+    Chapter, ContentSource, GenerationRequest, LectureWorkflow, RecordingTake, SlideDraft,
+    VideoEditDecision, VideoRenderVersion, WorkflowJob,
 )
 from .recording import (
     RecordingConflict, complete_recording, create_take, open_recording, recording_path,
@@ -23,6 +24,12 @@ from .workflow import (
     WorkflowConflict, cancel_job, claim_job, complete_job, create_workflow, fail_job,
     jobs_visible_to, submit_job, transition_workflow,
     workflow_actor_for_user, workflows_visible_to,
+)
+from .video import (
+    VideoConflict, UnsupportedRenderEnvironment, approve_spoken_edit,
+    create_edit_decision, grant_admin_final_approval, record_teacher_video_review,
+    render_video_path, request_export_package, request_initial_render,
+    submit_for_teacher_review, video_workflows_visible_to,
 )
 
 
@@ -86,6 +93,54 @@ def _recording_error(exc):
     if isinstance(exc, ValidationError):
         return _safe_json({"error": _validation_message(exc)}, status=400)
     return _safe_json({"error": "Recording record is unavailable."}, status=404)
+
+
+def _video_error(exc):
+    if isinstance(exc, PermissionDenied):
+        return _safe_json({"error": "Video operation is not authorized."}, status=403)
+    if isinstance(exc, VideoConflict):
+        return _safe_json({"error": _validation_message(exc)}, status=409)
+    if isinstance(exc, UnsupportedRenderEnvironment):
+        return _safe_json({"error": _validation_message(exc), "state": "unsupported"}, status=503)
+    if isinstance(exc, ValidationError):
+        return _safe_json({"error": _validation_message(exc)}, status=400)
+    return _safe_json({"error": "Video record is unavailable."}, status=404)
+
+
+def _video_body(request):
+    try:
+        if int(request.headers.get("Content-Length", "0") or 0) > settings.VIDEO_RENDER_MAX_REQUEST_BYTES:
+            raise ValueError
+        raw = request.body
+        if len(raw) > settings.VIDEO_RENDER_MAX_REQUEST_BYTES:
+            raise ValueError
+        value = json.loads(raw or "{}")
+        if not isinstance(value, dict):
+            raise ValueError
+        return value
+    except (ValueError, TypeError, json.JSONDecodeError) as exc:
+        raise ValidationError("Invalid bounded video request.") from exc
+
+
+def _render_payload(render):
+    return {
+        "id": render.pk,
+        "workflow_id": render.workflow_id,
+        "version": render.version,
+        "parent_id": render.parent_id,
+        "reference": render.reference,
+        "status": render.status,
+        "video_sha256": render.video_sha256,
+        "byte_size": render.byte_size,
+        "failure_reason_code": render.failure_reason_code,
+        "requested_at": render.requested_at.isoformat(),
+        "completed_at": render.completed_at.isoformat() if render.completed_at else None,
+        "review_submitted": hasattr(render, "review_submission"),
+        "teacher_review": (
+            render.teacher_review.decision if hasattr(render, "teacher_review") else None
+        ),
+        "admin_final_approved": hasattr(render, "admin_final_approval"),
+    }
 
 
 def _exact_fields(body, required, optional=()):
@@ -315,6 +370,216 @@ def slide_caption(request, slide_id):
         return _safe_json({"error": str(exc)}, status=403)
     except SlideDraft.DoesNotExist:
         return _safe_json({"error": "Slide is unavailable."}, status=403)
+
+
+@login_required
+@require_http_methods(["GET"])
+def admin_video_dashboard(request):
+    actor = workflow_actor_for_user(request.user)
+    if actor.actor_type != "ADMINISTRATOR":
+        raise PermissionDenied
+    rows = video_workflows_visible_to(actor).select_related(
+        "generation__chapter__course"
+    ).prefetch_related("video_render_versions", "video_export_packages")
+    return render(
+        request,
+        "lectures/video_dashboard.html",
+        {
+            "workflows": rows,
+            "mode": "admin",
+            "adapter_supported": bool(
+                settings.VIDEO_RENDER_ADAPTER_ENABLED and settings.VIDEO_RENDER_EVALUATION_ACK
+            ),
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET"])
+def teacher_video_dashboard(request):
+    actor = workflow_actor_for_user(request.user)
+    if actor.actor_type != "TEACHER":
+        raise PermissionDenied
+    rows = video_workflows_visible_to(actor).select_related(
+        "generation__chapter__course"
+    ).prefetch_related("video_render_versions")
+    return render(
+        request,
+        "lectures/video_dashboard.html",
+        {"workflows": rows, "mode": "teacher", "adapter_supported": True},
+    )
+
+
+@login_required
+@require_http_methods(["GET"])
+def video_workflow_detail(request, workflow_id):
+    actor = workflow_actor_for_user(request.user)
+    workflow = video_workflows_visible_to(actor).select_related(
+        "generation__chapter__course"
+    ).prefetch_related(
+        "video_render_versions__applied_edits__decision",
+        "video_edit_decisions",
+        "video_export_packages",
+    ).filter(pk=workflow_id).first()
+    if workflow is None:
+        raise PermissionDenied
+    if actor.actor_type not in {"ADMINISTRATOR", "TEACHER"}:
+        raise PermissionDenied
+    return render(
+        request,
+        "lectures/video_detail.html",
+        {
+            "workflow": workflow,
+            "mode": "admin" if actor.actor_type == "ADMINISTRATOR" else "teacher",
+            "decision_types": VideoEditDecision.DecisionType,
+            "adapter_supported": bool(
+                settings.VIDEO_RENDER_ADAPTER_ENABLED and settings.VIDEO_RENDER_EVALUATION_ACK
+            ),
+        },
+    )
+
+
+@login_required
+@require_http_methods(["POST"])
+def video_render_request_api(request, workflow_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, set())
+        item = request_initial_render(
+            actor=workflow_actor_for_user(request.user), workflow_id=workflow_id
+        )
+        return _safe_json(_render_payload(item), status=201)
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def video_edit_decision_api(request, workflow_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, {"base_render_id", "decision_type", "payload"})
+        decision, render_version = create_edit_decision(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            base_render_id=body["base_render_id"],
+            decision_type=body["decision_type"],
+            payload=body["payload"],
+        )
+        return _safe_json(
+            {
+                "decision_id": decision.pk,
+                "teacher_spoken_approval_required": render_version is None,
+                "render": _render_payload(render_version) if render_version else None,
+            },
+            status=201,
+        )
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def spoken_edit_approval_api(request, decision_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, set())
+        item = approve_spoken_edit(
+            actor=workflow_actor_for_user(request.user), decision_id=decision_id
+        )
+        return _safe_json(_render_payload(item), status=201)
+    except (PermissionDenied, ValidationError, VideoEditDecision.DoesNotExist) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def video_submit_review_api(request, workflow_id, render_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, set())
+        submission = submit_for_teacher_review(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            render_id=render_id,
+        )
+        return _safe_json({"submission_id": submission.pk, "job_id": submission.job_id}, status=201)
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def teacher_video_review_api(request, workflow_id, render_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, {"decision", "notes"})
+        review = record_teacher_video_review(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            render_id=render_id,
+            decision=body["decision"],
+            notes=body["notes"],
+        )
+        return _safe_json({"review_id": review.pk, "decision": review.decision}, status=201)
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def admin_final_video_approval_api(request, workflow_id, render_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, set())
+        approval = grant_admin_final_approval(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            render_id=render_id,
+        )
+        return _safe_json({"approval_id": approval.pk}, status=201)
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["POST"])
+def video_export_request_api(request, workflow_id, render_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, set())
+        package = request_export_package(
+            actor=workflow_actor_for_user(request.user),
+            workflow_id=workflow_id,
+            render_id=render_id,
+        )
+        return _safe_json(
+            {"package_id": package.pk, "job_id": package.job_id, "status": package.status},
+            status=201,
+        )
+    except (PermissionDenied, ValidationError, LectureWorkflow.DoesNotExist) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["GET"])
+def video_render_media(request, render_id):
+    actor = workflow_actor_for_user(request.user)
+    item = VideoRenderVersion.objects.select_related(
+        "workflow__generation__chapter__course"
+    ).filter(pk=render_id, status=VideoRenderVersion.Status.SUCCEEDED).first()
+    if item is None or not video_workflows_visible_to(actor).filter(pk=item.workflow_id).exists():
+        raise PermissionDenied
+    if actor.actor_type == "TEACHER" and item.reference != item.workflow.draft_video_reference:
+        raise PermissionDenied
+    try:
+        response = FileResponse(render_video_path(item).open("rb"), content_type="video/mp4")
+    except ValidationError as exc:
+        return _video_error(exc)
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    response["Content-Disposition"] = f'inline; filename="lecture-draft-v{item.version}.mp4"'
+    return response
 
 
 @login_required

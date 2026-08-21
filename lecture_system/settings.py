@@ -133,5 +133,18 @@ RECORDING_MAX_DURATION_MS = int(
 )
 RECORDING_MAX_REQUEST_BYTES = RECORDING_MAX_UPLOAD_BYTES + 64 * 1024
 
+# T050 renders only through a server-side local adapter into ignored project
+# storage. Enabling it requires an explicit process-only evaluation acknowledgement.
+VIDEO_STORAGE_ROOT = BASE_DIR / "data" / "lectures" / "t050-video"
+VIDEO_EXPORT_ROOT = BASE_DIR / "data" / "exports" / "t050-video"
+REMOTION_PROJECT_ROOT = BASE_DIR / "remotion"
+VIDEO_RENDER_ADAPTER_ENABLED = os.environ.get("AI_LECTURE_VIDEO_RENDER_ADAPTER", "") == "1"
+VIDEO_RENDER_EVALUATION_ACK = (
+    os.environ.get("AI_LECTURE_REMOTION_EVALUATION_ACK", "") == "evaluation-only-2026-08-20"
+)
+VIDEO_RENDER_TIMEOUT_SECONDS = 3600
+VIDEO_RENDER_MAX_OUTPUT_BYTES = 2 * 1024 * 1024 * 1024
+VIDEO_RENDER_MAX_REQUEST_BYTES = 64 * 1024
+
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/teacher/recordings/"

@@ -7,6 +7,9 @@ from .models import (
     LectureWorkflow, WorkflowAuditEvent, WorkflowJob, WorkflowJobEvent,
     RecordingCompletion, RecordingCompletionItem, RecordingSelection,
     RecordingSelectionEvent, RecordingTake,
+    AdminFinalVideoApproval, SpokenContentEditApproval, TeacherVideoReview,
+    VideoEditDecision, VideoExportPackage, VideoRenderAppliedEdit, VideoRenderInput,
+    VideoRenderInputItem, VideoRenderVersion, VideoReviewSubmission,
 )
 
 
@@ -148,3 +151,17 @@ for recording_model in (
     RecordingCompletionItem,
 ):
     admin.site.register(recording_model, ReadOnlyGenerationAdmin)
+
+for video_model in (
+    VideoRenderInput,
+    VideoRenderInputItem,
+    VideoRenderVersion,
+    VideoEditDecision,
+    SpokenContentEditApproval,
+    VideoRenderAppliedEdit,
+    VideoReviewSubmission,
+    TeacherVideoReview,
+    AdminFinalVideoApproval,
+    VideoExportPackage,
+):
+    admin.site.register(video_model, ReadOnlyGenerationAdmin)

@@ -1,0 +1,32 @@
+{
+  "name": "ai-lecture-t050-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "build": "remotion bundle src/index.ts",
+    "check": "tsc --noEmit",
+    "lock:check": "node ../scripts/check_remotion_lock.mjs",
+    "versions": "remotion versions",
+    "browser:ensure": "remotion browser ensure",
+    "smoke": "remotion render src/index.ts SyntheticLectureSmoke ../data/lectures/t050-smoke/synthetic-smoke.mp4 --props=fixtures/smoke-props.json --codec=h264 --concurrency=1 --log=verbose"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.514",
+    "@remotion/renderer": "4.0.514",
+    "@remotion/transitions": "4.0.514",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.514"
+  },
+  "devDependencies": {
+    "@remotion/cli": "4.0.514",
+    "@types/react": "19.2.7",
+    "@types/react-dom": "19.2.3",
+    "typescript": "5.9.3"
+  }
+}
