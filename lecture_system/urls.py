@@ -3,12 +3,14 @@ from django.contrib.auth import views as auth_views
 from django.urls import path
 
 from lectures import views
+from ugi_sso.views import consume_ugi_launch
 
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/login/", auth_views.LoginView.as_view(template_name="registration/login.html"), name="login"),
     path("accounts/logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("auth/ugi/consume", consume_ugi_launch, name="ugi-sso-consume"),
     path("teacher/recordings/", views.teacher_recording_portal, name="teacher-recording-portal"),
     path("teacher/recordings/<int:workflow_id>/", views.teacher_recording_detail, name="teacher-recording-detail"),
     path("teacher/recording-takes/<int:take_id>/media/", views.recording_take_media, name="recording-take-media"),

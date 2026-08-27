@@ -26,6 +26,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "lectures.apps.LecturesConfig",
+    "ugi_sso.apps.UgiSsoConfig",
 ]
 
 MIDDLEWARE = [
@@ -86,8 +87,6 @@ CONTENT_RENDER_TIMEOUT_SECONDS = int(os.environ.get("AI_LECTURE_RENDER_TIMEOUT_S
 CONTENT_PDF_TEXT_TIMEOUT_SECONDS = int(os.environ.get("AI_LECTURE_PDF_TEXT_TIMEOUT_SECONDS", 60))
 CONTENT_PDF_INSPECTION_TIMEOUT_SECONDS = int(os.environ.get("AI_LECTURE_PDF_INSPECTION_TIMEOUT_SECONDS", 15))
 CONTENT_MAX_PDF_INSPECTION_RESPONSE_BYTES = int(os.environ.get("AI_LECTURE_MAX_PDF_INSPECTION_RESPONSE_BYTES", 64 * 1024))
-# Conservative ceilings for the Phase-1 Windows PC (8 GB RAM). These are checked
-# before OCR/rendering and again while accumulating derived output.
 CONTENT_MAX_IMAGE_WIDTH = int(os.environ.get("AI_LECTURE_MAX_IMAGE_WIDTH", 10000))
 CONTENT_MAX_IMAGE_HEIGHT = int(os.environ.get("AI_LECTURE_MAX_IMAGE_HEIGHT", 10000))
 CONTENT_MAX_IMAGE_PIXELS = int(os.environ.get("AI_LECTURE_MAX_IMAGE_PIXELS", 40_000_000))
@@ -106,7 +105,6 @@ CONTENT_TESSDATA_PATH = Path(
     os.environ.get("AI_LECTURE_TESSDATA_PATH", BASE_DIR / "data" / "content-tools" / "tesseract-5.4.0" / "tessdata")
 )
 
-# T022's deterministic extractor is intentionally small enough for the Phase-1 PC.
 GENERATION_MAX_SOURCES = int(os.environ.get("AI_LECTURE_GENERATION_MAX_SOURCES", 10))
 GENERATION_MAX_TOTAL_CHARACTERS = int(os.environ.get("AI_LECTURE_GENERATION_MAX_CHARACTERS", 500_000))
 GENERATION_MAX_PAGE_CHARACTERS = int(os.environ.get("AI_LECTURE_GENERATION_MAX_PAGE_CHARACTERS", 50_000))
@@ -114,13 +112,9 @@ GENERATION_MAX_PAGE_TEXT_BYTES = int(os.environ.get("AI_LECTURE_GENERATION_MAX_P
 GENERATION_MAX_CLAIMS = int(os.environ.get("AI_LECTURE_GENERATION_MAX_CLAIMS", 120))
 GENERATION_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_GENERATION_MAX_REQUEST_BYTES", 256_000))
 
-# T030 stores only bounded identifiers and coordination metadata. SQLite is an
-# explicitly sequential Phase-1 queue; controlled concurrent workers require PostgreSQL.
 WORKFLOW_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_WORKFLOW_MAX_REQUEST_BYTES", 64_000))
 WORKFLOW_SQLITE_SINGLE_WORKER = True
 
-# T040 accepts only bounded browser-audio takes and keeps every accepted raw take
-# beneath ignored project-local storage. No media URL or external storage backend is configured.
 RECORDING_STORAGE_ROOT = Path(
     os.environ.get("AI_LECTURE_RECORDING_ROOT", BASE_DIR / "data" / "recordings")
 )
@@ -132,6 +126,9 @@ RECORDING_MAX_DURATION_MS = int(
     os.environ.get("AI_LECTURE_RECORDING_MAX_DURATION_MS", 20 * 60 * 1000)
 )
 RECORDING_MAX_REQUEST_BYTES = RECORDING_MAX_UPLOAD_BYTES + 64 * 1024
+
+# Dedicated cross-service secret. Never reuse Django SECRET_KEY.
+UGI_CRM_SSO_SIGNING_SECRET = os.environ.get("UGI_CRM_SSO_SIGNING_SECRET", "").strip()
 
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/teacher/recordings/"

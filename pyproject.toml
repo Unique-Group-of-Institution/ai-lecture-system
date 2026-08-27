@@ -10,12 +10,13 @@ requires-python = ">=3.12"
 dependencies = [
     "Django~=6.0.7",
     "Pillow==12.3.0",
+    "PyJWT==2.10.1",
     "pypdf==6.14.2",
     "pypdfium2==5.12.1",
 ]
 
 [tool.setuptools.packages.find]
-include = ["agent_workspace*", "lecture_system*", "lectures*"]
+include = ["agent_workspace*", "lecture_system*", "lectures*", "ugi_sso*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
