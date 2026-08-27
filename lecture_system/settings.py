@@ -109,9 +109,14 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_BACKEND = (
+    "django.contrib.staticfiles.storage.StaticFilesStorage"
+    if DEBUG
+    else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+)
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
-    "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    "staticfiles": {"BACKEND": STATICFILES_BACKEND},
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -151,7 +156,7 @@ GENERATION_MAX_CLAIMS = int(os.environ.get("AI_LECTURE_GENERATION_MAX_CLAIMS", 1
 GENERATION_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_GENERATION_MAX_REQUEST_BYTES", 256_000))
 
 WORKFLOW_MAX_REQUEST_BYTES = int(os.environ.get("AI_LECTURE_WORKFLOW_MAX_REQUEST_BYTES", 64_000))
-WORKFLOW_SQLITE_SINGLE_WORKER = not bool(DATABASE_URL)
+WORKFLOW_SQLITE_SINGLE_WORKER = DATABASES["default"]["ENGINE"].endswith("sqlite3")
 
 RECORDING_STORAGE_ROOT = Path(os.environ.get("AI_LECTURE_RECORDING_ROOT", DATA_ROOT / "recordings"))
 RECORDING_MAX_UPLOAD_BYTES = int(os.environ.get("AI_LECTURE_RECORDING_MAX_BYTES", 25 * 1024 * 1024))
