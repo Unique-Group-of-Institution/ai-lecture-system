@@ -4,7 +4,7 @@
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T050 local Remotion video assembly, review and export implementation is complete and in REVIEW on its dedicated task branch
+**Overall status:** T050 local Remotion video assembly, review and export is approved and DONE; PR #11 finalization is awaiting fresh exact-head CI before normal merge
 
 ## Completed
 
@@ -60,7 +60,7 @@
 
 ## Current task
 
-- T050 is owned by `codex` and is in REVIEW. The complete local-first implementation and synthetic validation evidence are present on `task/t050-remotion-video-assembly`; independent review is required before any human may move it to DONE.
+- T050 is DONE under `codex`. The product owner approved the recovery-corrected implementation and authorized PR #11 finalization and normal merge on 2026-08-30. Implementation head `ac29142e77773ec6eaab994236e5dfa35b11e188` passed fresh `workspace-ci` run `33308055942`; the synchronization-only finalization commit must receive fresh successful exact-head CI before merge. Old PR #8 is superseded by PR #11.
 
 ## Proposed backlog — not yet implemented
 
@@ -108,6 +108,8 @@
 Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.
 
 ## T050 implementation
+
+- The product owner approved T050, performed the exact human `REVIEW` to `DONE` transition, authorized PR #11 finalization and normal merge, and directed PR #8 to close as superseded on 2026-08-30.
 
 - The recovery merge now adds administrator-only, CSRF-protected failed-render recovery. A failed initial or latest derived render remains terminal and immutable; recovery revalidates current workflow/approval state, slide/narration snapshots, selected takes, recording bytes and hashes, then creates a uniquely addressed child render with the same immutable input/edit chain and a separate immutable recovery audit record. Duplicate recovery of one failed version is database-constrained.
 - Remotion render and export processing now require the exact `local-evaluation` deployment mode, a loopback execution host, the adapter switch and evaluation acknowledgement, and no Railway environment. Production, Railway, staging, operational, published, commercial, disabled, empty and unknown modes fail closed. Railway authentication/UI staging behavior remains available while T050 processing is disabled.

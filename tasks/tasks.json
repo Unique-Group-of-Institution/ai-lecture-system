@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-20T14:38:50Z",
+  "updated_at": "2026-08-30T11:08:46Z",
   "tasks": [
     {
       "id": "T001",
@@ -631,7 +631,7 @@
       "id": "T050",
       "title": "Build admin video assembly edit review and export",
       "priority": 10,
-      "status": "REVIEW",
+      "status": "DONE",
       "owner": "codex",
       "dependencies": [
         "T040"
@@ -658,6 +658,11 @@
           "at": "2026-08-30T10:48:30Z",
           "actor": "codex",
           "evidence": "Authorized T050 recovery and review corrections remain uncommitted in the active merge: failed-render recovery and the fail-closed local-evaluation boundary are retained; consecutive Remotion slide sequences prevent narration overlap; one frame-quantized manifest timeline drives composition, approved spoken cuts, holds and SRT; and workflow-detail environment status uses the complete support predicate. The earlier managed-sandbox temporary-directory errors were infrastructure-only. The same validation subsequently passed in normal local CMD with a workspace-local TEMP/TMP directory on 2026-08-30: all 14 focused T050 tests passed, all 118 Django tests passed in 108.585 seconds, and scripts/check_workspace.py reported WORKSPACE CHECK PASSED. Django system check, migration-drift check, pip check, TypeScript, the 300-package Remotion lock validator, npm audit with 0 vulnerabilities, and git diff --check passed. Local development dependencies were installed only in ignored .venv and remotion/node_modules; no production data or real media was used. T050 remains REVIEW."
+        },
+        {
+          "at": "2026-08-30T11:08:46Z",
+          "actor": "human",
+          "evidence": "Product owner approved T050 and PR #11 after recovery corrections. Implementation head ac29142e77773ec6eaab994236e5dfa35b11e188 passed fresh workspace-ci run 33308055942. T050 moved from REVIEW to DONE; finalization requires fresh CI before normal merge."
         }
       ],
       "history": [
@@ -681,6 +686,13 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Implemented deterministic local Remotion video assembly, bounded review/edit workflow and approval-gated local export package"
+        },
+        {
+          "at": "2026-08-30T11:08:46Z",
+          "actor": "human",
+          "from": "REVIEW",
+          "to": "DONE",
+          "note": "Product owner approved T050, authorized PR #11 finalization and normal merge, and directed old PR #8 to close as superseded"
         }
       ]
     },
