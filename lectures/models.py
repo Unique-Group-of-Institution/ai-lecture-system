@@ -780,3 +780,304 @@ class RecordingCompletionItem(ImmutableRecordingRecord):
                 condition=Q(position__gte=1), name="recording_completion_position_positive"
             ),
         ]
+
+
+class ImmutableVideoRecord(models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs):
+        if self.pk and type(self).objects.filter(pk=self.pk).exists():
+            raise ValueError("Video history records are immutable.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Video history records cannot be deleted.")
+
+
+class VideoRenderInput(ImmutableVideoRecord):
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="video_render_inputs"
+    )
+    recording_completion = models.ForeignKey(
+        RecordingCompletion, on_delete=models.PROTECT, related_name="video_render_inputs"
+    )
+    workflow_version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    slide_approval_fingerprint = models.CharField(max_length=64)
+    recording_reference = models.CharField(max_length=128)
+    input_sha256 = models.CharField(max_length=64, unique=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="video_render_inputs"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("workflow", "created_at", "pk")
+        indexes = [models.Index(fields=("workflow", "created_at"), name="video_input_workflow_idx")]
+
+
+class VideoRenderInputItem(ImmutableVideoRecord):
+    render_input = models.ForeignKey(
+        VideoRenderInput, on_delete=models.PROTECT, related_name="items"
+    )
+    position = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    slide_revision = models.ForeignKey(
+        SlideRevision, on_delete=models.PROTECT, related_name="video_render_input_items"
+    )
+    canonical_narration = models.ForeignKey(
+        CanonicalNarrationSnapshot,
+        on_delete=models.PROTECT,
+        related_name="video_render_input_items",
+    )
+    take = models.ForeignKey(
+        RecordingTake, on_delete=models.PROTECT, related_name="video_render_input_items"
+    )
+    title_snapshot = models.CharField(max_length=200)
+    claims_snapshot = models.JSONField(default=list)
+    narration_snapshot = models.TextField()
+    narration_sha256 = models.CharField(max_length=64)
+    take_sha256 = models.CharField(max_length=64)
+    take_duration_ms = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    take_storage_key = models.CharField(max_length=255)
+
+    class Meta:
+        ordering = ("render_input", "position")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("render_input", "position"), name="unique_video_input_position"
+            ),
+            models.CheckConstraint(condition=Q(position__gte=1), name="video_input_position_positive"),
+            models.CheckConstraint(
+                condition=Q(take_duration_ms__gte=1), name="video_input_duration_positive"
+            ),
+        ]
+
+
+class VideoRenderVersion(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending local render"
+        RUNNING = "RUNNING", "Local render running"
+        SUCCEEDED = "SUCCEEDED", "Draft render available"
+        FAILED = "FAILED", "Local render failed"
+        STALE = "STALE", "Inputs are stale"
+
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="video_render_versions"
+    )
+    render_input = models.ForeignKey(
+        VideoRenderInput, on_delete=models.PROTECT, related_name="render_versions"
+    )
+    version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    parent = models.ForeignKey(
+        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="derived_versions"
+    )
+    reference = models.CharField(max_length=128, unique=True)
+    status = models.CharField(max_length=16, choices=Status, default=Status.PENDING)
+    manifest_storage_key = models.CharField(max_length=255)
+    video_storage_key = models.CharField(max_length=255)
+    video_sha256 = models.CharField(max_length=64, blank=True)
+    byte_size = models.PositiveBigIntegerField(null=True, blank=True)
+    failure_reason_code = models.CharField(max_length=64, blank=True)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="video_render_versions"
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("workflow", "version")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("workflow", "version"), name="unique_video_render_version"
+            ),
+            models.CheckConstraint(condition=Q(version__gte=1), name="video_render_version_positive"),
+        ]
+        indexes = [
+            models.Index(fields=("status", "requested_at"), name="video_render_status_idx"),
+            models.Index(fields=("workflow", "version"), name="video_render_workflow_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and VideoRenderVersion.objects.filter(pk=self.pk).exists() and not getattr(
+            self, "_domain_service_write", False
+        ):
+            raise ValueError("Video render versions may change only through the video service.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Video render versions cannot be deleted.")
+
+
+class VideoEditDecision(ImmutableVideoRecord):
+    class DecisionType(models.TextChoices):
+        BRANDING = "BRANDING", "Institutional branding"
+        CAPTION_LAYOUT = "CAPTION_LAYOUT", "Caption layout"
+        TRANSITION_TIMING = "TRANSITION_TIMING", "Transition timing"
+        SPOKEN_CONTENT_REMOVAL = "SPOKEN_CONTENT_REMOVAL", "Approved spoken-content removal"
+
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="video_edit_decisions"
+    )
+    base_render = models.ForeignKey(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="edit_decisions"
+    )
+    decision_type = models.CharField(max_length=32, choices=DecisionType)
+    payload = models.JSONField(default=dict)
+    payload_sha256 = models.CharField(max_length=64)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="video_edit_decisions"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("workflow", "created_at", "pk")
+        indexes = [models.Index(fields=("workflow", "created_at"), name="video_edit_workflow_idx")]
+
+
+class VideoRenderRecovery(ImmutableVideoRecord):
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="video_render_recoveries"
+    )
+    failed_render = models.OneToOneField(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="recovery"
+    )
+    replacement_render = models.OneToOneField(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="recovery_origin"
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="video_render_recoveries"
+    )
+    reason = models.CharField(max_length=300)
+    requested_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("workflow", "requested_at", "pk")
+
+
+class SpokenContentEditApproval(ImmutableVideoRecord):
+    decision = models.OneToOneField(
+        VideoEditDecision, on_delete=models.PROTECT, related_name="spoken_approval"
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="spoken_content_edit_approvals",
+    )
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+
+class VideoRenderAppliedEdit(ImmutableVideoRecord):
+    render = models.ForeignKey(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="applied_edits"
+    )
+    decision = models.ForeignKey(
+        VideoEditDecision, on_delete=models.PROTECT, related_name="applied_to_renders"
+    )
+    position = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+
+    class Meta:
+        ordering = ("render", "position")
+        constraints = [
+            models.UniqueConstraint(fields=("render", "decision"), name="unique_render_edit"),
+            models.UniqueConstraint(fields=("render", "position"), name="unique_render_edit_position"),
+        ]
+
+
+class VideoReviewSubmission(ImmutableVideoRecord):
+    render = models.OneToOneField(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="review_submission"
+    )
+    job = models.OneToOneField(
+        WorkflowJob, on_delete=models.PROTECT, related_name="video_review_submission"
+    )
+    submitted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="video_review_submissions",
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True)
+
+
+class TeacherVideoReview(ImmutableVideoRecord):
+    class Decision(models.TextChoices):
+        APPROVED = "APPROVED", "Approved"
+        REVISION_REQUESTED = "REVISION_REQUESTED", "Revision requested"
+
+    render = models.OneToOneField(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="teacher_review"
+    )
+    decision = models.CharField(max_length=24, choices=Decision)
+    notes = models.CharField(max_length=500, blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="teacher_video_reviews"
+    )
+    reviewed_at = models.DateTimeField(auto_now_add=True)
+
+
+class AdminFinalVideoApproval(ImmutableVideoRecord):
+    render = models.OneToOneField(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="admin_final_approval"
+    )
+    teacher_review = models.OneToOneField(
+        TeacherVideoReview, on_delete=models.PROTECT, related_name="admin_final_approval"
+    )
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="admin_final_video_approvals",
+    )
+    approved_at = models.DateTimeField(auto_now_add=True)
+
+
+class VideoExportPackage(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending local package"
+        RUNNING = "RUNNING", "Local package running"
+        READY = "READY", "Local package ready"
+        FAILED = "FAILED", "Local package failed"
+        STALE = "STALE", "Approval or inputs are stale"
+
+    workflow = models.ForeignKey(
+        LectureWorkflow, on_delete=models.PROTECT, related_name="video_export_packages"
+    )
+    render = models.ForeignKey(
+        VideoRenderVersion, on_delete=models.PROTECT, related_name="export_packages"
+    )
+    admin_approval = models.OneToOneField(
+        AdminFinalVideoApproval, on_delete=models.PROTECT, related_name="export_package"
+    )
+    job = models.OneToOneField(
+        WorkflowJob, on_delete=models.PROTECT, related_name="video_export_package"
+    )
+    version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    reference = models.CharField(max_length=128, unique=True)
+    storage_key = models.CharField(max_length=255)
+    status = models.CharField(max_length=16, choices=Status, default=Status.PENDING)
+    manifest_sha256 = models.CharField(max_length=64, blank=True)
+    failure_reason_code = models.CharField(max_length=64, blank=True)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="video_export_packages"
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("workflow", "version")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("workflow", "version"), name="unique_video_export_version"
+            ),
+            models.CheckConstraint(condition=Q(version__gte=1), name="video_export_version_positive"),
+        ]
+        indexes = [models.Index(fields=("status", "requested_at"), name="video_export_status_idx")]
+
+    def save(self, *args, **kwargs):
+        if self.pk and VideoExportPackage.objects.filter(pk=self.pk).exists() and not getattr(
+            self, "_domain_service_write", False
+        ):
+            raise ValueError("Video export packages may change only through the video service.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Video export packages cannot be deleted.")

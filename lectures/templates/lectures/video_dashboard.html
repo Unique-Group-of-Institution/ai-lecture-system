@@ -1,0 +1,38 @@
+{% load static %}
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% if mode == 'admin' %}Video assembly{% else %}Teacher video review{% endif %}</title>
+  <link rel="stylesheet" href="{% static 'lectures/video.css' %}">
+</head>
+<body>
+  <header class="topbar">
+    <div><span class="eyebrow">Unique Group of Institutions</span><h1>{% if mode == 'admin' %}Lecture video assembly{% else %}Teacher video review · ویڈیو جائزہ{% endif %}</h1></div>
+    <form action="{% url 'logout' %}" method="post">{% csrf_token %}<button class="secondary">Sign out</button></form>
+  </header>
+  <main class="page">
+    {% if mode == 'admin' and not adapter_supported %}
+      <section class="notice unsupported" role="status"><strong>Unsupported environment</strong><p>The trusted local Remotion evaluation adapter is disabled. Requests remain unavailable until the process-only evaluation flags are set.</p></section>
+    {% endif %}
+    <section aria-labelledby="bundles-title">
+      <div class="section-title"><div><span class="eyebrow">Local-only workflow</span><h2 id="bundles-title">Eligible recording bundles</h2></div><span class="count">{{ workflows|length }} workflow{{ workflows|length|pluralize }}</span></div>
+      <div class="grid">
+        {% for workflow in workflows %}
+          <article class="card">
+            <div class="card-head"><span class="state state-{{ workflow.state|lower }}">{{ workflow.get_state_display }}</span><span>v{{ workflow.version }}</span></div>
+            <h3>{{ workflow.generation.chapter.course.name }}</h3>
+            <p>{{ workflow.generation.chapter.course.class_name }} · {{ workflow.generation.chapter.course.subject_name }}</p>
+            <p class="urdu" dir="rtl">{{ workflow.generation.chapter.title }}</p>
+            <dl><div><dt>Draft versions</dt><dd>{{ workflow.video_render_versions.count }}</dd></div><div><dt>Local packages</dt><dd>{{ workflow.video_export_packages.count }}</dd></div></dl>
+            <a class="button" href="{% url 'video-workflow-detail' workflow.pk %}">{% if mode == 'admin' %}Open assembly{% else %}Open review · جائزہ{% endif %}</a>
+          </article>
+        {% empty %}
+          <div class="empty"><h3>No video workflow is available</h3><p>Pending recording bundles will appear here after all approved slides have selected immutable takes.</p></div>
+        {% endfor %}
+      </div>
+    </section>
+  </main>
+</body>
+</html>
