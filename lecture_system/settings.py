@@ -172,5 +172,21 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = env_bool("AI_LECTURE_SECURE_COOKIES", default=not DEBUG)
 CSRF_COOKIE_SECURE = env_bool("AI_LECTURE_SECURE_COOKIES", default=not DEBUG)
 
+# T050 renders only through a server-side local adapter into ignored project
+# storage. Enabling it requires an explicit process-only evaluation acknowledgement.
+VIDEO_STORAGE_ROOT = DATA_ROOT / "lectures" / "t050-video"
+VIDEO_EXPORT_ROOT = DATA_ROOT / "exports" / "t050-video"
+REMOTION_PROJECT_ROOT = BASE_DIR / "remotion"
+VIDEO_RENDER_ADAPTER_ENABLED = os.environ.get("AI_LECTURE_VIDEO_RENDER_ADAPTER", "") == "1"
+VIDEO_RENDER_EVALUATION_ACK = (
+    os.environ.get("AI_LECTURE_REMOTION_EVALUATION_ACK", "") == "evaluation-only-2026-08-20"
+)
+VIDEO_RENDER_DEPLOYMENT_MODE = os.environ.get("AI_LECTURE_DEPLOYMENT_MODE", "").strip().lower()
+VIDEO_RENDER_EXECUTION_HOST = os.environ.get("AI_LECTURE_LOCAL_EXECUTION_HOST", "").strip().lower()
+VIDEO_RENDER_RAILWAY_ENVIRONMENT = bool(os.environ.get("RAILWAY_ENVIRONMENT", "").strip())
+VIDEO_RENDER_TIMEOUT_SECONDS = 3600
+VIDEO_RENDER_MAX_OUTPUT_BYTES = 2 * 1024 * 1024 * 1024
+VIDEO_RENDER_MAX_REQUEST_BYTES = 64 * 1024
+
 LOGIN_URL = "/accounts/login/"
 LOGIN_REDIRECT_URL = "/teacher/recordings/"

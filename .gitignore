@@ -20,6 +20,11 @@ __pycache__/
 venv/
 *.egg-info/
 
+# Local JavaScript dependencies and Remotion-managed browser/FFmpeg caches
+node_modules/
+remotion/public/runtime/*
+!remotion/public/runtime/.gitkeep
+
 # Runtime media and generated files
 data/uploads/*
 data/lectures/*

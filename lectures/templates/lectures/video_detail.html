@@ -1,0 +1,72 @@
+{% load static %}
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video workflow {{ workflow.pk }}</title>
+  <link rel="stylesheet" href="{% static 'lectures/video.css' %}">
+  <script src="{% static 'lectures/video.js' %}" defer></script>
+</head>
+<body data-mode="{{ mode }}" data-workflow-id="{{ workflow.pk }}">
+  <header class="topbar compact">
+    <div><a class="back" href="{% if mode == 'admin' %}{% url 'admin-video-dashboard' %}{% else %}{% url 'teacher-video-dashboard' %}{% endif %}">← Back</a><h1>{{ workflow.generation.chapter.course.name }}</h1><p>{{ workflow.generation.chapter.title }}</p></div>
+    <span class="state state-{{ workflow.state|lower }}" id="workflow-state">{{ workflow.get_state_display }}</span>
+  </header>
+  <main class="page detail">
+    <section class="notice" aria-live="polite" id="status-message"><strong>Local and approval-gated</strong><p>Raw recordings and older renders are retained. No upload or publication action exists here.</p></section>
+    {% if mode == 'admin' and not adapter_supported %}<section class="notice unsupported"><strong>Unsupported environment</strong><p>Rendering is disabled until the trusted evaluation-only adapter is enabled.</p></section>{% endif %}
+
+    <section class="panel">
+      <div class="section-title"><div><span class="eyebrow">Immutable history</span><h2>Draft render versions</h2></div>{% if mode == 'admin' and workflow.state == 'RECORDING_READY' %}<button id="request-render" class="button" {% if not adapter_supported %}disabled{% endif %}>Request draft render</button>{% endif %}</div>
+      <div class="versions">
+        {% for item in workflow.video_render_versions.all %}
+          <article class="version" data-render-id="{{ item.pk }}" data-render-status="{{ item.status }}">
+            <div class="card-head"><strong>Version {{ item.version }}</strong><span class="status-dot status-{{ item.status|lower }}">{{ item.get_status_display }}</span></div>
+            <p class="mono">{{ item.reference }}</p>
+            {% if item.status == 'SUCCEEDED' %}
+              <video controls preload="metadata" src="{% url 'video-render-media' item.pk %}" aria-label="Lecture draft version {{ item.version }}"></video>
+              {% if mode == 'admin' and workflow.state == 'DRAFT_VIDEO_PENDING' %}<button class="button submit-review" data-render-id="{{ item.pk }}">Submit this version for teacher review</button>{% endif %}
+              {% if mode == 'teacher' and workflow.state == 'DRAFT_VIDEO_READY' and workflow.draft_video_reference == item.reference %}
+                <form class="teacher-review" data-render-id="{{ item.pk }}">
+                  <label for="review-notes-{{ item.pk }}">Review notes · جائزہ نوٹس</label><textarea id="review-notes-{{ item.pk }}" maxlength="500"></textarea>
+                  <div class="actions"><button class="secondary" name="decision" value="REVISION_REQUESTED">Request revision · ترمیم</button><button class="button" name="decision" value="APPROVED">Approve video · منظور</button></div>
+                </form>
+              {% endif %}
+              {% if mode == 'admin' and workflow.state == 'TEACHER_VIDEO_APPROVED' and workflow.draft_video_reference == item.reference %}<button class="button admin-final" data-render-id="{{ item.pk }}">Grant final admin approval</button>{% endif %}
+              {% if mode == 'admin' and workflow.state == 'FINAL_ADMIN_APPROVED' and workflow.draft_video_reference == item.reference %}<button class="button request-export" data-render-id="{{ item.pk }}">Prepare local export package</button>{% endif %}
+            {% elif item.status == 'FAILED' %}<p class="error">Render failed safely: {{ item.failure_reason_code }}. The previous version and all raw recordings remain unchanged.</p>
+            {% elif item.status == 'STALE' %}<p class="warning">This version is stale because its approved input evidence changed.</p>
+            {% else %}<p class="pending">Pending trusted local worker processing.</p>{% endif %}
+          </article>
+        {% empty %}<div class="empty"><p>No draft render has been requested.</p></div>{% endfor %}
+      </div>
+    </section>
+
+    {% if mode == 'admin' and workflow.state == 'DRAFT_VIDEO_PENDING' and workflow.video_render_versions.count %}
+    <section class="panel">
+      <span class="eyebrow">Bounded decisions</span><h2>Admin edit decision</h2>
+      <p>Layout and timing decisions create a new version. Spoken-content removal additionally requires exact canonical transcript evidence, timestamps, and the assigned teacher’s approval.</p>
+      <form id="edit-form">
+        <label for="base-render">Latest successful version</label><select id="base-render" required>{% for item in workflow.video_render_versions.all %}{% if item.status == 'SUCCEEDED' %}<option value="{{ item.pk }}">Version {{ item.version }}</option>{% endif %}{% endfor %}</select>
+        <label for="decision-type">Decision type</label><select id="decision-type"><option value="BRANDING">Institutional branding</option><option value="CAPTION_LAYOUT">Caption layout</option><option value="TRANSITION_TIMING">Transition timing</option><option value="SPOKEN_CONTENT_REMOVAL">Spoken-content removal</option></select>
+        <div id="edit-fields" class="form-grid"></div>
+        <button class="button" type="submit">Record decision</button>
+      </form>
+    </section>
+    {% endif %}
+
+    {% if mode == 'teacher' %}
+    <section class="panel"><span class="eyebrow">Audio integrity</span><h2>Pending spoken-content edit evidence</h2>
+      {% for decision in workflow.video_edit_decisions.all %}{% if decision.decision_type == 'SPOKEN_CONTENT_REMOVAL' %}
+        <article class="evidence"><p><strong>Slide {{ decision.payload.slide_position }}:</strong> {{ decision.payload.start_ms }}–{{ decision.payload.end_ms }} ms</p><blockquote dir="auto">{{ decision.payload.transcript_excerpt }}</blockquote><p>{{ decision.payload.reason }}</p><button class="button approve-spoken" data-decision-id="{{ decision.pk }}">Approve timestamped removal</button></article>
+      {% endif %}{% empty %}<p>No spoken-content removal is pending.</p>{% endfor %}
+    </section>
+    {% endif %}
+
+    <section class="panel"><span class="eyebrow">Local handoff only</span><h2>Export-package readiness</h2>
+      {% for package in workflow.video_export_packages.all %}<article class="package"><strong>Package v{{ package.version }}</strong><span class="status-dot status-{{ package.status|lower }}">{{ package.get_status_display }}</span><p class="mono">{{ package.reference }}</p>{% if package.status == 'READY' %}<p>MP4, captions, metadata and a hash manifest are ready in ignored local storage. Nothing was uploaded.</p>{% endif %}</article>{% empty %}<p>Pending teacher video approval and final administrator approval.</p>{% endfor %}
+    </section>
+  </main>
+</body>
+</html>

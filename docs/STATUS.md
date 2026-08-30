@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-20
+**Updated:** 2026-08-30
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T040 teacher slide-by-slide recording portal is approved and DONE; PR #7 finalization is in progress on its dedicated task branch
+**Overall status:** T050 local Remotion video assembly, review and export is approved and DONE; PR #11 finalization is awaiting fresh exact-head CI before normal merge
 
 ## Completed
 
@@ -60,10 +60,10 @@
 
 ## Current task
 
-- No implementation task is claimed. T040 is DONE and PR #7 is being finalized; T050 remains unmodified in BACKLOG.
+- T050 is DONE under `codex`. The product owner approved the recovery-corrected implementation and authorized PR #11 finalization and normal merge on 2026-08-30. Implementation head `ac29142e77773ec6eaab994236e5dfa35b11e188` passed fresh `workspace-ci` run `33308055942`; the synchronization-only finalization commit must receive fresh successful exact-head CI before merge. Old PR #8 is superseded by PR #11.
 
 ## Proposed backlog — not yet implemented
-- T050: admin video assembly, AI-assisted edit, teacher review and export.
+
 - T060: separately deferred consented voice-clone option.
 - T070: separately gated local YouTube-ready handoff and upload.
 
@@ -106,6 +106,23 @@
 ## Current quality rule
 
 Keep the repository private under `Unique-Group-of-Institution`. Changes must use task or feature branches, pull requests, and passing CI; never bypass the local hook.
+
+## T050 implementation
+
+- The product owner approved T050, performed the exact human `REVIEW` to `DONE` transition, authorized PR #11 finalization and normal merge, and directed PR #8 to close as superseded on 2026-08-30.
+
+- The recovery merge now adds administrator-only, CSRF-protected failed-render recovery. A failed initial or latest derived render remains terminal and immutable; recovery revalidates current workflow/approval state, slide/narration snapshots, selected takes, recording bytes and hashes, then creates a uniquely addressed child render with the same immutable input/edit chain and a separate immutable recovery audit record. Duplicate recovery of one failed version is database-constrained.
+- Remotion render and export processing now require the exact `local-evaluation` deployment mode, a loopback execution host, the adapter switch and evaluation acknowledgement, and no Railway environment. Production, Railway, staging, operational, published, commercial, disabled, empty and unknown modes fail closed. Railway authentication/UI staging behavior remains available while T050 processing is disabled.
+- Recovery-review corrections on 2026-08-30 replace overlapping Remotion slide transitions with consecutive sequences and an internal visual fade. The manifest now carries one frame-quantized timeline used by composition metadata, narration placement and SRT generation, including holds and teacher-approved spoken cuts. The earlier managed-sandbox temporary-directory errors were infrastructure-only; the same validation subsequently passed in normal local CMD with a workspace-local `TEMP`/`TMP` directory: all 14 focused T050 tests passed, all 118 Django tests passed in 108.585 seconds, and `scripts/check_workspace.py` reported `WORKSPACE CHECK PASSED`. Focused coverage includes deterministic two-slide non-zero-transition/SRT timestamps and production/Railway/unsupported-host UI regressions. Django system check, migration-drift check, `pip check`, TypeScript, the 300-package Remotion lock validator, npm audit with 0 vulnerabilities, and `git diff --check` passed. Local development dependencies were installed only in ignored `.venv` and `remotion/node_modules`; no production data or real media was used.
+
+- A deterministic local Remotion 4.0.514 composition now assembles immutable T022 slide/narration snapshots with exact selected T040 recording takes, bilingual Urdu/English layout, institutional branding, canonical captions and bounded transitions. Every draft is a new immutable render version; raw takes and prior render artifacts are never overwritten or deleted.
+- The Django service snapshots and revalidates the exact current slide approval fingerprint, recording completion, ordered revision/take selection, narration hashes and recording file hashes. Changed or missing evidence fails closed and makes the affected render or export ineligible.
+- Administrators can request drafts and apply only allowlisted branding, caption-layout and transition/hold edits. Spoken-content removal additionally requires exact canonical-transcript evidence, bounded timestamps and the assigned teacher's immutable approval before a derived render can be created.
+- The assigned teacher reviews the exact current draft before an administrator can grant final approval. Export packaging requires both approvals and the exact T030 `DRAFT_VIDEO_READINESS` and `EXPORT_READINESS` job/result gates; the resulting versioned local package contains MP4, SRT captions, metadata, a package manifest and editable PPTX slides, but performs no upload or publication.
+- Rendering authority remains server-side. HTTP cannot mint worker identity or execute rendering. The adapter uses a fixed local composition, codec and concurrency with `shell=False`, bounded output and timeout, exact argument schemas and project-contained ignored paths. It requires both an explicit local adapter switch and the evaluation-only acknowledgement; production use fails closed.
+- Migration `0008` adds PostgreSQL-portable immutable input, edit, review, approval, render-version and export-package evidence. The responsive admin/teacher interface exposes eligible bundles, versions, previews, edits, approval ordering and pending/failed/stale/unsupported states.
+- Official evaluation dependencies are pinned in the dedicated subproject: Remotion packages 4.0.514, React/React DOM 19.2.3, TypeScript 5.9.3 and matching React types. Lock validation found 300 registry.npmjs.org entries with integrity data and exact Remotion-family versions. Remotion-managed Chrome Headless Shell 149.0.7790.0 is local and ignored; no global, paid, cloud or upload dependency is used.
+- Synthetic-only verification passed on 2026-08-20: 8 focused T050 tests, all 107 Django tests and all 19 repository tests; workspace validation; Django system and migration-drift checks; clean SQLite migration through `0008`; compilation; Python dependency, npm lock/version/TypeScript, task/dashboard, privacy/ignore and diff checks. A one-second local synthetic H.264 smoke render succeeded (178,903 bytes; SHA-256 `fca3789e3bd550444f8573fe4aabb7edb992864bbe7e9be91116e72f81878e1f`). Generated media, binaries, caches and `node_modules` remain ignored and untracked.
 
 ## T040 implementation
 
