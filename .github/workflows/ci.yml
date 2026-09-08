@@ -33,6 +33,13 @@ jobs:
           python manage.py check
           python manage.py makemigrations --check --dry-run
           python -m pip check
+      - name: Validate embedded slide engine
+        run: |
+          npm install --prefix slide-engine --ignore-scripts
+          npm --prefix slide-engine test
+          npm --prefix slide-engine run validate -- --input content/samples/final-02-all-slide-types.json
+          npm --prefix slide-engine run generate -- --input content/samples/final-02-all-slide-types.json --output "$RUNNER_TEMP/final-03-smoke.pptx"
+          test -s "$RUNNER_TEMP/final-03-smoke.pptx"
       - name: Validate exact Remotion dependencies and TypeScript
         run: |
           node scripts/check_remotion_lock.mjs
