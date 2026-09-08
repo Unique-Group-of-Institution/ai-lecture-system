@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ chapter.name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 2rem; }
+        .container { max-width: 800px; margin: auto; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        #status { margin-top: 20px; padding: 10px; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{{ chapter.name }}</h1>
+        <p><strong>Course:</strong> {{ chapter.course.name }}</p>
+        <hr>
+
+        <button onclick="generateSlides('{{ chapter.id }}')">🚀 Generate Lecture Slides</button>
+        <div id="status"></div>
+    </div>
+
+    <script>
+    function generateSlides(chapterId) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML = '⏳ Generating slides...';
+        statusDiv.style.background = '#fff3cd';
+        statusDiv.style.color = '#856404';
+
+        fetch(`/api/chapters/${chapterId}/generate-slides/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            }
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === 'success') {
+                statusDiv.innerHTML = `✅ ${data.message}`;
+                statusDiv.style.background = '#d4edda';
+                statusDiv.style.color = '#155724';
+                if (data.output_path) {
+                    statusDiv.innerHTML += `<br>📄 <a href="${data.output_path}" target="_blank">Download PPTX</a>`;
+                }
+            } else {
+                statusDiv.innerHTML = `❌ ${data.error}`;
+                statusDiv.style.background = '#f8d7da';
+                statusDiv.style.color = '#721c24';
+            }
+        })
+        .catch(err => {
+            statusDiv.innerHTML = `❌ Error: ${err.message}`;
+            statusDiv.style.background = '#f8d7da';
+            statusDiv.style.color = '#721c24';
+        });
+    }
+    </script>
+</body>
+</html>
