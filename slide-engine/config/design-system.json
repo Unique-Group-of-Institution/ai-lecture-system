@@ -1,0 +1,9 @@
+{
+  "brand": "Unique Group of Institutions",
+  "ratio": "LAYOUT_WIDE",
+  "fonts": {"display": "Aptos Display", "body": "Aptos", "math": "Cambria Math"},
+  "sizes": {"deckTitle": 52, "slideTitle": 36, "subheading": 24, "body": 19, "caption": 13},
+  "colors": {"navy": "17265C", "blue": "273A8B", "gold": "F2C400", "ink": "182033", "muted": "657087", "paper": "F7F9FC", "white": "FFFFFF", "line": "D8DFEE"},
+  "safeArea": {"left": 0.55, "right": 0.55, "top": 0.42, "bottom": 0.38},
+  "logo": {"path": "assets/ugi-logo.png", "x": 12.25, "y": 0.18, "w": 0.58, "h": 0.58}
+}
