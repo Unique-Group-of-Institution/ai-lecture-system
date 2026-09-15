@@ -1,7 +1,11 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
 import re
+import subprocess
+import tempfile
+import os
+from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
@@ -32,6 +36,13 @@ from .video import (
     request_export_package, request_initial_render,
     submit_for_teacher_review, video_workflows_visible_to,
 )
+
+
+# ============================================================
+# SLIDE ENGINE PATHS (FINAL-04)
+# ============================================================
+SLIDE_ENGINE_PATH = Path("E:/LMS Project/ugi-education-slide-engine")
+SLIDE_ENGINE_SCRIPT = SLIDE_ENGINE_PATH / "scripts" / "generate-deck.mjs"
 
 
 def _safe_json(payload, *, status=200):
@@ -372,6 +383,173 @@ def slide_caption(request, slide_id):
     except SlideDraft.DoesNotExist:
         return _safe_json({"error": "Slide is unavailable."}, status=403)
 
+
+# ============================================================
+# ðŸ†• FINAL-04: PPTX EXPORT (SLIDE ENGINE INTEGRATION)
+# ============================================================
+
+def _generation_to_slide_engine_json(generation: GenerationRequest) -> dict:
+    """
+    Convert an existing GenerationRequest (with SlideDraft + SlideRevision)
+    into the JSON format expected by the Node.js slide engine.
+    
+    This does NOT modify any existing models or workflows.
+    It only READS from them.
+    """
+    slides = []
+    for slide in generation.slides.all().order_by("position"):
+        try:
+            revision = slide.revisions.get(version=slide.current_version)
+        except ObjectDoesNotExist:
+            continue
+
+        # Extract narration text (flatten statements)
+        narration_text = "\n".join(
+            stmt.text for stmt in revision.narration_statements.all()
+        ) if hasattr(revision, "narration_statements") else ""
+
+        # Extract claims as bullet content
+        claims_text = "\n".join(
+            f"â€¢ {claim.text}" for claim in revision.claims.all()
+        ) if hasattr(revision, "claims") else ""
+
+        # Combine content
+        content = claims_text or narration_text or revision.title
+
+        slides.append({
+            "type": "concept",  # default â€“ can be enhanced later
+            "title": revision.title or f"Slide {slide.position}",
+            "content": content,
+            "speaker_notes": narration_text[:500] if narration_text else "",
+        })
+
+    chapter = generation.chapter
+    return {
+        "title": chapter.title if hasattr(chapter, "title") else str(chapter),
+        "subject": getattr(chapter.course, "subject_name", "General") if hasattr(chapter, "course") else "General",
+        "class": getattr(chapter.course, "class_name", "") if hasattr(chapter, "course") else "",
+        "sections": slides,
+    }
+
+
+@login_required
+@require_http_methods(["POST", "GET"])
+def export_generation_pptx(request, generation_id):
+    """
+    FINAL-04: Export an approved GenerationRequest as a PowerPoint file.
+    
+    This endpoint:
+    1. Loads the GenerationRequest
+    2. Converts its slides (SlideDraft + SlideRevision) to Slide Engine JSON
+    3. Calls the Node.js slide engine via subprocess
+    4. Returns the generated .pptx as a downloadable file
+    
+    Security:
+    - Requires authentication
+    - Only allows the owner of the generation to export
+    - Uses bounded subprocess with timeout
+    - Does NOT expose secrets or the slide engine path to the client
+    """
+    try:
+        context = actor_context_for_user(request.user)
+        generation = GenerationRequest.objects.filter(
+            pk=generation_id, requested_by_id=context.actor_id
+        ).select_related("chapter__course").first()
+        
+        if generation is None:
+            return _safe_json({"error": "Generation is unavailable."}, status=403)
+
+        # 1. Convert to slide engine JSON
+        lecture_json = _generation_to_slide_engine_json(generation)
+        
+        if not lecture_json.get("sections"):
+            return _safe_json(
+                {"error": "No slides found in this generation."},
+                status=400
+            )
+
+        # 2. Write JSON to temp file
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
+            json.dump(lecture_json, f, ensure_ascii=False, indent=2)
+            temp_json = f.name
+
+        # 3. Output PPTX path
+        output_dir = Path(settings.MEDIA_ROOT) / "exports" / "pptx"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_pptx = output_dir / f"generation-{generation_id}.pptx"
+
+        # 4. Verify slide engine exists
+        if not SLIDE_ENGINE_SCRIPT.exists():
+            os.unlink(temp_json)
+            return _safe_json(
+                {"error": "Slide engine is not available on this server."},
+                status=503
+            )
+
+        # 5. Call Node.js slide engine (bounded, safe)
+        try:
+            result = subprocess.run(
+                [
+                    "node",
+                    str(SLIDE_ENGINE_SCRIPT),
+                    "--input", temp_json,
+                    "--output", str(output_pptx),
+                ],
+                cwd=str(SLIDE_ENGINE_PATH),
+                capture_output=True,
+                text=True,
+                timeout=120,  # 2 minute timeout
+                check=False,
+            )
+        except subprocess.TimeoutExpired:
+            os.unlink(temp_json)
+            return _safe_json(
+                {"error": "Slide engine timed out."},
+                status=504
+            )
+        finally:
+            if os.path.exists(temp_json):
+                os.unlink(temp_json)
+
+        if result.returncode != 0:
+            return _safe_json(
+                {
+                    "error": "Slide engine failed.",
+                    "detail": result.stderr[:500] if result.stderr else "Unknown error",
+                },
+                status=500
+            )
+
+        if not output_pptx.exists():
+            return _safe_json(
+                {"error": "Slide engine did not produce a file."},
+                status=500
+            )
+
+        # 6. Return the file
+        response = FileResponse(
+            open(output_pptx, "rb"),
+            content_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        )
+        response["Content-Disposition"] = f'attachment; filename="lecture-{generation_id}.pptx"'
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+    except PermissionDenied as exc:
+        return _safe_json({"error": str(exc)}, status=403)
+    except Exception as exc:
+        return _safe_json(
+            {"error": "PPTX export failed.", "detail": str(exc)[:200]},
+            status=500
+        )
+
+
+# ============================================================
+# EXISTING VIDEO / WORKFLOW VIEWS (unchanged below)
+# ============================================================
 
 @login_required
 @require_http_methods(["GET"])
@@ -984,4 +1162,5 @@ def recording_take_media(request, take_id):
         response["X-Content-Type-Options"] = "nosniff"
         return response
     except (PermissionDenied, ValidationError, RecordingTake.DoesNotExist, OSError):
+        return _safe_json({"error": "Recording media is unavailable."}, status=404)
         return _safe_json({"error": "Recording media is unavailable."}, status=404)

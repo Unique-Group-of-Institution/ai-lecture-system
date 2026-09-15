@@ -34,6 +34,10 @@ urlpatterns = [
     path("api/content-selection/", views.content_selection, name="content-selection"),
     path("api/generations/", views.generations, name="generations"),
     path("api/generations/<int:generation_id>/", views.generation_detail, name="generation-detail"),
+    # ============================================================
+    # 🆕 FINAL-04: PPTX Export
+    # ============================================================
+    path("api/generations/<int:generation_id>/export-pptx/", views.export_generation_pptx, name="export-generation-pptx"),
     path("api/slides/<int:slide_id>/revisions/", views.slide_revisions, name="slide-revisions"),
     path("api/slides/<int:slide_id>/approve/", views.slide_approval, name="slide-approval"),
     path("api/slides/<int:slide_id>/caption/", views.slide_caption, name="slide-caption"),
