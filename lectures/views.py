@@ -1,9 +1,8 @@
 ﻿from __future__ import annotations
 
 import json
+import logging
 import re
-import subprocess
-import tempfile
 import os
 from pathlib import Path
 
@@ -29,6 +28,11 @@ from .workflow import (
     jobs_visible_to, submit_job, transition_workflow,
     workflow_actor_for_user, workflows_visible_to,
 )
+from .slide_engine import (
+    SlideEngineDependencyError,
+    SlideEngineError,
+    run_slide_engine,
+)
 from .video import (
     VideoConflict, UnsupportedRenderEnvironment, approve_spoken_edit,
     create_edit_decision, grant_admin_final_approval, record_teacher_video_review,
@@ -37,12 +41,7 @@ from .video import (
     submit_for_teacher_review, video_workflows_visible_to,
 )
 
-
-# ============================================================
-# SLIDE ENGINE PATHS (FINAL-04)
-# ============================================================
-SLIDE_ENGINE_PATH = Path("E:/LMS Project/ugi-education-slide-engine")
-SLIDE_ENGINE_SCRIPT = SLIDE_ENGINE_PATH / "scripts" / "generate-deck.mjs"
+logger = logging.getLogger(__name__)
 
 
 def _safe_json(payload, *, status=200):
@@ -145,6 +144,7 @@ def _render_payload(render):
         "video_sha256": render.video_sha256,
         "byte_size": render.byte_size,
         "failure_reason_code": render.failure_reason_code,
+        "failure_detail": render.failure_detail,
         "requested_at": render.requested_at.isoformat(),
         "completed_at": render.completed_at.isoformat() if render.completed_at else None,
         "review_submitted": hasattr(render, "review_submission"),
@@ -335,8 +335,16 @@ def generations(request):
 @login_required
 @require_http_methods(["GET"])
 def generation_detail(request, generation_id):
+    """FIXED: Staff/superuser can view any generation for oversight."""
     context = actor_context_for_user(request.user)
-    generation = GenerationRequest.objects.filter(pk=generation_id, requested_by_id=context.actor_id).first()
+    
+    if request.user.is_staff or request.user.is_superuser:
+        generation = GenerationRequest.objects.filter(pk=generation_id).select_related("chapter__course").first()
+    else:
+        generation = GenerationRequest.objects.filter(
+            pk=generation_id, requested_by_id=context.actor_id
+        ).select_related("chapter__course").first()
+    
     if generation is None:
         return _safe_json({"error": "Generation is unavailable."}, status=403)
     return _safe_json(_generation_payload(generation, detail=True))
@@ -385,166 +393,42 @@ def slide_caption(request, slide_id):
 
 
 # ============================================================
-# ðŸ†• FINAL-04: PPTX EXPORT (SLIDE ENGINE INTEGRATION)
+# FINAL-04: PPTX EXPORT (SLIDE ENGINE INTEGRATION)
 # ============================================================
-
-def _generation_to_slide_engine_json(generation: GenerationRequest) -> dict:
-    """
-    Convert an existing GenerationRequest (with SlideDraft + SlideRevision)
-    into the JSON format expected by the Node.js slide engine.
-    
-    This does NOT modify any existing models or workflows.
-    It only READS from them.
-    """
-    slides = []
-    for slide in generation.slides.all().order_by("position"):
-        try:
-            revision = slide.revisions.get(version=slide.current_version)
-        except ObjectDoesNotExist:
-            continue
-
-        # Extract narration text (flatten statements)
-        narration_text = "\n".join(
-            stmt.text for stmt in revision.narration_statements.all()
-        ) if hasattr(revision, "narration_statements") else ""
-
-        # Extract claims as bullet content
-        claims_text = "\n".join(
-            f"â€¢ {claim.text}" for claim in revision.claims.all()
-        ) if hasattr(revision, "claims") else ""
-
-        # Combine content
-        content = claims_text or narration_text or revision.title
-
-        slides.append({
-            "type": "concept",  # default â€“ can be enhanced later
-            "title": revision.title or f"Slide {slide.position}",
-            "content": content,
-            "speaker_notes": narration_text[:500] if narration_text else "",
-        })
-
-    chapter = generation.chapter
-    return {
-        "title": chapter.title if hasattr(chapter, "title") else str(chapter),
-        "subject": getattr(chapter.course, "subject_name", "General") if hasattr(chapter, "course") else "General",
-        "class": getattr(chapter.course, "class_name", "") if hasattr(chapter, "course") else "",
-        "sections": slides,
-    }
 
 
 @login_required
 @require_http_methods(["POST", "GET"])
 def export_generation_pptx(request, generation_id):
-    """
-    FINAL-04: Export an approved GenerationRequest as a PowerPoint file.
-    
-    This endpoint:
-    1. Loads the GenerationRequest
-    2. Converts its slides (SlideDraft + SlideRevision) to Slide Engine JSON
-    3. Calls the Node.js slide engine via subprocess
-    4. Returns the generated .pptx as a downloadable file
-    
-    Security:
-    - Requires authentication
-    - Only allows the owner of the generation to export
-    - Uses bounded subprocess with timeout
-    - Does NOT expose secrets or the slide engine path to the client
-    """
-    try:
-        context = actor_context_for_user(request.user)
-        generation = GenerationRequest.objects.filter(
-            pk=generation_id, requested_by_id=context.actor_id
-        ).select_related("chapter__course").first()
-        
-        if generation is None:
-            return _safe_json({"error": "Generation is unavailable."}, status=403)
+    """Export a generation as a PowerPoint file through the canonical slide engine."""
+    generation = GenerationRequest.objects.filter(pk=generation_id).select_related("chapter__course").first()
+    if generation is None:
+        return _safe_json({"error": "Generation is unavailable."}, status=404)
+    is_owner = generation.requested_by_id == request.user.pk
+    if not (is_owner or request.user.is_staff or request.user.is_superuser):
+        return _safe_json({"error": "Generation is unavailable."}, status=403)
 
-        # 1. Convert to slide engine JSON
-        lecture_json = _generation_to_slide_engine_json(generation)
-        
-        if not lecture_json.get("sections"):
-            return _safe_json(
-                {"error": "No slides found in this generation."},
-                status=400
-            )
-
-        # 2. Write JSON to temp file
-        with tempfile.NamedTemporaryFile(
-            mode="w", suffix=".json", delete=False, encoding="utf-8"
-        ) as f:
-            json.dump(lecture_json, f, ensure_ascii=False, indent=2)
-            temp_json = f.name
-
-        # 3. Output PPTX path
-        output_dir = Path(settings.MEDIA_ROOT) / "exports" / "pptx"
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_pptx = output_dir / f"generation-{generation_id}.pptx"
-
-        # 4. Verify slide engine exists
-        if not SLIDE_ENGINE_SCRIPT.exists():
-            os.unlink(temp_json)
-            return _safe_json(
-                {"error": "Slide engine is not available on this server."},
-                status=503
-            )
-
-        # 5. Call Node.js slide engine (bounded, safe)
+    storage_key = generation.pptx_storage_key
+    if not storage_key:
         try:
-            result = subprocess.run(
-                [
-                    "node",
-                    str(SLIDE_ENGINE_SCRIPT),
-                    "--input", temp_json,
-                    "--output", str(output_pptx),
-                ],
-                cwd=str(SLIDE_ENGINE_PATH),
-                capture_output=True,
-                text=True,
-                timeout=120,  # 2 minute timeout
-                check=False,
-            )
-        except subprocess.TimeoutExpired:
-            os.unlink(temp_json)
-            return _safe_json(
-                {"error": "Slide engine timed out."},
-                status=504
-            )
-        finally:
-            if os.path.exists(temp_json):
-                os.unlink(temp_json)
+            storage_key = run_slide_engine(generation.pk)
+        except SlideEngineDependencyError:
+            return _safe_json({"error": "The slide engine is not available on this server."}, status=503)
+        except (SlideEngineError, ValidationError) as exc:
+            logger.warning("PPTX export failed for generation=%s: %s", generation.pk, exc)
+            return _safe_json({"error": "PowerPoint generation failed safely. Please try again."}, status=500)
 
-        if result.returncode != 0:
-            return _safe_json(
-                {
-                    "error": "Slide engine failed.",
-                    "detail": result.stderr[:500] if result.stderr else "Unknown error",
-                },
-                status=500
-            )
-
-        if not output_pptx.exists():
-            return _safe_json(
-                {"error": "Slide engine did not produce a file."},
-                status=500
-            )
-
-        # 6. Return the file
-        response = FileResponse(
-            open(output_pptx, "rb"),
-            content_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        )
-        response["Content-Disposition"] = f'attachment; filename="lecture-{generation_id}.pptx"'
-        response["Cache-Control"] = "private, no-store"
-        response["X-Content-Type-Options"] = "nosniff"
-        return response
-
-    except PermissionDenied as exc:
-        return _safe_json({"error": str(exc)}, status=403)
-    except Exception as exc:
-        return _safe_json(
-            {"error": "PPTX export failed.", "detail": str(exc)[:200]},
-            status=500
-        )
+    pptx_path = Path(settings.DATA_ROOT).resolve() / storage_key
+    if not pptx_path.is_file():
+        return _safe_json({"error": "The generated PowerPoint file is unavailable."}, status=404)
+    response = FileResponse(
+        pptx_path.open("rb"),
+        content_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    )
+    response["Content-Disposition"] = f'attachment; filename="lecture-{generation_id}.pptx"'
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
 
 
 # ============================================================
@@ -1010,6 +894,8 @@ def _recording_workflow_payload(workflow):
         "id": workflow.pk,
         "state": workflow.state,
         "version": workflow.version,
+        "slide_count": len(slides),
+        "recorded_count": sum(1 for row in slides if row["selected_take_id"]),
         "class_name": workflow.generation.chapter.course.class_name,
         "subject_name": workflow.generation.chapter.course.subject_name,
         "course_code": workflow.generation.chapter.course.code,
@@ -1044,8 +930,19 @@ def teacher_recording_portal(request):
 @login_required
 @require_http_methods(["GET"])
 def teacher_recording_detail(request, workflow_id):
+    """FIXED: Staff/superuser can view any recording for oversight."""
     actor = workflow_actor_for_user(request.user)
-    workflow = recordings_visible_to(actor).filter(pk=workflow_id).first()
+    
+    if request.user.is_staff or request.user.is_superuser:
+        workflow = (
+            LectureWorkflow.objects
+            .select_related("generation__chapter__course")
+            .filter(pk=workflow_id)
+            .first()
+        )
+    else:
+        workflow = recordings_visible_to(actor).filter(pk=workflow_id).first()
+    
     if workflow is None:
         return render(request, "lectures/recording_unavailable.html", status=404)
     payload = _recording_workflow_payload(workflow)
@@ -1162,5 +1059,4 @@ def recording_take_media(request, take_id):
         response["X-Content-Type-Options"] = "nosniff"
         return response
     except (PermissionDenied, ValidationError, RecordingTake.DoesNotExist, OSError):
-        return _safe_json({"error": "Recording media is unavailable."}, status=404)
         return _safe_json({"error": "Recording media is unavailable."}, status=404)
