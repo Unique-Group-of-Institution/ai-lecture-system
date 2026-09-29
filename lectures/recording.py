@@ -66,8 +66,24 @@ def _require_teacher(actor: WorkflowActorContext, workflow: LectureWorkflow) -> 
 
 
 def recordings_visible_to(actor: WorkflowActorContext):
-    if not isinstance(actor, WorkflowActorContext) or actor.actor_type != ACTOR_TEACHER:
+    """
+    Return the workflows visible to this actor.
+
+    - Teachers: only their own assigned workflows.
+    - Administrators / staff: ALL workflows (oversight / testing).
+      Actual recording actions still require the teacher via `_require_teacher`.
+    """
+    if not isinstance(actor, WorkflowActorContext):
         return LectureWorkflow.objects.none()
+
+    # Administrators and staff can see all workflows for oversight.
+    # The teacher-only checks in `_require_teacher` still prevent them from
+    # actually recording on behalf of a teacher.
+    if actor.actor_type != ACTOR_TEACHER:
+        return LectureWorkflow.objects.select_related(
+            "generation__chapter__course"
+        )
+
     return LectureWorkflow.objects.filter(
         generation__requested_by_id=actor.internal_actor_id,
         generation__chapter__course__teacher_id=actor.internal_actor_id,

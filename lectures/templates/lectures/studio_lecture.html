@@ -1,0 +1,2403 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ chapter.title }} — LMS Studio</title>
+
+    <style>
+        :root {
+            --navy: #071d3a;
+            --navy-2: #0d2b50;
+            --gold: #d7a928;
+            --gold-light: #f4df9a;
+
+            --bg: #f4f7fb;
+            --white: #ffffff;
+            --text: #10233f;
+            --muted: #6b7b91;
+            --border: #dce4ee;
+
+            --success: #16794c;
+            --success-bg: #e9f7ef;
+
+            --warning: #a96c00;
+            --warning-bg: #fff5dc;
+
+            --danger: #b42318;
+            --danger-bg: #fff0ee;
+
+            --info: #245b9e;
+            --info-bg: #edf5ff;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        .app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* =====================================================
+           SIDEBAR
+        ===================================================== */
+
+        .sidebar {
+            width: 210px;
+            background: var(--navy);
+            color: white;
+            padding: 28px 15px;
+            position: fixed;
+            inset: 0 auto 0 0;
+            z-index: 20;
+        }
+
+        .brand {
+            padding: 5px 10px 25px;
+            border-bottom: 1px solid rgba(255,255,255,.12);
+            margin-bottom: 25px;
+        }
+
+        .brand-title {
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: .3px;
+        }
+
+        .brand-subtitle {
+            font-size: 10px;
+            margin-top: 7px;
+            color: #d9e2ef;
+            line-height: 1.4;
+        }
+
+        .nav a {
+            display: block;
+            color: #edf3fa;
+            text-decoration: none;
+            padding: 12px 11px;
+            border-radius: 7px;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .nav a:hover {
+            background: rgba(255,255,255,.08);
+        }
+
+        .nav a.active {
+            background: rgba(215,169,40,.16);
+            color: var(--gold-light);
+        }
+
+        /* =====================================================
+           MAIN
+        ===================================================== */
+
+        .main {
+            margin-left: 210px;
+            width: calc(100% - 210px);
+            padding: 30px;
+            max-width: 1500px;
+        }
+
+        .breadcrumbs {
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 12px;
+        }
+
+        .breadcrumbs a {
+            color: var(--navy);
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        /* =====================================================
+           HERO
+        ===================================================== */
+
+        .hero {
+            background: var(--navy);
+            color: white;
+            border-radius: 14px;
+            padding: 27px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .hero h1 {
+            margin: 0;
+            font-size: 25px;
+            line-height: 1.25;
+        }
+
+        .hero-meta {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #dbe6f3;
+        }
+
+        .status-pill {
+            border: 1px solid var(--gold);
+            color: var(--gold-light);
+            padding: 9px 15px;
+            border-radius: 30px;
+            font-size: 11px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        /* =====================================================
+           STATS
+        ===================================================== */
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 12px;
+            margin-top: 18px;
+        }
+
+        .stat {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 17px;
+            min-width: 0;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .7px;
+        }
+
+        .stat-value {
+            font-size: 23px;
+            font-weight: 800;
+            margin-top: 8px;
+            color: var(--navy);
+        }
+
+        /* =====================================================
+           CARDS
+        ===================================================== */
+
+        .card {
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            margin-top: 18px;
+            padding: 22px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 800;
+            margin-bottom: 17px;
+            color: var(--navy);
+        }
+
+        /* =====================================================
+           APPROVAL SUMMARY
+        ===================================================== */
+
+        .approval-summary {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            border-radius: 11px;
+            padding: 17px 18px;
+            margin-top: 18px;
+        }
+
+        .approval-summary.ready {
+            background: var(--success-bg);
+            border: 1px solid #b9e4cb;
+        }
+
+        .approval-summary.pending {
+            background: var(--warning-bg);
+            border: 1px solid #efd79a;
+        }
+
+        .approval-main {
+            flex: 1;
+        }
+
+        .approval-title {
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .approval-text {
+            font-size: 11px;
+            color: var(--muted);
+            margin-top: 5px;
+            line-height: 1.5;
+        }
+
+        .approval-count {
+            font-size: 23px;
+            font-weight: 800;
+            white-space: nowrap;
+        }
+
+        .progress {
+            height: 6px;
+            background: #e3e9f0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--gold);
+            transition: width .3s ease;
+        }
+
+        .ready .progress-bar {
+            background: var(--success);
+        }
+
+        /* =====================================================
+           WORKFLOW
+        ===================================================== */
+
+        .workflow-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 15px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .workflow-row:last-child {
+            border-bottom: none;
+        }
+
+        .workflow-number {
+            width: 31px;
+            height: 31px;
+            min-width: 31px;
+            border-radius: 50%;
+            background: var(--navy);
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 11px;
+            font-weight: 800;
+        }
+
+        .workflow-number.locked {
+            background: #edf1f5;
+            color: #9ba7b5;
+        }
+
+        .workflow-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .workflow-title {
+            font-size: 14px;
+            font-weight: 800;
+        }
+
+        .workflow-description {
+            margin-top: 5px;
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .locked-label {
+            font-size: 10px;
+            color: #98a5b4;
+            font-weight: 800;
+            margin-right: 8px;
+            white-space: nowrap;
+        }
+
+        /* =====================================================
+           BUTTONS
+        ===================================================== */
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            border: none;
+            border-radius: 7px;
+
+            padding: 9px 13px;
+
+            font-size: 10px;
+            font-weight: 800;
+
+            text-decoration: none;
+            cursor: pointer;
+
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--navy);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--navy-2);
+        }
+
+        .btn-gold {
+            background: var(--gold);
+            color: var(--navy);
+        }
+
+        .btn-gold:hover {
+            background: #e3b93b;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-disabled {
+            border: 1px solid var(--border);
+            background: #f7f9fb;
+            color: #9aa8b8;
+            cursor: not-allowed;
+        }
+
+        .render-button {
+            min-width: 190px;
+            padding: 11px 18px;
+            font-size: 10px;
+        }
+
+        /* =====================================================
+           READINESS
+        ===================================================== */
+
+        .readiness-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+
+        .readiness-item {
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 14px;
+        }
+
+        .readiness-label {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .readiness-value {
+            margin-top: 7px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .ready-text {
+            color: var(--success);
+        }
+
+        .waiting-text {
+            color: var(--warning);
+        }
+
+        .locked-text {
+            color: #8b98a8;
+        }
+
+        /* =====================================================
+           SLIDES
+        ===================================================== */
+
+        .slide-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .slide {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .slide:hover {
+            border-color: #c7d2df;
+        }
+
+        .slide-number {
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+
+            background: var(--navy);
+            color: white;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .slide-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .slide-title {
+            font-size: 13px;
+            font-weight: 800;
+        }
+
+        .slide-meta {
+            margin-top: 5px;
+            font-size: 10px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .slide-status {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 7px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+
+        .approved {
+            color: var(--success);
+            background: var(--success-bg);
+        }
+
+        .pending {
+            color: var(--warning);
+            background: var(--warning-bg);
+        }
+
+        .slide-actions {
+            display: flex;
+            gap: 7px;
+        }
+
+        /* =====================================================
+           INFORMATION
+        ===================================================== */
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .info-box {
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 14px;
+        }
+
+        .info-label {
+            font-size: 9px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: .5px;
+        }
+
+        .info-value {
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        /* =====================================================
+           NOTICE
+        ===================================================== */
+
+        .notice {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            padding: 13px;
+
+            font-size: 11px;
+            color: var(--muted);
+            line-height: 1.55;
+
+            margin-top: 14px;
+        }
+
+        .notice strong {
+            color: var(--text);
+        }
+
+        .notice.success-notice {
+            background: var(--success-bg);
+            border-color: #b9e4cb;
+            color: #286644;
+        }
+
+        .notice.warning-notice {
+            background: var(--warning-bg);
+            border-color: #efd79a;
+            color: #785300;
+        }
+
+        .notice.info-notice {
+            background: var(--info-bg);
+            border-color: #c9ddf5;
+            color: #245b9e;
+        }
+
+        /* =====================================================
+           RENDER PANEL
+        ===================================================== */
+
+        .render-panel {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 17px;
+            background: #fbfcfe;
+        }
+
+        .render-status-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .render-status {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--navy);
+        }
+
+        .render-reference {
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--muted);
+            word-break: break-word;
+        }
+
+        .render-actions {
+            margin-top: 15px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        /* =====================================================
+           TOAST
+        ===================================================== */
+
+        .toast {
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+
+            background: var(--navy);
+            color: white;
+
+            padding: 13px 17px;
+
+            border-radius: 8px;
+
+            font-size: 11px;
+
+            display: none;
+
+            z-index: 1000;
+
+            box-shadow: 0 8px 30px rgba(0,0,0,.18);
+        }
+
+        .toast.error {
+            background: var(--danger);
+        }
+
+        /* =====================================================
+           RESPONSIVE
+        ===================================================== */
+
+        @media (max-width: 1150px) {
+
+            .stats {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .readiness-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 900px) {
+
+            .sidebar {
+                position: static;
+                width: 100%;
+                min-height: auto;
+            }
+
+            .app {
+                display: block;
+            }
+
+            .main {
+                margin-left: 0;
+                width: 100%;
+                padding: 18px;
+            }
+
+            .hero {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .info-grid,
+            .readiness-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .approval-summary {
+                display: block;
+            }
+
+            .approval-count {
+                margin-top: 10px;
+            }
+
+            .render-status-row {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 600px) {
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .workflow-row {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .workflow-content {
+                width: calc(100% - 50px);
+            }
+
+            .slide {
+                align-items: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .slide-info {
+                width: calc(100% - 60px);
+            }
+
+            .slide-status {
+                margin-left: 56px;
+            }
+
+            .slide-actions {
+                margin-left: 56px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+
+            <div class="brand-title">
+                LMS STUDIO
+            </div>
+
+            <div class="brand-subtitle">
+                Unique Group of Institutions
+            </div>
+
+        </div>
+
+        <nav class="nav">
+
+            <a href="{% url 'studio-home' %}">
+                Dashboard
+            </a>
+
+            <a href="{% url 'teacher-recording-portal' %}">
+                Recordings
+            </a>
+
+            <a href="{% url 'admin-video-dashboard' %}">
+                Video Assembly
+            </a>
+
+            <a href="/admin/">
+                Administration
+            </a>
+
+        </nav>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main">
+
+        <!-- BREADCRUMBS -->
+
+        <div class="breadcrumbs">
+
+            <a href="{% url 'studio-home' %}">
+                LMS Studio
+            </a>
+
+            &nbsp; / &nbsp;
+
+            {{ course.class_name }}
+
+            &nbsp; / &nbsp;
+
+            {{ course.subject_name }}
+
+            &nbsp; / &nbsp;
+
+            Lecture
+
+        </div>
+
+
+        <!-- =================================================
+             HERO
+        ================================================== -->
+
+        <section class="hero">
+
+            <div>
+
+                <h1>
+                    {{ chapter.title }}
+                </h1>
+
+                <div class="hero-meta">
+
+                    {{ course.class_name }}
+                    &nbsp; • &nbsp;
+                    {{ course.subject_name }}
+                    &nbsp; • &nbsp;
+
+                    {% if course.teacher %}
+                        {{ course.teacher.get_full_name|default:course.teacher.username }}
+                    {% else %}
+                        Unassigned Teacher
+                    {% endif %}
+
+                </div>
+
+            </div>
+
+            <div class="status-pill">
+                {{ state_label|default:"Workflow Active" }}
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             STATS
+        ================================================== -->
+
+        <section class="stats">
+
+            <div class="stat">
+                <div class="stat-label">
+                    Slides
+                </div>
+
+                <div class="stat-value">
+                    {{ slide_count }}
+                </div>
+            </div>
+
+
+            <div class="stat">
+                <div class="stat-label">
+                    Approved
+                </div>
+
+                <div class="stat-value">
+                    {{ approved_slides }}
+                </div>
+            </div>
+
+
+            <div class="stat">
+                <div class="stat-label">
+                    Recording Takes
+                </div>
+
+                <div class="stat-value">
+                    {{ recording_takes }}
+                </div>
+            </div>
+
+
+            <div class="stat">
+                <div class="stat-label">
+                    Selected Takes
+                </div>
+
+                <div class="stat-value">
+                    {{ recording_selections }}
+                </div>
+            </div>
+
+
+            <div class="stat">
+
+                <div class="stat-label">
+                    Recording Duration
+                </div>
+
+                <div
+                    class="stat-value"
+                    style="font-size:20px;"
+                >
+                    {{ recording_duration }}
+                </div>
+
+            </div>
+
+
+            <div class="stat">
+
+                <div class="stat-label">
+                    Selected Duration
+                </div>
+
+                <div
+                    class="stat-value"
+                    style="font-size:20px;"
+                >
+                    {{ selected_duration }}
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             APPROVAL SUMMARY
+        ================================================== -->
+
+        <section
+            class="approval-summary
+            {% if all_slides_approved %}
+                ready
+            {% else %}
+                pending
+            {% endif %}"
+        >
+
+            <div class="approval-main">
+
+                <div class="approval-title">
+
+                    {% if all_slides_approved %}
+
+                        ✓ Lecture Ready for Production
+
+                    {% else %}
+
+                        Review &amp; Approval Required
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="approval-text">
+
+                    {% if all_slides_approved %}
+
+                        All {{ slide_count }} slides have been approved.
+                        The lecture can move into production.
+
+                    {% else %}
+
+                        {{ pending_slides }}
+                        slide{{ pending_slides|pluralize }}
+                        still require approval before recording can begin.
+
+                    {% endif %}
+
+                </div>
+
+
+                <div class="progress">
+
+                    <div
+                        class="progress-bar"
+                        style="width:
+                        {% if slide_count %}
+                            {% widthratio approved_slides slide_count 100 %}
+                        {% else %}
+                            0
+                        {% endif %}%;"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <div class="approval-count">
+
+                {{ approved_slides }}
+                /
+                {{ slide_count }}
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             NEXT ACTION
+        ================================================== -->
+
+        <section class="card" id="next-action-card">
+
+            <div class="card-title">
+                Next Action
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+
+                {% if state == "SLIDE_NARRATION_DRAFT" and all_slides_approved %}
+
+                    <button
+                        type="button"
+                        class="btn btn-gold render-button"
+                        id="confirm-approval-btn"
+                        onclick="confirmApprovalAndUnlockRecording()"
+                    >
+                        ✓ Confirm approval &amp; unlock recording
+                    </button>
+
+                {% endif %}
+
+                {% if state == "TEACHER_SLIDE_NARRATION_APPROVED" or state == "RECORDING_PENDING" %}
+
+                    <a class="btn btn-gold render-button"
+                       href="{% url 'teacher-recording-detail' workflow.id %}">
+                        Go to recording portal →
+                    </a>
+
+                {% endif %}
+
+                <a class="btn" href="{% url 'export-generation-pptx' generation.id %}">
+                    Download PPTX
+                </a>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             PRODUCTION READINESS
+        ================================================== -->
+
+        <section class="card">
+
+            <div class="card-title">
+                Production Readiness
+            </div>
+
+
+            <div class="readiness-grid">
+
+                <div class="readiness-item">
+
+                    <div class="readiness-label">
+                        Slide Approval
+                    </div>
+
+                    <div
+                        class="readiness-value
+                        {% if all_slides_approved %}
+                            ready-text
+                        {% else %}
+                            waiting-text
+                        {% endif %}"
+                    >
+
+                        {% if all_slides_approved %}
+
+                            ✓ {{ approved_slides }}/{{ slide_count }} Approved
+
+                        {% else %}
+
+                            {{ approved_slides }}/{{ slide_count }} Approved
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="readiness-item">
+
+                    <div class="readiness-label">
+                        Recording
+                    </div>
+
+                    <div
+                        class="readiness-value
+                        {% if recording_complete %}
+                            ready-text
+                        {% else %}
+                            waiting-text
+                        {% endif %}"
+                    >
+
+                        {% if recording_complete %}
+
+                            ✓ Complete
+
+                        {% else %}
+
+                            Pending
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="readiness-item">
+
+                    <div class="readiness-label">
+                        Selected Takes
+                    </div>
+
+                    <div
+                        class="readiness-value
+                        {% if every_slide_has_take %}
+                            ready-text
+                        {% else %}
+                            waiting-text
+                        {% endif %}"
+                    >
+
+                        {{ recording_selections }}
+                        /
+                        {{ slide_count }}
+
+                        {% if every_slide_has_take %}
+                            ✓
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="readiness-item">
+
+                    <div class="readiness-label">
+                        Final Video
+                    </div>
+
+                    <div
+                        class="readiness-value
+                        {% if final_video_ready %}
+                            ready-text
+                        {% else %}
+                            locked-text
+                        {% endif %}"
+                    >
+
+                        {% if final_video_ready %}
+
+                            ✓ Ready
+
+                        {% else %}
+
+                            🔒 Locked
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div
+                class="notice
+                {% if final_video_ready %}
+                    success-notice
+                {% else %}
+                    warning-notice
+                {% endif %}"
+            >
+
+                <strong>Production rule:</strong>
+
+                Final video assembly becomes available only after
+                every slide is approved, recording is completed,
+                and every slide has a selected recording take.
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             DRAFT VIDEO RENDER
+        ================================================== -->
+
+        {% if all_slides_approved and recording_complete and every_slide_has_take %}
+
+        <section class="card">
+
+            <div class="card-title">
+                Draft Video Render
+            </div>
+
+            <div class="render-panel">
+
+                {% if latest_render %}
+
+                    <div class="render-status-row">
+
+                        <div>
+
+                            <div class="render-status">
+
+                                Version {{ latest_render.version }}
+
+                                &nbsp; — &nbsp;
+
+                                {{ latest_render.get_status_display }}
+
+                            </div>
+
+                            {% if latest_render.reference %}
+
+                                <div class="render-reference">
+
+                                    Reference:
+                                    {{ latest_render.reference }}
+
+                                </div>
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    {% if latest_render.status == "STALE" %}
+
+                        <div class="notice warning-notice">
+
+                            <strong>Previous render is stale.</strong>
+
+                            The original render snapshot is preserved.
+                            Create a fresh draft render using the
+                            current approved slides and selected recordings.
+
+                        </div>
+
+
+                        <div class="render-actions">
+
+                            <button
+                                type="button"
+                                class="btn btn-gold render-button"
+                                id="request-render-btn"
+                                onclick="requestDraftRender()"
+                            >
+                                REQUEST NEW DRAFT RENDER
+                            </button>
+
+                        </div>
+
+
+                    {% elif latest_render.status == "PENDING" %}
+
+                        <div class="notice info-notice">
+
+                            <strong>Draft render pending.</strong>
+
+                            The trusted local render worker can now process
+                            this render.
+
+                        </div>
+
+
+                    {% elif latest_render.status == "RUNNING" %}
+
+                        <div class="notice info-notice">
+
+                            <strong>Draft render running.</strong>
+
+                            The trusted local render worker is processing
+                            the lecture.
+
+                        </div>
+
+
+                    {% elif latest_render.status == "SUCCEEDED" %}
+
+                        <div class="notice success-notice">
+
+                            <strong>Draft render available.</strong>
+
+                            The generated draft video is ready for review.
+
+                        </div>
+
+
+                    {% elif latest_render.status == "FAILED" %}
+
+                        <div class="notice warning-notice">
+
+                            <strong>Draft render failed.</strong>
+
+                            Use the audited recovery workflow from the
+                            Video Assembly module.
+
+                        </div>
+
+                    {% endif %}
+
+                {% else %}
+
+                    <div class="render-status">
+
+                        No draft render has been requested yet.
+
+                    </div>
+
+
+                    <div class="notice info-notice">
+
+                        <strong>Ready for production.</strong>
+
+                        All approved slides, completed recordings and
+                        selected takes are available for the first local
+                        draft render.
+
+                    </div>
+
+
+                    <div class="render-actions">
+
+                        <button
+                            type="button"
+                            class="btn btn-gold render-button"
+                            id="request-render-btn"
+                            onclick="requestDraftRender()"
+                        >
+                            REQUEST DRAFT RENDER
+                        </button>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
+             PRODUCTION WORKFLOW
+        ================================================== -->
+
+        <section class="card">
+
+            <div class="card-title">
+                Lecture Production Workflow
+            </div>
+
+
+            <!-- 01 PPT & CONTENT -->
+
+            <div class="workflow-row">
+
+                <div class="workflow-number">
+                    01
+                </div>
+
+
+                <div class="workflow-content">
+
+                    <div class="workflow-title">
+                        PPT &amp; Content
+                    </div>
+
+                    <div class="workflow-description">
+                        Source content, generated slides and lecture structure.
+                    </div>
+
+                </div>
+
+
+                <a
+                    class="btn btn-primary"
+                    href="{% url 'generation-detail' generation.id %}"
+                >
+                    OPEN PPT
+                </a>
+
+            </div>
+
+
+            <!-- 02 REVIEW -->
+
+            <div class="workflow-row">
+
+                <div class="workflow-number">
+                    02
+                </div>
+
+
+                <div class="workflow-content">
+
+                    <div class="workflow-title">
+                        Review &amp; Approval
+                    </div>
+
+                    <div class="workflow-description">
+                        Review every slide and approve the current slide version.
+                    </div>
+
+                </div>
+
+
+                <a
+                    class="btn btn-primary"
+                    href="#slides"
+                >
+                    REVIEW
+                </a>
+
+            </div>
+
+
+            <!-- 03 ANIMATION -->
+
+            <div class="workflow-row">
+
+                <div
+                    class="workflow-number
+                    {% if not all_slides_approved %}
+                        locked
+                    {% endif %}"
+                >
+                    03
+                </div>
+
+
+                <div class="workflow-content">
+
+                    <div class="workflow-title">
+                        Animation
+                    </div>
+
+                    <div class="workflow-description">
+
+                        {% if all_slides_approved %}
+
+                            Approved slides are ready for
+                            LMS animation preparation.
+
+                        {% else %}
+
+                            Locked until all slides are approved.
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                {% if all_slides_approved %}
+
+                    <span class="btn btn-gold">
+                        ANIMATION READY
+                    </span>
+
+                {% else %}
+
+                    <span class="locked-label">
+                        🔒 LOCKED
+                    </span>
+
+                    <span class="btn btn-disabled">
+                        NEXT MODULE
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- 04 RECORDING -->
+
+            <div class="workflow-row">
+
+                <div
+                    class="workflow-number
+                    {% if not all_slides_approved %}
+                        locked
+                    {% endif %}"
+                >
+                    04
+                </div>
+
+
+                <div class="workflow-content">
+
+                    <div class="workflow-title">
+                        Slide Recording
+                    </div>
+
+                    <div class="workflow-description">
+
+                        {% if not all_slides_approved %}
+
+                            Recording is locked until every slide is approved.
+
+                        {% elif recording_complete %}
+
+                            Recording complete.
+                            {{ recording_selections }}/{{ slide_count }}
+                            slide selections available.
+
+                        {% else %}
+
+                            Record each approved slide separately
+                            and select the best take for every slide.
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                {% if all_slides_approved %}
+
+                    <a
+                        class="btn btn-primary"
+                        href="{% url 'teacher-recording-detail' workflow.id %}"
+                    >
+
+                        {% if recording_complete %}
+                            OPEN RECORDING
+                        {% else %}
+                            START RECORDING
+                        {% endif %}
+
+                    </a>
+
+                {% else %}
+
+                    <span class="locked-label">
+                        🔒 LOCKED
+                    </span>
+
+                    <span class="btn btn-disabled">
+                        START RECORDING
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- 05 FINAL VIDEO -->
+
+            <div class="workflow-row">
+
+                <div
+                    class="workflow-number
+                    {% if not final_video_ready %}
+                        locked
+                    {% endif %}"
+                >
+                    05
+                </div>
+
+
+                <div class="workflow-content">
+
+                    <div class="workflow-title">
+                        Final Video
+                    </div>
+
+                    <div class="workflow-description">
+
+                        {% if final_video_ready %}
+
+                            All slides approved and recording selections complete.
+                            Final LMS video can now be assembled.
+
+                        {% elif not all_slides_approved %}
+
+                            Waiting for complete slide approval.
+
+                        {% elif not recording_complete %}
+
+                            Waiting for recording completion.
+
+                        {% elif not every_slide_has_take %}
+
+                            Every slide must have a selected recording take.
+
+                        {% else %}
+
+                            Final video is not yet ready.
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                {% if final_video_ready %}
+
+                    <a
+                        class="btn btn-success"
+                        href="{% url 'video-workflow-detail' workflow.id %}"
+                    >
+                        VIDEO WORKFLOW
+                    </a>
+
+                {% else %}
+
+                    <span class="locked-label">
+                        🔒 LOCKED
+                    </span>
+
+                    <span class="btn btn-disabled">
+                        VIDEO WORKFLOW
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+
+            <!-- 06 GOOGLE DRIVE -->
+
+            <div class="workflow-row">
+
+                <div class="workflow-number locked">
+                    06
+                </div>
+
+
+                <div class="workflow-content">
+
+                    <div class="workflow-title">
+                        Google Drive
+                    </div>
+
+                    <div class="workflow-description">
+                        Upload the completed lecture to the LMS shared Drive structure.
+                    </div>
+
+                </div>
+
+
+                <span class="btn btn-disabled">
+                    NEXT MODULE
+                </span>
+
+            </div>
+
+
+            <!-- 07 CREDITS -->
+
+            <div class="workflow-row">
+
+                <div class="workflow-number locked">
+                    07
+                </div>
+
+
+                <div class="workflow-content">
+
+                    <div class="workflow-title">
+                        Credits &amp; Payment
+                    </div>
+
+                    <div class="workflow-description">
+                        Calculate recording duration, lecture credits
+                        and estimated LMS payment.
+                    </div>
+
+                </div>
+
+
+                <span class="btn btn-disabled">
+                    NEXT MODULE
+                </span>
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             SLIDE REVIEW & APPROVAL
+        ================================================== -->
+
+        <section class="card" id="slides">
+
+            <div class="card-title">
+                Slide Review &amp; Approval
+            </div>
+
+
+            <div class="slide-list">
+
+                {% for slide in slides %}
+
+                <div
+                    class="slide"
+                    id="slide-{{ slide.id }}"
+                >
+
+                    <div class="slide-number">
+                        {{ slide.position|stringformat:"02d" }}
+                    </div>
+
+
+                    <div class="slide-info">
+
+                        <div class="slide-title">
+                            Slide {{ slide.position }}
+                        </div>
+
+
+                        <div class="slide-meta">
+
+                            Current version:
+                            {{ slide.current_version }}
+
+                            &nbsp; • &nbsp;
+
+                            {% if slide.approved_revision_id %}
+
+                                Approved revision:
+                                {{ slide.approved_revision_id }}
+
+                            {% else %}
+
+                                No approved revision
+
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+
+                    {% if slide.approved_revision_id %}
+
+                        <span
+                            class="slide-status approved"
+                            id="status-{{ slide.id }}"
+                        >
+                            APPROVED
+                        </span>
+
+                    {% else %}
+
+                        <span
+                            class="slide-status pending"
+                            id="status-{{ slide.id }}"
+                        >
+                            PENDING REVIEW
+                        </span>
+
+                    {% endif %}
+
+
+                    <div class="slide-actions">
+
+                        <button
+                            type="button"
+                            class="btn btn-primary"
+                            onclick="approveSlide({{ slide.id }})"
+                            id="approve-{{ slide.id }}"
+
+                            {% if slide.approved_revision_id %}
+
+                                disabled
+                                style="opacity:.55;cursor:not-allowed;"
+
+                            {% endif %}
+                        >
+
+                            {% if slide.approved_revision_id %}
+
+                                APPROVED
+
+                            {% else %}
+
+                                APPROVE
+
+                            {% endif %}
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+                {% empty %}
+
+                    <div class="notice">
+
+                        No slides are currently available
+                        for this lecture.
+
+                    </div>
+
+                {% endfor %}
+
+            </div>
+
+
+            <div class="notice">
+
+                <strong>Review rule:</strong>
+
+                Approve only after checking slide accuracy,
+                SLO alignment, terminology, examples,
+                narration and LMS presentation readiness.
+
+            </div>
+
+        </section>
+
+
+        <!-- =================================================
+             RECORDING SUMMARY
+        ================================================== -->
+
+        <section class="card">
+
+            <div class="card-title">
+                Recording Summary
+            </div>
+
+
+            <div class="info-grid">
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Total Recording Takes
+                    </div>
+
+                    <div class="info-value">
+                        {{ recording_takes }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Selected Takes
+                    </div>
+
+                    <div class="info-value">
+                        {{ recording_selections }}
+                        / {{ slide_count }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Total Recording Duration
+                    </div>
+
+                    <div class="info-value">
+                        {{ recording_duration }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Selected Recording Duration
+                    </div>
+
+                    <div class="info-value">
+                        {{ selected_duration }}
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            {% if recording_complete %}
+
+                <div class="notice success-notice">
+
+                    <strong>Recording complete.</strong>
+
+                    The workflow has a recording completion record.
+
+                    {% if every_slide_has_take %}
+
+                        Every slide currently has a selected take.
+
+                    {% else %}
+
+                        Some slides still require a selected take.
+
+                    {% endif %}
+
+                </div>
+
+            {% elif all_slides_approved %}
+
+                <div class="notice warning-notice">
+
+                    <strong>Recording pending.</strong>
+
+                    All slides are approved, so the teacher can now
+                    proceed to slide-by-slide recording.
+
+                </div>
+
+            {% else %}
+
+                <div class="notice">
+
+                    <strong>Recording locked.</strong>
+
+                    Complete slide approval before starting recording.
+
+                </div>
+
+            {% endif %}
+
+        </section>
+
+
+        <!-- =================================================
+             LECTURE INFORMATION
+        ================================================== -->
+
+        <section class="card">
+
+            <div class="card-title">
+                Lecture Information
+            </div>
+
+
+            <div class="info-grid">
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Class
+                    </div>
+
+                    <div class="info-value">
+                        {{ course.class_name }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Subject
+                    </div>
+
+                    <div class="info-value">
+                        {{ course.subject_name }}
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Teacher
+                    </div>
+
+                    <div class="info-value">
+
+                        {% if course.teacher %}
+
+                            {{ course.teacher.get_full_name|default:course.teacher.username }}
+
+                        {% else %}
+
+                            Unassigned Teacher
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+                <div class="info-box">
+
+                    <div class="info-label">
+                        Workflow State
+                    </div>
+
+                    <div class="info-value">
+                        {{ state_label }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+</div>
+
+
+<!-- =========================================================
+     TOAST
+========================================================= -->
+
+<div
+    class="toast"
+    id="toast"
+></div>
+
+
+<!-- =========================================================
+     CSRF
+========================================================= -->
+
+<form style="display:none;">
+    {% csrf_token %}
+</form>
+
+
+<script>
+
+    function getCsrfToken() {
+
+        const tokenInput =
+            document.querySelector(
+                'input[name="csrfmiddlewaretoken"]'
+            );
+
+        return tokenInput
+            ? tokenInput.value
+            : "";
+    }
+
+
+    function showToast(message, error = false) {
+
+        const toast =
+            document.getElementById("toast");
+
+        toast.textContent = message;
+
+        toast.classList.toggle(
+            "error",
+            error
+        );
+
+        toast.style.display = "block";
+
+        setTimeout(function() {
+
+            toast.style.display = "none";
+
+        }, 3500);
+    }
+
+
+    async function approveSlide(slideId) {
+
+        const button =
+            document.getElementById(
+                "approve-" + slideId
+            );
+
+        const status =
+            document.getElementById(
+                "status-" + slideId
+            );
+
+
+        if (!button) {
+            return;
+        }
+
+
+        button.disabled = true;
+
+        button.textContent =
+            "APPROVING...";
+
+
+        try {
+
+            const url =
+                "{% url 'slide-approval' 0 %}"
+                .replace(
+                    "/0/",
+                    "/" + slideId + "/"
+                );
+
+
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            "X-CSRFToken":
+                                getCsrfToken(),
+
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        },
+
+                        body:
+                            JSON.stringify({})
+                    }
+                );
+
+
+            let data = {};
+
+            try {
+
+                data =
+                    await response.json();
+
+            } catch (jsonError) {
+
+                data = {};
+
+            }
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    data.detail ||
+                    "Slide approval failed."
+                );
+            }
+
+
+            if (status) {
+
+                status.textContent =
+                    "APPROVED";
+
+                status.className =
+                    "slide-status approved";
+
+            }
+
+
+            button.textContent =
+                "APPROVED";
+
+            button.style.opacity =
+                ".55";
+
+            button.style.cursor =
+                "not-allowed";
+
+
+            showToast(
+                "Slide approved successfully."
+            );
+
+
+            setTimeout(function() {
+
+                window.location.reload();
+
+            }, 700);
+
+
+        } catch (error) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                "APPROVE";
+
+
+            showToast(
+                error.message ||
+                "Approval failed.",
+                true
+            );
+        }
+    }
+
+
+    /* =====================================================
+       DRAFT VIDEO RENDER REQUEST
+    ===================================================== */
+
+    async function requestDraftRender() {
+
+        const button =
+            document.getElementById(
+                "request-render-btn"
+            );
+
+
+        if (!button) {
+            return;
+        }
+
+
+        button.disabled = true;
+
+        button.textContent =
+            "REQUESTING...";
+
+
+        try {
+
+            const url =
+                "{% url 'video-render-request' workflow.id %}";
+
+
+            const response =
+                await fetch(
+                    url,
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json",
+
+                            "X-CSRFToken":
+                                getCsrfToken(),
+
+                            "X-Requested-With":
+                                "XMLHttpRequest"
+                        },
+
+                        body:
+                            JSON.stringify({})
+                    }
+                );
+
+
+            let data = {};
+
+            try {
+
+                data =
+                    await response.json();
+
+            } catch (jsonError) {
+
+                data = {};
+
+            }
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error ||
+                    data.detail ||
+                    "Draft render request failed."
+                );
+            }
+
+
+            showToast(
+                "Draft render requested successfully."
+            );
+
+
+            setTimeout(function() {
+
+                window.location.reload();
+
+            }, 900);
+
+
+        } catch (error) {
+
+            button.disabled =
+                false;
+
+            button.textContent =
+                "REQUEST NEW DRAFT RENDER";
+
+
+            showToast(
+                error.message ||
+                "Draft render request failed.",
+                true
+            );
+        }
+    }
+
+    async function confirmApprovalAndUnlockRecording() {
+
+        const button = document.getElementById("confirm-approval-btn");
+
+        if (!button) { return; }
+
+        button.disabled = true;
+        button.textContent = "CONFIRMING...";
+
+        try {
+
+            const response = await fetch(
+                "{% url 'workflow-transition' workflow.id %}",
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRFToken": getCsrfToken(),
+                        "X-Requested-With": "XMLHttpRequest"
+                    },
+                    body: JSON.stringify({
+                        target_state: "TEACHER_SLIDE_NARRATION_APPROVED",
+                        reason_code: "TEACHER_APPROVED_CURRENT_DRAFT",
+                        expected_version: {{ workflow.version }},
+                        idempotency_key: "studio-confirm-" + Date.now()
+                    })
+                }
+            );
+
+            let data = {};
+            try { data = await response.json(); } catch (jsonError) { data = {}; }
+
+            if (!response.ok) {
+                throw new Error(data.error || data.detail || "Approval confirmation failed.");
+            }
+
+            showToast("Recording unlocked. Opening recording portal...");
+            setTimeout(function() {
+                window.location.href = "{% url 'teacher-recording-detail' workflow.id %}";
+            }, 900);
+
+        } catch (error) {
+
+            button.disabled = false;
+            button.textContent = "✓ Confirm approval & unlock recording";
+            showToast(error.message || "Approval confirmation failed.", true);
+        }
+    }
+
+</script>
+
+</body>
+</html>
