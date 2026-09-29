@@ -1,13 +1,16 @@
 import hashlib
 import json
 import shutil
+import sys
 import uuid
 import zipfile
 from pathlib import Path
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.files.storage import default_storage
 from django.test import Client, TestCase, override_settings
 
 from .models import (
@@ -33,6 +36,7 @@ from .models import (
 )
 from .roles import assign_administrator, assign_teacher, ensure_roles
 from .video import (
+    RenderPipelineError,
     UnsupportedRenderEnvironment,
     VideoConflict,
     approve_spoken_edit,
@@ -46,7 +50,7 @@ from .video import (
     request_export_package,
     request_initial_render,
     submit_for_teacher_review,
-    _build_srt,
+    _build_srt, _run_bounded, _validate_manifest_for_render,
 )
 from .workflow import create_workflow, recording_approval_fingerprint, workflow_actor_for_user
 
@@ -186,6 +190,13 @@ class RemotionVideoAssemblyTests(TestCase):
             RECORDING_STORAGE_ROOT=self.recording_root,
             VIDEO_STORAGE_ROOT=self.video_root,
             VIDEO_EXPORT_ROOT=self.export_root,
+            STORAGES={
+                **settings.STORAGES,
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                    "OPTIONS": {"location": self.video_root},
+                },
+            },
             VIDEO_RENDER_ADAPTER_ENABLED=True,
             VIDEO_RENDER_EVALUATION_ACK=True,
             VIDEO_RENDER_DEPLOYMENT_MODE="local-evaluation",
@@ -201,6 +212,7 @@ class RemotionVideoAssemblyTests(TestCase):
                 shutil.rmtree(root)
 
     def fake_render(self, manifest_path, output_path):
+        self.assertTrue(default_storage.exists(manifest_path.relative_to(self.video_root.resolve()).as_posix()))
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         self.assertEqual(manifest["compositionId"], "LectureAssembly")
         self.assertIn("مصنوعی", manifest["slides"][0]["title"])
@@ -222,6 +234,39 @@ class RemotionVideoAssemblyTests(TestCase):
         process_next_readiness_job()
         self.workflow.refresh_from_db()
         return item
+
+    def test_successful_render_persists_manifest_through_default_storage_and_metadata(self):
+        item = self.rendered()
+        self.assertTrue(default_storage.exists(item.manifest_storage_key))
+        manifest_path = self.video_root / item.manifest_storage_key
+        output_path = self.video_root / item.video_storage_key
+        self.assertTrue(manifest_path.is_file())
+        self.assertTrue(output_path.is_file())
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertEqual([slide["position"] for slide in manifest["slides"]], [1, 2])
+        self.assertEqual(item.status, VideoRenderVersion.Status.SUCCEEDED)
+        self.assertEqual(item.byte_size, output_path.stat().st_size)
+        self.assertEqual(item.video_sha256, hashlib.sha256(output_path.read_bytes()).hexdigest())
+
+    def test_missing_manifest_is_rejected_before_renderer_invocation(self):
+        item = request_initial_render(actor=self.admin_actor, workflow_id=self.workflow.pk)
+        manifest_path = self.video_root / item.manifest_storage_key
+        output_path = self.video_root / item.video_storage_key
+        with self.assertRaises(RenderPipelineError) as raised:
+            _validate_manifest_for_render(manifest_path, output_path)
+        self.assertEqual(raised.exception.reason_code, "MISSING_MANIFEST")
+        self.assertIn("Manifest does not exist", raised.exception.detail)
+
+    def test_renderer_stderr_is_captured_in_actionable_failure_detail(self):
+        with self.assertRaises(RenderPipelineError) as raised:
+            _run_bounded(
+                [sys.executable, "-c", "import sys; sys.stderr.write('synthetic renderer failure'); sys.exit(7)"],
+                cwd=Path.cwd(),
+                timeout=10,
+            )
+        self.assertEqual(raised.exception.reason_code, "LOCAL_RENDER_FAILED")
+        self.assertIn("Remotion exited with code 7", raised.exception.detail)
+        self.assertIn("synthetic renderer failure", raised.exception.detail)
 
     def test_authorization_and_immutable_input_snapshot_preserve_raw_recordings(self):
         with self.assertRaises(PermissionDenied):
@@ -254,6 +299,9 @@ class RemotionVideoAssemblyTests(TestCase):
             with self.assertRaises(RuntimeError):
                 process_render(failed.pk)
         failed.refresh_from_db()
+        self.assertEqual(failed.status, VideoRenderVersion.Status.FAILED)
+        self.assertIn("RuntimeError: synthetic", failed.failure_detail)
+        self.assertFalse((self.video_root / failed.video_storage_key).exists())
         old_manifest = (self.video_root / failed.manifest_storage_key).read_bytes()
         with self.assertRaises(PermissionDenied):
             recover_failed_render(

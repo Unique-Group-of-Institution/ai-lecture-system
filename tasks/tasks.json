@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-08-30T11:08:46Z",
+  "updated_at": "2026-09-16T13:31:53Z",
   "tasks": [
     {
       "id": "T001",
@@ -739,6 +739,68 @@
       ],
       "verification": [],
       "history": []
+    },
+    {
+      "id": "T080",
+      "title": "Wire lecture-division scoped PPT generation pipeline",
+      "priority": 13,
+      "status": "REVIEW",
+      "owner": "qoder",
+      "dependencies": [
+        "T021",
+        "T022",
+        "T030"
+      ],
+      "scope": [
+        "LectureDivision model mapping each lecture to its textbook page range",
+        "Management commands to ingest a textbook PDF and import a lecture division (JSON/CSV)",
+        "Page-scoped grounded generation limited to the lecture page range",
+        "In-repo Node slide engine run that persists a real PPTX storage key",
+        "Workflow and queued slide-engine job creation from a single command"
+      ],
+      "acceptance_criteria": [
+        "Generation only uses reviewed pages inside the lecture page range",
+        "Out-of-scope, foreign-chapter and unscoped lectures are rejected",
+        "A genuine PPTX is produced and its storage key recorded on the GenerationRequest",
+        "Creating a generation also creates the workflow and queued job",
+        "No paid AI APIs; deterministic extractive generation only",
+        "No demo or synthetic content seeded into the development database for validation"
+      ],
+      "verification": [
+        {
+          "at": "2026-09-16T13:31:53Z",
+          "actor": "qoder",
+          "evidence": "lectures/test_lecture_division.py: 7/7 pass in isolated test DB with synthetic in-test fixtures; scripts/check_workspace.py: WORKSPACE CHECK PASSED"
+        },
+        {
+          "at": "2026-09-22T00:00:00Z",
+          "actor": "qoder",
+          "evidence": "Real Class 9 CS textbook (ContentSource 2, READY) end-to-end: generate_lecture_ppt for CS9-2026 lectures 1-7 produced generations 10-16, each with workflow + SUCCEEDED slide-engine job + persisted pptx_storage_key (data/slide-engine/generation-10..16/lecture.pptx). Full Django suite: 123 tests OK."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-09-16T13:31:53Z",
+          "actor": "qoder",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Scoped from product owner master brief: PDF process -> lecture mapping -> DB -> relevant pages -> PPT -> workflow"
+        },
+        {
+          "at": "2026-09-16T13:31:53Z",
+          "actor": "qoder",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Implementation and isolated tests complete; end-to-end verification awaiting real Class 9 CS textbook PDF and LMS lecture division from product owner"
+        },
+        {
+          "at": "2026-09-22T00:00:00Z",
+          "actor": "qoder",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Real textbook end-to-end verified: 7 Unit 1 lectures produced genuine PPTX decks (generations 10-16) with workflows and SUCCEEDED engine jobs; slide quality fixed (sentence-level grounded units, page-number artifacts removed); 123 Django tests OK. Awaiting human REVIEW->DONE."
+        }
+      ]
     }
   ]
 }

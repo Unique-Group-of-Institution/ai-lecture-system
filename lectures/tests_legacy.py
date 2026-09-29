@@ -57,6 +57,7 @@ class CleanMigrationTests(TestCase):
         with tempfile.TemporaryDirectory() as directory:
             database = Path(directory) / "clean.sqlite3"
             environment = os.environ.copy()
+            environment.pop("DATABASE_URL", None)
             environment["AI_LECTURE_SQLITE_PATH"] = str(database)
             result = subprocess.run(
                 [sys.executable, "manage.py", "migrate", "--noinput"],

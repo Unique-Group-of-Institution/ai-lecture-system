@@ -25,6 +25,7 @@ button:disabled { opacity:.52; cursor:not-allowed; }
 .meta-row span,.state-pill,.take-status { display:inline-flex; padding:.35rem .65rem; border-radius:99px; background:#e7effd; color:#194a9b; font-size:.82rem; font-weight:700; }
 .course-card .button-link { margin-top:.8rem; width:100%; }
 .recording-shell { display:grid; gap:1rem; }
+.recording-progress { margin:0; padding:.7rem 1.1rem; border-radius:.9rem; background:#e7effd; border:1px solid #b9cff2; color:#194a9b; font-weight:800; justify-self:start; }
 .notice { padding:.9rem 1rem; border-radius:.8rem; border:1px solid #97b7ed; background:#edf4ff; color:#183b75; }
 .notice.danger,.gate-card.blocked { border-color:#f0aaa5; background:#fff1f0; color:#761c16; }
 .slide-list { display:grid; gap:1rem; }

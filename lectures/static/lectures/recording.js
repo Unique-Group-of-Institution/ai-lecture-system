@@ -39,6 +39,13 @@
   }
   function duration(ms) { const total = Math.floor(ms / 1000); return `${String(Math.floor(total/60)).padStart(2,"0")}:${String(total%60).padStart(2,"0")}`; }
   function cardFor(slideId) { return document.querySelector(`[data-slide-id="${slideId}"]`); }
+  function refreshProgress() {
+    const banner = document.getElementById("recording-progress");
+    if (!banner) return;
+    const recorded = document.querySelectorAll(".slide-card [data-status].ready").length;
+    banner.textContent = `${recorded} of ${data.slide_count} slides recorded`;
+    banner.dataset.recorded = String(recorded);
+  }
   async function upload(slide, card, item) {
     const form = new FormData();
     form.append("expected_revision_id", String(slide.approved_revision_id));
@@ -61,7 +68,7 @@
       const audio = document.createElement("audio"); audio.controls = true; audio.preload = "none"; audio.src = payload.media_url;
       const select = document.createElement("button"); select.type = "button"; select.className = "select-take secondary"; select.dataset.select = payload.id; select.disabled = true; select.textContent = "Selected";
       row.append(info,audio,select); card.querySelector("[data-takes]").append(row);
-      card.querySelector("[data-status]").textContent = "Take selected"; card.querySelector("[data-status]").classList.add("ready");
+      card.querySelector("[data-status]").textContent = "Take selected"; card.querySelector("[data-status]").classList.add("ready"); refreshProgress();
     } catch (error) {
       if (error.status === 409) return stale(error.message);
       status.textContent = `${error.message} The captured take remains in this browser tab; retry the local upload.`;
@@ -100,7 +107,7 @@
     if (event.target.matches("[data-retry]") && card) { const slide = data.slides.find((item) => item.id === Number(card.dataset.slideId)); const item = pending.get(slide.id); if (item) await upload(slide,card,item); }
     if (event.target.matches("[data-select]") && card) {
       const slide = data.slides.find((item) => item.id === Number(card.dataset.slideId));
-      try { await jsonFetch(`/api/recordings/${data.id}/slides/${slide.id}/select/`,{take_id:Number(event.target.dataset.select),expected_revision_id:slide.approved_revision_id}); card.querySelectorAll("[data-select]").forEach((button) => { button.disabled=false; button.textContent="Use this take"; }); event.target.disabled=true; event.target.textContent="Selected"; card.querySelector("[data-status]").textContent="Take selected"; card.querySelector("[data-status]").classList.add("ready"); }
+      try { await jsonFetch(`/api/recordings/${data.id}/slides/${slide.id}/select/`,{take_id:Number(event.target.dataset.select),expected_revision_id:slide.approved_revision_id}); card.querySelectorAll("[data-select]").forEach((button) => { button.disabled=false; button.textContent="Use this take"; }); event.target.disabled=true; event.target.textContent="Selected"; card.querySelector("[data-status]").textContent="Take selected"; card.querySelector("[data-status]").classList.add("ready"); refreshProgress(); }
       catch(error) { if(error.status===409) stale(error.message); else card.querySelector("[data-message]").textContent=error.message; }
     }
   });

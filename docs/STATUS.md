@@ -1,10 +1,10 @@
 # Project Status
 
-**Updated:** 2026-08-30
+**Updated:** 2026-09-22
 
 **Phase:** Phase-1 application foundation
 
-**Overall status:** T050 local Remotion video assembly, review and export is approved and DONE; PR #11 finalization is awaiting fresh exact-head CI before normal merge
+**Overall status:** T050 local Remotion video assembly, review and export is approved and DONE; PR #11 finalization is awaiting fresh exact-head CI before normal merge. T080 (lecture-division scoped PPT generation pipeline) is in REVIEW under `qoder`: on 2026-09-22 the pipeline was verified end-to-end with the real Class 9 Computer Science textbook — seven Unit 1 lectures produced genuine PPTX decks (generations 10-16) with workflows and succeeded slide-engine jobs — and now awaits human REVIEW→DONE.
 
 ## Completed
 
@@ -61,6 +61,7 @@
 ## Current task
 
 - T050 is DONE under `codex`. The product owner approved the recovery-corrected implementation and authorized PR #11 finalization and normal merge on 2026-08-30. Implementation head `ac29142e77773ec6eaab994236e5dfa35b11e188` passed fresh `workspace-ci` run `33308055942`; the synchronization-only finalization commit must receive fresh successful exact-head CI before merge. Old PR #8 is superseded by PR #11.
+- T080 is in REVIEW under `qoder` on `simple-lms-workflow`. On 2026-09-22 the pipeline was verified end-to-end against the real Class 9 Computer Science textbook: the 169-page PDF was ingested as `ContentSource` 2 (rights confirmed, READY), course `CS9-2026` (teacher `bilal.ali`) carries seven lecture divisions over book pages 6-27, and `generate_lecture_ppt` for lectures 1-7 produced generations 10-16, each with a workflow, a SUCCEEDED slide-engine job and a genuine deck at `data/slide-engine/generation-10..16/lecture.pptx`. This session also fixed slide quality (the deterministic generator now emits whole-sentence grounded units, skipping digit-only page-number lines and merging wrapped PDF lines, with absolute page offsets), enforced the Node schema minimum lengths in `lecture_builder.py`, granted the `Teacher` group the generation/review permissions the actor context requires, and made `admin` a superuser. `python manage.py test lectures` reports 123 tests OK and `scripts/check_workspace.py` passes. Video assembly still shows "Unsupported environment" by design: T050 Remotion processing stays gated to the trusted local evaluation mode and Phase-1 delivery is the PPTX. Awaiting human REVIEW→DONE.
 
 ## Proposed backlog — not yet implemented
 

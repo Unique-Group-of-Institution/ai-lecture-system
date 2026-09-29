@@ -83,20 +83,31 @@ def build_lecture_json(*, course_class: str, subject: str, unit: str, lecture: i
         sources = [_source_dict(source) for source in slide.sources]
         if not sources:
             raise ValueError("Every teaching slide must contain provenance.")
+        bullets = [claim for claim in claims[1:8] if len(claim) >= 2] or (
+            [claims[0]] if len(claims[0]) >= 2 else []
+        )
         canonical_slides.append({
             "type": "concept",
             "title": slide.title.strip()[:200],
             "lead": claims[0],
-            "bullets": claims[1:8] or claims[:1],
+            "bullets": bullets,
             "narration": " ".join(_clean_lines(slide.narration, 2500))[:2500],
             "sources": sources,
         })
 
-    slos = _clean_lines(learning_objectives, 500)
+    slos = [line for line in _clean_lines(learning_objectives, 500) if len(line) >= 5]
     if not 3 <= len(slos) <= 6:
         raise ValueError("Canonical lecture JSON requires 3-6 learning objectives.")
     if len(canonical_slides) < 2:
         raise ValueError("Canonical lecture JSON requires at least two teaching slides.")
+
+    recap_lines = [line for line in _clean_lines(recap, 500) if len(line) >= 5]
+    for slide in canonical_slides:
+        if len(recap_lines) >= 2:
+            break
+        if len(slide["lead"]) >= 5 and slide["lead"] not in recap_lines:
+            recap_lines.append(slide["lead"])
+    questions = [line for line in _clean_lines(review_questions, 500) if len(line) >= 5]
 
     payload = {
         "metadata": {
@@ -111,8 +122,8 @@ def build_lecture_json(*, course_class: str, subject: str, unit: str, lecture: i
         "introduction": " ".join(str(introduction).split())[:2000],
         "slos": slos,
         "slides": canonical_slides,
-        "recap": _clean_lines(recap, 500),
-        "reviewQuestions": _clean_lines(review_questions, 500),
+        "recap": recap_lines,
+        "reviewQuestions": questions,
     }
     if previous_knowledge:
         payload["previousKnowledge"] = " ".join(str(previous_knowledge).split())[:1500]
