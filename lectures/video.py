@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import ipaddress
+import logging
 import json
 import os
 import re
@@ -15,6 +16,8 @@ from pathlib import Path, PurePosixPath
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 
@@ -53,6 +56,7 @@ from .workflow import (
 HEX64 = re.compile(r"[0-9a-f]{64}\Z")
 HEX_COLOR = re.compile(r"#[0-9A-Fa-f]{6}\Z")
 MAX_PROCESS_OUTPUT = 1_000_000
+logger = logging.getLogger(__name__)
 
 
 class VideoConflict(ValidationError):
@@ -61,6 +65,13 @@ class VideoConflict(ValidationError):
 
 class UnsupportedRenderEnvironment(ValidationError):
     pass
+
+
+class RenderPipelineError(RuntimeError):
+    def __init__(self, reason_code: str, detail: str):
+        self.reason_code = reason_code
+        self.detail = detail
+        super().__init__(detail)
 
 
 def _positive(value, field: str, *, maximum: int | None = None) -> int:
@@ -167,8 +178,30 @@ def _storage_path(root: Path, key: str, *, must_exist: bool = False) -> Path:
     return path
 
 
+def _video_storage_path(key: str, *, must_exist: bool = False) -> Path:
+    root = _root("VIDEO_STORAGE_ROOT")
+    if not isinstance(key, str):
+        raise ValidationError("Invalid video storage reference.")
+    relative = PurePosixPath(key)
+    if relative.is_absolute() or not relative.parts or ".." in relative.parts:
+        raise ValidationError("Invalid video storage reference.")
+    try:
+        path = Path(default_storage.path(key)).resolve()
+    except NotImplementedError as exc:
+        raise UnsupportedRenderEnvironment(
+            "The trusted local renderer requires filesystem-backed video storage."
+        ) from exc
+    if not _contained(root, path):
+        raise UnsupportedRenderEnvironment(
+            "Django default storage must resolve inside the trusted video storage root."
+        )
+    if must_exist and (not default_storage.exists(key) or not path.is_file()):
+        raise ValidationError("Video artifact is unavailable.")
+    return path
+
+
 def render_video_path(render: VideoRenderVersion) -> Path:
-    return _storage_path(_root("VIDEO_STORAGE_ROOT"), render.video_storage_key, must_exist=True)
+    return _video_storage_path(render.video_storage_key, must_exist=True)
 
 
 def _completion_for(workflow: LectureWorkflow) -> RecordingCompletion:
@@ -227,7 +260,7 @@ def _snapshot_input(workflow: LectureWorkflow, actor: WorkflowActorContext) -> V
                 "title": revision.title,
                 "claims": [claim.text for claim in revision.claims.order_by("position")],
                 "narration": revision.canonical_narration.text,
-                "narration_sha256": revision.canonical_narration.text_sha256,
+                "narration_sha256": _sha(revision.canonical_narration.text.encode("utf-8")),
                 "storage_key": item.take.storage_key,
             }
         )
@@ -302,7 +335,7 @@ def _input_is_current(render_input: VideoRenderInput, workflow: LectureWorkflow)
             or item.title_snapshot != revision.title
             or item.claims_snapshot != claims
             or item.narration_snapshot != narration.text
-            or item.narration_sha256 != narration.text_sha256
+            or item.narration_sha256 != _sha(narration.text.encode("utf-8"))
             or _sha(item.narration_snapshot.encode("utf-8")) != item.narration_sha256
             or item.take_storage_key != item.take.storage_key
             or item.take_duration_ms != item.take.duration_ms
@@ -335,16 +368,61 @@ def _new_render(
 
 
 @transaction.atomic
-def request_initial_render(*, actor: WorkflowActorContext, workflow_id: int) -> VideoRenderVersion:
+def request_initial_render(
+    *, actor: WorkflowActorContext, workflow_id: int
+) -> VideoRenderVersion:
     workflow = LectureWorkflow.objects.select_for_update().select_related(
         "generation__chapter__course"
     ).get(pk=_positive(workflow_id, "workflow identifier"))
+
     _require_admin(actor, workflow)
-    if workflow.state != LectureWorkflow.State.RECORDING_READY:
-        raise VideoConflict("A new initial render is unavailable in the current workflow state.")
-    if workflow.video_render_versions.exists():
-        raise VideoConflict("The initial render already exists.")
-    return _new_render(workflow=workflow, render_input=_snapshot_input(workflow, actor), actor=actor)
+
+    renders = workflow.video_render_versions.order_by("-version")
+    latest = renders.first()
+
+    # First render: normal recording-ready workflow.
+    if latest is None:
+        if workflow.state != LectureWorkflow.State.RECORDING_READY:
+            raise VideoConflict(
+                "A new initial render is unavailable in the current workflow state."
+            )
+        return _new_render(
+            workflow=workflow,
+            render_input=_snapshot_input(workflow, actor),
+            actor=actor,
+        )
+
+    # A stale render means its immutable snapshot is no longer usable.
+    # Keep the stale version untouched and create a fresh immutable snapshot.
+    if (
+        workflow.state == LectureWorkflow.State.DRAFT_VIDEO_PENDING
+        and latest.status == VideoRenderVersion.Status.STALE
+    ):
+        return _new_render(
+            workflow=workflow,
+            render_input=_snapshot_input(workflow, actor),
+            actor=actor,
+            parent=latest,
+        )
+
+    # Do not create duplicate renders while one is active.
+    if latest.status in {
+        VideoRenderVersion.Status.PENDING,
+        VideoRenderVersion.Status.RUNNING,
+    }:
+        raise VideoConflict("A render is already pending or running.")
+
+    # Successful renders must remain immutable.
+    if latest.status == VideoRenderVersion.Status.SUCCEEDED:
+        raise VideoConflict("A successful draft render already exists.")
+
+    # Failed renders have their own audited recovery mechanism.
+    if latest.status == VideoRenderVersion.Status.FAILED:
+        raise VideoConflict(
+            "Use failed-render recovery for the latest failed render."
+        )
+
+    raise VideoConflict("A new render is unavailable in the current workflow state.")
 
 
 def _validate_edit_payload(decision_type: str, payload: dict, base: VideoRenderVersion) -> dict:
@@ -632,10 +710,9 @@ def _render_config(render: VideoRenderVersion) -> dict:
 
 
 def _build_manifest(render: VideoRenderVersion) -> tuple[Path, Path]:
-    root = _root("VIDEO_STORAGE_ROOT")
-    manifest_path = _storage_path(root, render.manifest_storage_key)
-    output_path = _storage_path(root, render.video_storage_key)
-    if manifest_path.exists() or output_path.exists() or output_path.with_suffix(".mp4.part").exists():
+    manifest_path = _video_storage_path(render.manifest_storage_key)
+    output_path = _video_storage_path(render.video_storage_key)
+    if default_storage.exists(render.manifest_storage_key) or default_storage.exists(render.video_storage_key) or Path(f"{output_path}.part.mp4").exists():
         raise ValidationError("Immutable render destination already exists.")
     manifest_path.parent.mkdir(parents=True, exist_ok=False)
     public_dir = manifest_path.parent / "public"
@@ -700,8 +777,57 @@ def _build_manifest(render: VideoRenderVersion) -> tuple[Path, Path]:
         "holdAfterMs": config["holdAfterMs"],
         "totalDurationInFrames": timeline_cursor,
     }
-    manifest_path.write_bytes(_canonical(manifest))
+    encoded = _canonical(manifest)
+    saved_key = default_storage.save(render.manifest_storage_key, ContentFile(encoded))
+    if saved_key != render.manifest_storage_key:
+        raise ValidationError("Immutable render manifest destination changed unexpectedly.")
+    if not default_storage.exists(render.manifest_storage_key):
+        raise ValidationError("Render manifest was not persisted to storage.")
+    manifest_path = _video_storage_path(render.manifest_storage_key, must_exist=True)
+    if manifest_path.read_bytes() != encoded:
+        raise ValidationError("Render manifest failed its storage integrity check.")
+    _validate_manifest_for_render(manifest_path, output_path)
     return manifest_path, output_path
+
+
+def _manifest_error(reason_code: str, detail: str) -> RenderPipelineError:
+    return RenderPipelineError(reason_code, detail[:8000])
+
+
+def _validate_manifest_for_render(manifest_path: Path, output_path: Path) -> dict:
+    if not manifest_path.is_file():
+        raise _manifest_error("MISSING_MANIFEST", f"Manifest does not exist before renderer invocation: {manifest_path}")
+    if output_path.exists() or Path(f"{output_path}.part.mp4").exists():
+        raise _manifest_error("IMMUTABLE_OUTPUT_UNAVAILABLE", f"Output path is already occupied: {output_path}")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise _manifest_error("INVALID_MANIFEST_JSON", f"Manifest JSON is unreadable or invalid: {exc}") from exc
+    required = {"schemaVersion", "compositionId", "fps", "width", "height", "renderReference", "publicDir", "slides", "branding", "captions", "transitionMs", "holdAfterMs", "totalDurationInFrames"}
+    if set(manifest) != required or manifest.get("compositionId") != "LectureAssembly":
+        raise _manifest_error("INVALID_MANIFEST_SCHEMA", "Manifest does not match the trusted renderer schema.")
+    public_dir = Path(manifest["publicDir"]).resolve()
+    expected_public = (manifest_path.parent / "public").resolve()
+    if public_dir != expected_public or not _contained(_root("VIDEO_STORAGE_ROOT"), public_dir):
+        raise _manifest_error("INVALID_MANIFEST_ASSET_ROOT", "Manifest publicDir is outside the trusted render staging directory.")
+    slides = manifest.get("slides")
+    if not isinstance(slides, list) or not slides:
+        raise _manifest_error("INVALID_MANIFEST_SCHEMA", "Manifest has no renderable slides.")
+    for index, slide in enumerate(slides, 1):
+        if slide.get("position") != index:
+            raise _manifest_error("INVALID_MANIFEST_SCHEMA", "Manifest slides are not in consecutive order.")
+        audio_src = slide.get("audioSrc")
+        if not isinstance(audio_src, str):
+            raise _manifest_error("INVALID_MANIFEST_SCHEMA", "Manifest slide audio reference is invalid.")
+        audio_path = (public_dir / PurePosixPath(audio_src)).resolve()
+        if not _contained(public_dir, audio_path) or not audio_path.is_file():
+            raise _manifest_error("MISSING_RENDER_ASSET", f"Referenced slide audio is unavailable: slide {index}")
+    return manifest
+
+
+def _command_for_detail(command: list[str]) -> str:
+    return " ".join(command)
 
 
 def _run_bounded(command: list[str], *, cwd: Path, timeout: int) -> None:
@@ -755,12 +881,23 @@ def _run_bounded(command: list[str], *, cwd: Path, timeout: int) -> None:
         process.wait()
     for reader in readers:
         reader.join(5)
+    stdout_tail = bytes(buffers["stdout"][-2000:]).decode("utf-8", "replace").strip()
+    stderr_tail = bytes(buffers["stderr"][-4000:]).decode("utf-8", "replace").strip()
     if any(reader.is_alive() for reader in readers) or overflow.is_set():
-        raise RuntimeError("Local renderer output exceeded the safe boundary.")
+        raise RenderPipelineError(
+            "LOCAL_RENDER_OUTPUT_LIMIT",
+            f"Local renderer output exceeded the safe boundary. command: {_command_for_detail(command)} stdout: {stdout_tail or '(empty)'} stderr: {stderr_tail or '(empty)'}",
+        )
     if timed_out:
-        raise TimeoutError("Local renderer exceeded the safe time limit.")
+        raise RenderPipelineError(
+            "LOCAL_RENDER_TIMEOUT",
+            f"Local renderer exceeded the safe time limit. command: {_command_for_detail(command)} stdout: {stdout_tail or '(empty)'} stderr: {stderr_tail or '(empty)'}",
+        )
     if process.returncode:
-        raise RuntimeError("Local renderer failed safely.")
+        raise RenderPipelineError(
+            "LOCAL_RENDER_FAILED",
+            f"Remotion exited with code {process.returncode}. command: {_command_for_detail(command)} stderr: {stderr_tail or '(empty)'} stdout: {stdout_tail or '(empty)'}",
+        )
 
 
 def _invoke_adapter(manifest_path: Path, output_path: Path) -> None:
@@ -772,11 +909,29 @@ def _invoke_adapter(manifest_path: Path, output_path: Path) -> None:
     script = project / "scripts" / "render.mjs"
     if not node or not script.is_file():
         raise UnsupportedRenderEnvironment("The trusted local Remotion adapter is unavailable.")
+    _validate_manifest_for_render(manifest_path, output_path)
     _run_bounded(
         [node, str(script), str(manifest_path), str(output_path)],
         cwd=project,
         timeout=settings.VIDEO_RENDER_TIMEOUT_SECONDS,
     )
+
+
+def _render_failure_detail(exc: Exception, manifest_path: Path | None, output_path: Path | None) -> str:
+    if isinstance(exc, RenderPipelineError):
+        detail = exc.detail
+    elif isinstance(exc, ValidationError):
+        detail = "; ".join(str(message) for message in getattr(exc, "messages", [str(exc)]))
+    else:
+        detail = f"{type(exc).__name__}: {exc}"
+    context = []
+    if manifest_path is not None:
+        context.append(f"manifest: {manifest_path}")
+    if output_path is not None:
+        context.append(f"output: {output_path}")
+    if context:
+        detail = f"{detail} | " + " | ".join(context)
+    return detail[:8000]
 
 
 def process_render(render_id: int) -> VideoRenderVersion:
@@ -817,6 +972,8 @@ def process_render(render_id: int) -> VideoRenderVersion:
         )
         raise
     _save_render(render, status=VideoRenderVersion.Status.RUNNING, started_at=timezone.now())
+    manifest_path = None
+    output_path = None
     try:
         manifest_path, output_path = _build_manifest(render)
         _invoke_adapter(manifest_path, output_path)
@@ -830,13 +987,15 @@ def process_render(render_id: int) -> VideoRenderVersion:
             byte_size=size,
             completed_at=timezone.now(),
         )
-    except Exception:
+    except Exception as exc:
         render.refresh_from_db()
+        logger.exception("Render %s failed", render.pk)
         if render.status == VideoRenderVersion.Status.RUNNING:
             _save_render(
                 render,
                 status=VideoRenderVersion.Status.FAILED,
-                failure_reason_code="LOCAL_RENDER_FAILED",
+                failure_reason_code=getattr(exc, "reason_code", "LOCAL_RENDER_FAILED"),
+                failure_detail=_render_failure_detail(exc, manifest_path, output_path),
                 completed_at=timezone.now(),
             )
         raise

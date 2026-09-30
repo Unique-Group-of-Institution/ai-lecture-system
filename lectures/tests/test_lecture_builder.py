@@ -32,5 +32,5 @@ class LectureBuilderTests(SimpleTestCase):
                 course_class="10", subject="physics", unit="1", lecture=1, title="Test",
                 lms_scope="scope", textbook_pages="1", introduction="Enough introduction.",
                 learning_objectives=["Only one"], slides=(), recap=["One", "Two"],
-                review_questions=["One", "Two"],
+                review_questions=["One", "Two"], previous_knowledge=None,
             )

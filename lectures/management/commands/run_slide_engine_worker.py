@@ -16,7 +16,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         actor = system_worker_context(
             identity_reference="slide-engine-worker",
-            permitted_course_ids=Course.objects.values_list("pk", flat=True),
+            permitted_course_ids=list(Course.objects.values_list("pk", flat=True)),
         )
         processed = 0
         while True:

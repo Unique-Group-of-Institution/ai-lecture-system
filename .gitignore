@@ -74,3 +74,17 @@ desktop.ini
 *.tmp
 *.part
 AI-Lecture-System-T050-Review/
+<<<<<<< HEAD
+
+AI-Lecture-System-T050-Review/
+
+# Ignore local agent scratch and temp
+.codex/
+data/tmp/
+data/slide-engine/
+*.log
+*.bak
+
+# Ignore accidental CMD files
+findstr
+set

@@ -2,7 +2,7 @@ import {existsSync, readFileSync, realpathSync, renameSync} from 'node:fs';
 import {dirname, extname, relative, resolve, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {bundle} from '@remotion/bundler';
-import {renderMedia, selectComposition} from '@remotion/renderer';
+import {openBrowser, renderMedia, selectComposition} from '@remotion/renderer';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const workspaceRoot = resolve(projectRoot, '..');
@@ -31,7 +31,7 @@ const outputPath = resolve(process.argv[3]);
 if (!contained(videoRoot, manifestPath) || !contained(videoRoot, outputPath) || extname(outputPath) !== '.mp4' || !manifestPath.endsWith(`${sep}manifest.json`)) {
   throw new Error('Render paths are outside the trusted local boundary.');
 }
-if (!existsSync(manifestPath) || existsSync(outputPath) || existsSync(`${outputPath}.part`)) throw new Error('Immutable render path is unavailable.');
+if (!existsSync(manifestPath) || existsSync(outputPath) || existsSync(`${outputPath}.part.mp4`)) throw new Error('Immutable render path is unavailable.');
 if (!contained(videoRoot, realpathSync(manifestPath))) throw new Error('Manifest resolved outside the trusted boundary.');
 const raw = readFileSync(manifestPath);
 if (raw.length > 65536) throw new Error('Manifest exceeds the safe limit.');
@@ -89,16 +89,53 @@ for (const [index, slide] of manifest.slides.entries()) {
 }
 if (timelineCursor !== manifest.totalDurationInFrames) throw new Error('Total duration does not match the slide timeline.');
 
-const serveUrl = await bundle({entryPoint: resolve(projectRoot, 'src', 'index.ts'), publicDir});
-const composition = await selectComposition({serveUrl, id: 'LectureAssembly', inputProps: manifest});
-await renderMedia({
-  composition,
-  serveUrl,
-  codec: 'h264',
-  outputLocation: `${outputPath}.part`,
-  inputProps: manifest,
-  concurrency: 1,
-  overwrite: false,
-});
+// This evaluation PC starts chrome-headless-shell in ~15s cold (Defender scan)
+// and needs well over Remotion's 30s defaults while bundling competes for CPU,
+// so the browser is opened before bundling and timeouts are raised.
+// openBrowser's internal 25s connect budget is not configurable; on a loaded
+// machine the first launch can exceed it, so retry (attempt 2 is warm).
+const browserSetupTimeoutMs = 300000;
+const openBrowserWithRetries = async (attempts = 3) => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await openBrowser('chrome');
+    } catch (err) {
+      if (attempt >= attempts || !String(err?.message ?? '').includes('connect to the browser')) throw err;
+      console.error(`Browser connect failed (attempt ${attempt}/${attempts}); retrying warm launch...`);
+      await new Promise((r) => setTimeout(r, 5000));
+    }
+  }
+};
+const browserPromise = openBrowserWithRetries();
+let serveUrl;
+try {
+  serveUrl = await bundle({entryPoint: resolve(projectRoot, 'src', 'index.ts'), publicDir});
+} catch (err) {
+  await browserPromise.then((b) => b.close({silent: true})).catch(() => undefined);
+  throw err;
+}
+const browser = await browserPromise;
+try {
+  const composition = await selectComposition({
+    serveUrl,
+    id: 'LectureAssembly',
+    inputProps: manifest,
+    puppeteerInstance: browser,
+    timeoutInMilliseconds: browserSetupTimeoutMs,
+  });
+  await renderMedia({
+    composition,
+    serveUrl,
+    codec: 'h264',
+    outputLocation: `${outputPath}.part.mp4`,
+    inputProps: manifest,
+    concurrency: 1,
+    overwrite: false,
+    puppeteerInstance: browser,
+    timeoutInMilliseconds: browserSetupTimeoutMs,
+  });
+} finally {
+  await browser.close({silent: true}).catch(() => undefined);
+}
 if (existsSync(outputPath)) throw new Error('Immutable output was created concurrently.');
-renameSync(`${outputPath}.part`, outputPath);
+renameSync(`${outputPath}.part.mp4`, outputPath);

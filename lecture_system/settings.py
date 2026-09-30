@@ -109,18 +109,22 @@ USE_TZ = True
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
+DATA_ROOT = Path(os.environ.get("AI_LECTURE_DATA_ROOT", BASE_DIR / "data"))
+VIDEO_STORAGE_ROOT = DATA_ROOT / "lectures" / "t050-video"
 STATICFILES_BACKEND = (
     "django.contrib.staticfiles.storage.StaticFilesStorage"
     if DEBUG
     else "whitenoise.storage.CompressedManifestStaticFilesStorage"
 )
 STORAGES = {
-    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "OPTIONS": {"location": VIDEO_STORAGE_ROOT},
+    },
     "staticfiles": {"BACKEND": STATICFILES_BACKEND},
 }
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-DATA_ROOT = Path(os.environ.get("AI_LECTURE_DATA_ROOT", BASE_DIR / "data"))
 CONTENT_STORAGE_ROOT = Path(os.environ.get("AI_LECTURE_CONTENT_ROOT", DATA_ROOT / "content-library"))
 CONTENT_MAX_UPLOAD_BYTES = int(os.environ.get("AI_LECTURE_CONTENT_MAX_BYTES", 25 * 1024 * 1024))
 CONTENT_OCR_TIMEOUT_SECONDS = int(os.environ.get("AI_LECTURE_OCR_TIMEOUT_SECONDS", 120))
@@ -174,7 +178,6 @@ CSRF_COOKIE_SECURE = env_bool("AI_LECTURE_SECURE_COOKIES", default=not DEBUG)
 
 # T050 renders only through a server-side local adapter into ignored project
 # storage. Enabling it requires an explicit process-only evaluation acknowledgement.
-VIDEO_STORAGE_ROOT = DATA_ROOT / "lectures" / "t050-video"
 VIDEO_EXPORT_ROOT = DATA_ROOT / "exports" / "t050-video"
 REMOTION_PROJECT_ROOT = BASE_DIR / "remotion"
 VIDEO_RENDER_ADAPTER_ENABLED = os.environ.get("AI_LECTURE_VIDEO_RENDER_ADAPTER", "") == "1"

@@ -59,7 +59,7 @@ def _source_for_reference(reference: SourceReference) -> BuilderSource:
 
 
 def build_canonical_payload(generation: GenerationRequest) -> dict:
-    generation = GenerationRequest.objects.select_related("chapter__course").prefetch_related(
+    generation = GenerationRequest.objects.select_related("chapter__course", "lecture").prefetch_related(
         "slides__revisions__claims__references__page_snapshot",
         "slides__revisions__narration_statements__references__page_snapshot",
     ).get(pk=generation.pk)
@@ -81,17 +81,24 @@ def build_canonical_payload(generation: GenerationRequest) -> dict:
         unique = {(r.page_snapshot_id, r.start_offset, r.end_offset): r for r in refs}
         sources = tuple(unique.values())
         slides.append(BuilderSlide(revision.title, claims, narration, sources))
-        recap.append(claims[0] if claims else revision.title)
+        recap.append(next(
+            (clean for clean in (" ".join(claim.split()) for claim in claims) if len(clean) >= 5),
+            revision.title.strip(),
+        ))
         questions.append(f"What is the main idea of {revision.title}?")
+    lecture = generation.lecture
+    deck_title = lecture.title if lecture else (
+        generation.slides.order_by("position").first().revisions.get(version=1).title if generation.slides.exists() else generation.chapter.title
+    )
     payload = build_lecture_json(
         course_class=generation.chapter.course.class_name or "Unknown",
         subject=generation.chapter.course.subject_name or "physics",
         unit=generation.chapter.title,
-        lecture=generation.pk,
-        title=generation.slides.order_by("position").first().revisions.get(version=1).title if generation.slides.exists() else generation.chapter.title,
-        lms_scope=generation.chapter.title,
-        textbook_pages=", ".join(str(p.page_number) for p in generation.source_snapshots.values_list("pages__page_number", flat=True).distinct() if p),
-        introduction=f"This lecture covers {generation.chapter.title} using the authorized, reviewed textbook snapshot.",
+        lecture=lecture.number if lecture else generation.pk,
+        title=deck_title,
+        lms_scope=lecture.title if lecture else generation.chapter.title,
+        textbook_pages=", ".join(str(number) for number in generation.source_snapshots.values_list("pages__page_number", flat=True).distinct() if number),
+        introduction=f"This lecture covers {lecture.title if lecture else generation.chapter.title} using the authorized, reviewed textbook snapshot.",
         learning_objectives=slos[:6],
         previous_knowledge=None,
         slides=slides,
@@ -150,8 +157,10 @@ def run_slide_engine(generation_id: int) -> str:
         logger.error("Slide engine failed: returncode=%s stdout=%r stderr=%r", completed.returncode, stdout, stderr)
         raise SlideEngineError("The slide generator failed safely.")
     _validate_pptx(output_path)
+    relative = output_path.relative_to(Path(settings.DATA_ROOT).resolve()).as_posix()
+    GenerationRequest.objects.filter(pk=generation_id).update(pptx_storage_key=relative, updated_at=timezone.now())
     logger.info("Slide engine completed generation=%s output=%s", generation_id, output_path)
-    return output_path.relative_to(settings.DATA_ROOT).as_posix()
+    return relative
 
 
 def queue_slide_generation(*, actor: WorkflowActorContext, workflow_id: int, idempotency_key: str) -> WorkflowJob:

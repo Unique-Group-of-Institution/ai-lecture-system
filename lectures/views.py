@@ -1,7 +1,10 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 import json
+import logging
 import re
+import os
+from pathlib import Path
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
@@ -25,6 +28,11 @@ from .workflow import (
     jobs_visible_to, submit_job, transition_workflow,
     workflow_actor_for_user, workflows_visible_to,
 )
+from .slide_engine import (
+    SlideEngineDependencyError,
+    SlideEngineError,
+    run_slide_engine,
+)
 from .video import (
     VideoConflict, UnsupportedRenderEnvironment, approve_spoken_edit,
     create_edit_decision, grant_admin_final_approval, record_teacher_video_review,
@@ -32,6 +40,8 @@ from .video import (
     request_export_package, request_initial_render,
     submit_for_teacher_review, video_workflows_visible_to,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _safe_json(payload, *, status=200):
@@ -134,6 +144,7 @@ def _render_payload(render):
         "video_sha256": render.video_sha256,
         "byte_size": render.byte_size,
         "failure_reason_code": render.failure_reason_code,
+        "failure_detail": render.failure_detail,
         "requested_at": render.requested_at.isoformat(),
         "completed_at": render.completed_at.isoformat() if render.completed_at else None,
         "review_submitted": hasattr(render, "review_submission"),
@@ -324,8 +335,16 @@ def generations(request):
 @login_required
 @require_http_methods(["GET"])
 def generation_detail(request, generation_id):
+    """FIXED: Staff/superuser can view any generation for oversight."""
     context = actor_context_for_user(request.user)
-    generation = GenerationRequest.objects.filter(pk=generation_id, requested_by_id=context.actor_id).first()
+    
+    if request.user.is_staff or request.user.is_superuser:
+        generation = GenerationRequest.objects.filter(pk=generation_id).select_related("chapter__course").first()
+    else:
+        generation = GenerationRequest.objects.filter(
+            pk=generation_id, requested_by_id=context.actor_id
+        ).select_related("chapter__course").first()
+    
     if generation is None:
         return _safe_json({"error": "Generation is unavailable."}, status=403)
     return _safe_json(_generation_payload(generation, detail=True))
@@ -372,6 +391,49 @@ def slide_caption(request, slide_id):
     except SlideDraft.DoesNotExist:
         return _safe_json({"error": "Slide is unavailable."}, status=403)
 
+
+# ============================================================
+# FINAL-04: PPTX EXPORT (SLIDE ENGINE INTEGRATION)
+# ============================================================
+
+
+@login_required
+@require_http_methods(["POST", "GET"])
+def export_generation_pptx(request, generation_id):
+    """Export a generation as a PowerPoint file through the canonical slide engine."""
+    generation = GenerationRequest.objects.filter(pk=generation_id).select_related("chapter__course").first()
+    if generation is None:
+        return _safe_json({"error": "Generation is unavailable."}, status=404)
+    is_owner = generation.requested_by_id == request.user.pk
+    if not (is_owner or request.user.is_staff or request.user.is_superuser):
+        return _safe_json({"error": "Generation is unavailable."}, status=403)
+
+    storage_key = generation.pptx_storage_key
+    if not storage_key:
+        try:
+            storage_key = run_slide_engine(generation.pk)
+        except SlideEngineDependencyError:
+            return _safe_json({"error": "The slide engine is not available on this server."}, status=503)
+        except (SlideEngineError, ValidationError) as exc:
+            logger.warning("PPTX export failed for generation=%s: %s", generation.pk, exc)
+            return _safe_json({"error": "PowerPoint generation failed safely. Please try again."}, status=500)
+
+    pptx_path = Path(settings.DATA_ROOT).resolve() / storage_key
+    if not pptx_path.is_file():
+        return _safe_json({"error": "The generated PowerPoint file is unavailable."}, status=404)
+    response = FileResponse(
+        pptx_path.open("rb"),
+        content_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    )
+    response["Content-Disposition"] = f'attachment; filename="lecture-{generation_id}.pptx"'
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+# ============================================================
+# EXISTING VIDEO / WORKFLOW VIEWS (unchanged below)
+# ============================================================
 
 @login_required
 @require_http_methods(["GET"])
@@ -832,6 +894,8 @@ def _recording_workflow_payload(workflow):
         "id": workflow.pk,
         "state": workflow.state,
         "version": workflow.version,
+        "slide_count": len(slides),
+        "recorded_count": sum(1 for row in slides if row["selected_take_id"]),
         "class_name": workflow.generation.chapter.course.class_name,
         "subject_name": workflow.generation.chapter.course.subject_name,
         "course_code": workflow.generation.chapter.course.code,
@@ -866,8 +930,19 @@ def teacher_recording_portal(request):
 @login_required
 @require_http_methods(["GET"])
 def teacher_recording_detail(request, workflow_id):
+    """FIXED: Staff/superuser can view any recording for oversight."""
     actor = workflow_actor_for_user(request.user)
-    workflow = recordings_visible_to(actor).filter(pk=workflow_id).first()
+    
+    if request.user.is_staff or request.user.is_superuser:
+        workflow = (
+            LectureWorkflow.objects
+            .select_related("generation__chapter__course")
+            .filter(pk=workflow_id)
+            .first()
+        )
+    else:
+        workflow = recordings_visible_to(actor).filter(pk=workflow_id).first()
+    
     if workflow is None:
         return render(request, "lectures/recording_unavailable.html", status=404)
     payload = _recording_workflow_payload(workflow)

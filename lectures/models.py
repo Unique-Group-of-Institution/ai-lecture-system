@@ -53,6 +53,38 @@ class Chapter(models.Model):
         return f"{self.course.code} / {self.number}: {self.title}"
 
 
+class LectureDivision(models.Model):
+    """One lecture of the LMS lecture division with its textbook page scope."""
+
+    chapter = models.ForeignKey(Chapter, on_delete=models.PROTECT, related_name="lecture_divisions")
+    number = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    title = models.CharField(max_length=200)
+    page_start = models.PositiveIntegerField(null=True, blank=True)
+    page_end = models.PositiveIntegerField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("chapter", "number")
+        constraints = [
+            models.UniqueConstraint(fields=("chapter", "number"), name="unique_lecture_division_number"),
+            models.CheckConstraint(condition=Q(number__gte=1), name="lecture_division_number_positive"),
+            models.CheckConstraint(
+                condition=Q(page_start__isnull=True) | Q(page_end__isnull=True) | Q(page_end__gte=models.F("page_start")),
+                name="lecture_division_page_range_ordered",
+            ),
+        ]
+        indexes = [models.Index(fields=("chapter", "number"), name="lecture_division_chapter_idx")]
+
+    def __str__(self) -> str:
+        return f"{self.chapter} / Lecture {self.number}: {self.title}"
+
+    def page_range(self) -> tuple[int, int] | None:
+        if self.page_start is None or self.page_end is None:
+            return None
+        return self.page_start, self.page_end
+
+
 class LectureRequest(models.Model):
     class Status(models.TextChoices):
         DRAFT = "DRAFT", "Draft"
@@ -254,12 +286,20 @@ class GenerationRequest(models.Model):
         APPROVED = "APPROVED", "Teacher approved"
 
     chapter = models.ForeignKey(Chapter, on_delete=models.PROTECT, related_name="generation_requests")
+    lecture = models.ForeignKey(
+        "LectureDivision",
+        on_delete=models.PROTECT,
+        related_name="generations",
+        null=True,
+        blank=True,
+    )
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="generation_requests"
     )
     guidelines = models.JSONField()
     generator_key = models.CharField(max_length=64)
     input_sha256 = models.CharField(max_length=64)
+    pptx_storage_key = models.CharField(max_length=255, blank=True, default="")
     status = models.CharField(max_length=24, choices=Status, default=Status.GENERATED)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -274,7 +314,7 @@ class GenerationRequest(models.Model):
     def save(self, *args, **kwargs):
         if self.pk:
             previous = GenerationRequest.objects.filter(pk=self.pk).values(
-                "chapter_id", "requested_by_id", "guidelines", "generator_key", "input_sha256"
+                "chapter_id", "lecture_id", "requested_by_id", "guidelines", "generator_key", "input_sha256"
             ).first()
             current = {name: getattr(self, name) for name in previous} if previous else None
             if previous is not None and current != previous:
@@ -878,6 +918,7 @@ class VideoRenderVersion(models.Model):
     video_sha256 = models.CharField(max_length=64, blank=True)
     byte_size = models.PositiveBigIntegerField(null=True, blank=True)
     failure_reason_code = models.CharField(max_length=64, blank=True)
+    failure_detail = models.TextField(blank=True)
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="video_render_versions"
     )

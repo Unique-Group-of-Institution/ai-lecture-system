@@ -22,6 +22,7 @@ from .models import (
     GenerationPageSnapshot,
     GenerationRequest,
     GenerationSourceSnapshot,
+    LectureDivision,
     LectureWorkflow,
     NarrationStatement,
     SlideClaim,
@@ -129,26 +130,55 @@ class DeterministicExtractiveGenerator:
     key = GENERATOR_KEY
 
     @staticmethod
-    def _units(page: GenerationPageSnapshot):
+    def _line_spans(text: str):
+        start = 0
+        for line in text.split("\n"):
+            yield start, start + len(line), line
+            start += len(line) + 1
+
+    @staticmethod
+    def _chunks(text: str, page_pk: int, start: int, end: int):
+        while start < end and text[start].isspace():
+            start += 1
+        while end > start and text[end - 1].isspace():
+            end -= 1
+        while end - start > 600:
+            cut = text.rfind(" ", start, start + 601)
+            cut = cut if cut > start else start + 600
+            yield GroundedText(text[start:cut], page_pk, start, cut)
+            start = cut
+            while start < end and text[start].isspace():
+                start += 1
+        if end > start:
+            yield GroundedText(text[start:end], page_pk, start, end)
+
+    def _units(self, page: GenerationPageSnapshot):
         text = page.text
-        starts = [0]
-        for match in re.finditer(r"(?<=[.!?۔؟])\s+|\n+", text):
-            starts.append(match.end())
-        starts.append(len(text))
-        for left, right in zip(starts, starts[1:]):
-            while left < right and text[left].isspace():
-                left += 1
-            while right > left and text[right - 1].isspace():
-                right -= 1
-            while right - left > 600:
-                cut = text.rfind(" ", left, left + 601)
-                cut = cut if cut > left else left + 600
-                yield GroundedText(text[left:cut], page.pk, left, cut)
-                left = cut
-                while left < right and text[left].isspace():
-                    left += 1
-            if right > left:
-                yield GroundedText(text[left:right], page.pk, left, right)
+        buffer_start = buffer_end = None
+        for start, end, line in self._line_spans(text):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            if stripped.isdigit():
+                if buffer_start is not None:
+                    yield from self._chunks(text, page.pk, buffer_start, buffer_end)
+                    buffer_start = buffer_end = None
+                continue
+            cursor = start
+            for match in re.finditer(r"[.!?۔؟]", line):
+                cut = start + match.end()
+                if buffer_start is None:
+                    buffer_start = cursor
+                buffer_end = cut
+                yield from self._chunks(text, page.pk, buffer_start, buffer_end)
+                buffer_start = buffer_end = None
+                cursor = cut
+            if text[cursor:end].strip():
+                if buffer_start is None:
+                    buffer_start = cursor
+                buffer_end = end
+        if buffer_start is not None:
+            yield from self._chunks(text, page.pk, buffer_start, buffer_end)
 
     def generate(self, pages, guidelines):
         units = [unit for page in pages for unit in self._units(page) if unit.text]
@@ -203,11 +233,13 @@ def _load_reviewed_pages(source: ContentSource) -> tuple[ExtractionVersion, list
 
 
 @transaction.atomic
-def create_generation(*, actor: GenerationActorContext, chapter_id: int, source_ids, guidelines, generator: GroundedGenerator | None = None) -> GenerationRequest:
+def create_generation(*, actor: GenerationActorContext, chapter_id: int, source_ids, guidelines, generator: GroundedGenerator | None = None, lecture_id: int | None = None) -> GenerationRequest:
     if not actor.can_generate:
         raise PermissionDenied("Generation is not authorized for this actor context.")
     if isinstance(chapter_id, bool) or not isinstance(chapter_id, int) or chapter_id <= 0:
         raise ValidationError("Invalid chapter selection.")
+    if lecture_id is not None and (isinstance(lecture_id, bool) or not isinstance(lecture_id, int) or lecture_id <= 0):
+        raise ValidationError("Invalid lecture selection.")
     if not isinstance(source_ids, list) or not source_ids or len(source_ids) > settings.GENERATION_MAX_SOURCES or any(
         isinstance(value, bool) or not isinstance(value, int) or value <= 0 for value in source_ids
     ) or len(set(source_ids)) != len(source_ids):
@@ -218,6 +250,13 @@ def create_generation(*, actor: GenerationActorContext, chapter_id: int, source_
         raise PermissionDenied("Chapter is outside the actor's authorized course context.")
     if not set(source_ids).issubset(actor.permitted_source_ids):
         raise PermissionDenied("Selection includes an unauthorized source.")
+    lecture = None
+    if lecture_id is not None:
+        lecture = LectureDivision.objects.filter(pk=lecture_id).first()
+        if lecture is None or lecture.chapter_id != chapter.pk:
+            raise ValidationError("The selected lecture division does not belong to this chapter.")
+        if lecture.page_range() is None:
+            raise ValidationError("The selected lecture division has no textbook page scope.")
     sources = list(ContentSource.objects.select_related("original_file").filter(pk__in=source_ids).order_by("pk"))
     if len(sources) != len(source_ids) or any(source.chapter_id != chapter.pk for source in sources):
         raise PermissionDenied("Every source must belong to the selected chapter.")
@@ -225,12 +264,19 @@ def create_generation(*, actor: GenerationActorContext, chapter_id: int, source_
     total_characters = 0
     for source in sources:
         extraction, pages = _load_reviewed_pages(source)
+        if lecture is not None:
+            start, end = lecture.page_range()
+            pages = [(page, text) for page, text in pages if start <= page.page_number <= end]
+        if not pages:
+            raise ValidationError("The lecture page scope contains no reviewed source pages.")
         total_characters += sum(len(text) for _, text in pages)
         if total_characters > settings.GENERATION_MAX_TOTAL_CHARACTERS:
             raise ValidationError("Selected reviewed text exceeds the generation resource limit.")
         loaded_sources.append((source, extraction, pages))
     digest_payload = {
         "chapter_id": chapter.pk,
+        "lecture_id": lecture.pk if lecture else None,
+        "lecture_pages": [lecture.page_start, lecture.page_end] if lecture else None,
         "guidelines": clean_guidelines,
         "sources": [(source.pk, extraction.version, [page.text_sha256 for page, _ in pages]) for source, extraction, pages in loaded_sources],
     }
@@ -238,7 +284,7 @@ def create_generation(*, actor: GenerationActorContext, chapter_id: int, source_
     provider = generator or DeterministicExtractiveGenerator()
     provider_key = _bounded_text(provider.key, "generator_key", 64, required=True)
     request = GenerationRequest.objects.create(
-        chapter=chapter, requested_by_id=actor.actor_id, guidelines=clean_guidelines,
+        chapter=chapter, lecture=lecture, requested_by_id=actor.actor_id, guidelines=clean_guidelines,
         generator_key=provider_key, input_sha256=digest,
     )
     page_snapshots = []

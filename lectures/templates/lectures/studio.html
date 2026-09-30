@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>LMS Studio — UGI</title>
+
+    <style>
+        :root {
+            --navy: #071a33;
+            --navy-2: #0d2949;
+            --gold: #f2c94c;
+            --white: #ffffff;
+            --muted: #718096;
+            --bg: #f5f7fa;
+            --border: #e5e9ef;
+            --green: #2f855a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Inter, Segoe UI, Arial, sans-serif;
+            background: var(--bg);
+            color: #182230;
+        }
+
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 245px;
+            background: var(--navy);
+            color: white;
+            padding: 25px 18px;
+        }
+
+        .brand {
+            padding: 8px 12px 28px;
+            border-bottom: 1px solid rgba(255,255,255,.12);
+            margin-bottom: 24px;
+        }
+
+        .brand-title {
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: .2px;
+        }
+
+        .brand-subtitle {
+            margin-top: 5px;
+            color: #cbd5e1;
+            font-size: 11px;
+        }
+
+        .nav-item {
+            display: block;
+            padding: 12px 14px;
+            border-radius: 9px;
+            color: #dbe5f0;
+            text-decoration: none;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+
+        .nav-item.active,
+        .nav-item:hover {
+            background: var(--navy-2);
+            color: var(--gold);
+        }
+
+        .main {
+            flex: 1;
+            padding: 30px 34px;
+            max-width: 1500px;
+        }
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 26px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            color: var(--navy);
+        }
+
+        .subtitle {
+            margin-top: 6px;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .user {
+            background: white;
+            border: 1px solid var(--border);
+            padding: 9px 14px;
+            border-radius: 9px;
+            font-size: 13px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 20px;
+        }
+
+        .stat-label {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: .6px;
+        }
+
+        .stat-value {
+            margin-top: 8px;
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--navy);
+        }
+
+        .section-title {
+            margin: 0 0 14px;
+            font-size: 19px;
+            color: var(--navy);
+        }
+
+        .class-card {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+
+        .class-header {
+            padding: 18px 20px;
+            background: linear-gradient(90deg, var(--navy), var(--navy-2));
+            color: white;
+            font-size: 18px;
+            font-weight: 750;
+        }
+
+        .subject {
+            margin: 18px;
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            overflow: hidden;
+        }
+
+        .subject-header {
+            padding: 13px 16px;
+            background: #f8fafc;
+            border-bottom: 1px solid var(--border);
+            font-weight: 750;
+            color: var(--navy);
+        }
+
+        .teacher {
+            margin: 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .teacher-header {
+            padding: 11px 14px;
+            display: flex;
+            justify-content: space-between;
+            background: white;
+        }
+
+        .teacher-name {
+            font-weight: 700;
+        }
+
+        .teacher-label {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .lectures {
+            border-top: 1px solid var(--border);
+        }
+
+        .lecture {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--border);
+            gap: 15px;
+        }
+
+        .lecture:last-child {
+            border-bottom: 0;
+        }
+
+        .lecture-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .lecture-title {
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        .lecture-link {
+            color: var(--navy);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .lecture-link:hover {
+            color: #b68b00;
+            text-decoration: underline;
+        }
+
+        .lecture-meta {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 9px;
+            border-radius: 20px;
+            background: #edf7f1;
+            color: var(--green);
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .stage {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 750;
+            white-space: nowrap;
+        }
+
+        .stage-teacher { background: #fff4e0; color: #975a16; }
+        .stage-admin { background: #e8effd; color: #1c4e9d; }
+        .stage-done { background: #edf7f1; color: var(--green); }
+
+        .stage-hint {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .open-lecture {
+            display: inline-block;
+            padding: 8px 13px;
+            border-radius: 7px;
+            background: var(--navy);
+            color: white;
+            text-decoration: none;
+            font-size: 11px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .open-lecture:hover {
+            background: var(--navy-2);
+            color: var(--gold);
+        }
+
+        .empty {
+            padding: 18px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        @media(max-width: 900px) {
+            .sidebar {
+                width: 190px;
+            }
+
+            .stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .lecture {
+                align-items: flex-start;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            <div class="brand-title">LMS STUDIO</div>
+            <div class="brand-subtitle">
+                Unique Group of Institutions
+            </div>
+        </div>
+
+        <a class="nav-item active" href="/">
+            Dashboard
+        </a>
+
+        <a class="nav-item" href="/teacher/recordings/">
+            Recordings
+        </a>
+
+        <a class="nav-item" href="/admin/video-assembly/">
+            Video Assembly
+        </a>
+
+        <a class="nav-item" href="/admin/">
+            Administration
+        </a>
+
+    </aside>
+
+    <main class="main">
+
+        <div class="topbar">
+
+            <div>
+                <h1>LMS Studio</h1>
+
+                <div class="subtitle">
+                    Lecture Creation & Recording Management System
+                </div>
+            </div>
+
+            <div class="user">
+                {{ request.user.get_username }}
+            </div>
+
+        </div>
+
+
+        <div class="stats">
+
+            <div class="stat">
+                <div class="stat-label">Classes</div>
+                <div class="stat-value">
+                    {{ class_count }}
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Subjects</div>
+                <div class="stat-value">
+                    {{ subject_count }}
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Teachers</div>
+                <div class="stat-value">
+                    {{ teacher_count }}
+                </div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-label">Lectures</div>
+                <div class="stat-value">
+                    {{ lecture_count }}
+                </div>
+            </div>
+
+        </div>
+
+
+        <h2 class="section-title">
+            Lecture Production
+        </h2>
+
+
+        {% for class_name, class_data in hierarchy.items %}
+
+            <section class="class-card">
+
+                <div class="class-header">
+                    {{ class_name }}
+                </div>
+
+
+                {% for subject_name, subject_data in class_data.subjects.items %}
+
+                    <div class="subject">
+
+                        <div class="subject-header">
+                            {{ subject_name }}
+                        </div>
+
+
+                        {% for teacher_name, teacher_data in subject_data.teachers.items %}
+
+                            <div class="teacher">
+
+                                <div class="teacher-header">
+
+                                    <div>
+                                        <div class="teacher-label">
+                                            Teacher
+                                        </div>
+
+                                        <div class="teacher-name">
+                                            {{ teacher_name }}
+                                        </div>
+                                    </div>
+
+
+                                    <div>
+
+                                        <span class="status">
+                                            {{ teacher_data.lectures|length }}
+                                            Lecture{{ teacher_data.lectures|length|pluralize }}
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div class="lectures">
+
+                                    {% for lecture in teacher_data.lectures %}
+
+                                        <div class="lecture">
+
+                                            <div class="lecture-info">
+
+                                                {% if lecture.workflow %}
+
+                                                    <a
+                                                        class="lecture-title lecture-link"
+                                                        href="{% url 'studio-lecture' lecture.workflow.id %}"
+                                                    >
+                                                        {{ lecture.chapter.title }}
+                                                    </a>
+
+                                                {% else %}
+
+                                                    <div class="lecture-title">
+                                                        {{ lecture.chapter.title }}
+                                                    </div>
+
+                                                {% endif %}
+
+
+                                                <div class="lecture-meta">
+                                                    Lecture / Chapter ID:
+                                                    {{ lecture.chapter.id }}
+                                                </div>
+
+                                                {% if lecture.stage %}
+                                                    <div class="lecture-meta">
+                                                        <span class="stage stage-{{ lecture.stage.tone }}">
+                                                            {{ lecture.stage.state_label }}
+                                                        </span>
+                                                    </div>
+
+                                                    {% if lecture.stage.hint %}
+                                                        <div class="stage-hint">
+                                                            {{ lecture.stage.actor }} next:
+                                                            {{ lecture.stage.hint }}
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
+
+                                            </div>
+
+
+                                            {% if lecture.workflow %}
+
+                                                <a
+                                                    class="open-lecture"
+                                                    href="{% url 'studio-lecture' lecture.workflow.id %}"
+                                                >
+                                                    OPEN LECTURE →
+                                                </a>
+
+                                            {% else %}
+
+                                                <span class="status">
+                                                    Setup
+                                                </span>
+
+                                            {% endif %}
+
+                                        </div>
+
+
+                                    {% empty %}
+
+                                        <div class="empty">
+                                            No lectures configured yet.
+                                        </div>
+
+                                    {% endfor %}
+
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endfor %}
+
+            </section>
+
+
+        {% empty %}
+
+            <div class="class-card">
+
+                <div class="empty">
+                    No active classes are configured yet.
+                </div>
+
+            </div>
+
+        {% endfor %}
+
+    </main>
+
+</div>
+
+</body>
+</html>

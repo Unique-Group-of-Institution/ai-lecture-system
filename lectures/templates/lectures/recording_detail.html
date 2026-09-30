@@ -19,6 +19,7 @@
       <div><p class="kicker">{{ recording_payload.course_title }}</p><h2>{{ recording_payload.chapter_title }}</h2></div>
       <div class="state-pill" id="workflow-state">{{ workflow.get_state_display }}</div>
     </section>
+    <p class="recording-progress" id="recording-progress" data-slide-count="{{ recording_payload.slide_count }}" data-recorded="{{ recording_payload.recorded_count }}">{{ recording_payload.recorded_count }} of {{ recording_payload.slide_count }} slides recorded</p>
     <div id="global-message" class="notice" role="status" aria-live="polite" hidden></div>
     <div id="browser-warning" class="notice danger" role="alert" hidden></div>
     {% if recording_payload.can_open %}
@@ -33,7 +34,7 @@
     <section class="slide-list" aria-label="Approved slides and narration">
       {% for slide in recording_payload.slides %}
         <article class="slide-card" data-slide-id="{{ slide.id }}" data-revision-id="{{ slide.approved_revision_id|default:'' }}">
-          <div class="slide-heading"><span class="slide-number">Slide {{ slide.position }}</span><span class="take-status" data-status>{% if slide.selected_take_id %}Take selected{% else %}No take selected{% endif %}</span></div>
+          <div class="slide-heading"><span class="slide-number">Slide {{ slide.position }}</span><span class="take-status{% if slide.selected_take_id %} ready{% endif %}" data-status>{% if slide.selected_take_id %}Take selected{% else %}No take selected{% endif %}</span></div>
           <h2 dir="auto">{{ slide.title }}</h2>
           <div class="narration-panel"><span class="label">Canonical narration · منظور شدہ متن</span><p dir="auto">{{ slide.narration|linebreaksbr }}</p></div>
           <div class="record-controls">
