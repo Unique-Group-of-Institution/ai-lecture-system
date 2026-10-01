@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-09-16T13:31:53Z",
+  "updated_at": "2026-10-01T00:00:00Z",
   "tasks": [
     {
       "id": "T001",
@@ -799,6 +799,50 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Real textbook end-to-end verified: 7 Unit 1 lectures produced genuine PPTX decks (generations 10-16) with workflows and SUCCEEDED engine jobs; slide quality fixed (sentence-level grounded units, page-number artifacts removed); 123 Django tests OK. Awaiting human REVIEW->DONE."
+        }
+      ]
+    },
+    {
+      "id": "T090",
+      "title": "Build teacherless lecture scene timeline and Remotion foundation",
+      "priority": 14,
+      "status": "IN_PROGRESS",
+      "owner": "codex",
+      "dependencies": [
+        "T080",
+        "T050"
+      ],
+      "scope": [
+        "Add an isolated teacherless scene manifest contract without changing the existing teacher-recording render contract",
+        "Render educational text, formula, diagram and step-by-step animation scenes deterministically in Remotion",
+        "Support scene-level narration audio references while allowing audio-less synthetic verification",
+        "Add synthetic manifest fixtures and automated schema/render-contract checks",
+        "Document the boundary between the existing teacher-recording pipeline and the new automated lecture path"
+      ],
+      "acceptance_criteria": [
+        "Existing LectureProps and LectureAssembly behavior remain source-compatible",
+        "A TeacherlessLecture composition accepts a validated scene manifest at 1920x1080 and derives total duration from scenes",
+        "Formula, diagram, highlight and step animations are deterministic and frame-driven",
+        "Scene audio is optional for the foundation fixture and never requires teacher RecordingTake records",
+        "Invalid scene IDs, non-positive durations and unsupported animation payloads are rejected by the manifest validator",
+        "Synthetic render verification can produce a short teacherless MP4 without teacher recordings or external services",
+        "No paid AI API, external upload, credential, or production data is introduced"
+      ],
+      "verification": [],
+      "history": [
+        {
+          "at": "2026-10-01T00:00:00Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Product owner authorized teacherless automated lecture implementation while preserving all existing LMS functionality."
+        },
+        {
+          "at": "2026-10-01T00:00:00Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Claimed isolated teacherless scene-timeline foundation; existing T050/T080 paths remain unchanged."
         }
       ]
     }
