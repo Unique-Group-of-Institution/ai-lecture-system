@@ -36,3 +36,12 @@
 - Scene primitives currently cover concept text, formulas, diagrams/callouts, fade-in, draw, highlight and step reveal; optional scene audio does not require teacher recordings.
 - No database migration, external service, paid AI API, voice cloning, credential or production media was added.
 - Branch is 14 commits ahead of main because each small deliverable was committed independently. CI workflow runs were not yet reported for the PR head at handoff; do not treat the PR as verified until CI executes and passes.
+
+## T090 progress update — CI verified
+
+- GitHub Actions `workspace-ci` run #61 completed successfully.
+- Passed workspace validation, Django foundation tests/checks, embedded slide engine validation, Remotion dependency/type checking, and the new teacherless fixture check.
+- Added approved-generation -> teacherless manifest compiler, immutable source provenance mapping, estimated timeline, SRT export, and provider-neutral TTS contract.
+- T091 is queued for real TTS integration and measured audio timing.
+- The real browser-based teacherless MP4 smoke render is intentionally still pending; CI does not run the Remotion browser render yet. Do not mark T090 fully complete until that render is executed and inspected.
+- PR #14 remains the isolated integration point; main is unchanged.
