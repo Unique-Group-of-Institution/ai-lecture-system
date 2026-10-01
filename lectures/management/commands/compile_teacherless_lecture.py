@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-from lectures.teacherless import compile_teacherless_manifest, manifest_sha256, write_teacherless_manifest
+from lectures.teacherless import compile_teacherless_manifest, manifest_sha256, write_teacherless_manifest, write_teacherless_srt
 
 
 class Command(BaseCommand):
@@ -8,13 +8,13 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument("generation_id", type=int)
-        parser.add_argument("--write", action="store_true", help="Persist the manifest under DATA_ROOT.")
+        parser.add_argument("--write", action="store_true", help="Persist the manifest and SRT under DATA_ROOT.")
 
     def handle(self, *args, **options):
         generation_id = options["generation_id"]
         try:
             manifest = compile_teacherless_manifest(generation_id)
-            path = write_teacherless_manifest(generation_id) if options["write"] else None
+            path = write_teacherless_manifest(generation_id) if options["write"] else None\n            srt_path = write_teacherless_srt(generation_id) if options["write"] else None
         except Exception as exc:
             raise CommandError(str(exc)) from exc
 
