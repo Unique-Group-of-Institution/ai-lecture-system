@@ -1002,6 +1002,90 @@
           "note": "Demo MP4 and stills verified. Background music hook is code-complete but untested against a real music file until the product owner supplies one. Awaiting reviewer approval to move to DONE."
         }
       ]
+    },
+    {
+      "id": "T093",
+      "title": "Studio UI teacherless lecture button: one click to MP4 (request, TTS, render, poll, download)",
+      "priority": 15,
+      "status": "REVIEW",
+      "owner": "codex",
+      "dependencies": [
+        "T090",
+        "T091",
+        "T092"
+      ],
+      "scope": [
+        "Add the immutable TeacherlessRender model (migration 0011) tracking PENDING/RUNNING/SUCCEEDED/FAILED versions per approved generation",
+        "Add the teacherless_render service: authz, idempotent request, stale-render recovery, manifest+TTS+captions+branding assembly, bounded Remotion render via a new trusted sibling renderer script, sha256/byte-size recording",
+        "Add three API views and URLs: POST render request (queue + background worker thread via transaction.on_commit), GET status for polling, GET media with inline preview and ?download=1 attachment",
+        "Add the Studio lecture 'Teacherless Lecture' card visible when all slides are approved: generate button, live status polling, inline video preview, download link, re-render, and stale-recovery click during RUNNING",
+        "Add lectures/test_teacherless_render.py: 33 tests covering traversal guards, MP4 mvhd duration parsing, request authz/idempotency/stale recovery, full pipeline with stubbed renderer, payload shape, and view authorization/streaming behaviour",
+        "Fix compile_teacherless_lecture management command (literal backslash-n syntax error)",
+        "Harden render_teacherless.mjs with forced process exit so leaked chrome-headless-shell handles cannot stall the Python caller"
+      ],
+      "acceptance_criteria": [
+        "Teacher with an approved generation can start a teacherless render from the Studio page without any command line",
+        "Status endpoint polls every 5 seconds and the page reloads with a working MP4 preview and download link on success",
+        "Render rows are immutable outside the service; no record can be deleted",
+        "A crashed RUNNING render self-heals into a FAILED RENDER_STALE row plus a fresh version on the next click",
+        "Media streaming is authorization-checked, private, nosniff, and attachment filenames are versioned",
+        "No paid API, external upload, or new credential is introduced"
+      ],
+      "verification": [
+        {
+          "at": "2026-10-01T11:50:00Z",
+          "check": "Django lectures test suite (with 33 new teacherless tests)",
+          "result": "PASS",
+          "details": "Ran 156 tests in 237s OK; includes traversal rejection, stale recovery, pipeline success/failure, and view authz/media-header tests."
+        },
+        {
+          "at": "2026-10-01T11:33:00Z",
+          "check": "Live browser E2E part 1: Studio card, POST, TTS, manifest, branding, real Remotion render",
+          "result": "PASS",
+          "details": "Synthetic generation 17 (2 slides): button posted 201, worker produced 2 TTS WAVs, manifest.json, captions.srt, branding copies and a valid 19.798s 1080p lecture.mp4 (6,027,795 bytes); status polled every 5s."
+        },
+        {
+          "at": "2026-10-01T11:36:00Z",
+          "check": "E2E defect found and fixed: renderer node process outlives rename, row stuck RUNNING",
+          "result": "PASS",
+          "details": "render_teacherless.mjs now calls process.exit(0) after rename and exits 1 on uncaught errors; second run completed in ~4 minutes."
+        },
+        {
+          "at": "2026-10-01T11:40:00Z",
+          "check": "E2E defect found and fixed: RUNNING render locked the teacher out after a server crash",
+          "result": "PASS",
+          "details": "Studio button stays clickable during PENDING/RUNNING ('click to check / recover'); POST is idempotent for a live render and triggers stale recovery otherwise."
+        },
+        {
+          "at": "2026-10-01T11:57:00Z",
+          "check": "Live browser E2E part 2: stale recovery + full happy path with fixed code",
+          "result": "PASS",
+          "details": "Stale RUNNING v1 marked FAILED RENDER_STALE, click created PENDING v2, background thread rendered SUCCEEDED v2 (2 scenes, 19714 ms, sha256 2c352220...), page reloaded showing download link, Re-render, and inline video; GET media returns video/mp4 200 and ?download=1 returns attachment."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-10-01T10:05:00Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Product owner directed the Studio UI Generate Teacherless Lecture button as the next task after T092."
+        },
+        {
+          "at": "2026-10-01T10:10:00Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Renderer script, model+migration 0011, service, views, URLs, Studio card and polling implemented; env gates reused from the T050 video adapter."
+        },
+        {
+          "at": "2026-10-01T12:05:00Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "156 tests green; two live E2E defects found and fixed (renderer exit hang, RUNNING lockout); full button-to-MP4 flow verified twice in the browser including stale recovery and download headers. Product owner review requested; dev database now contains synthetic e2e-teacher generation 17 and teacherless renders 1-2 as flow evidence."
+        }
+      ]
     }
   ]
 }

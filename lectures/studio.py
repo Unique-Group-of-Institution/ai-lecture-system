@@ -8,6 +8,7 @@ from .models import (
     Course,
     GenerationRequest,
     LectureWorkflow,
+    TeacherlessRender,
 )
 
 
@@ -320,10 +321,19 @@ def studio_lecture(request, workflow_id):
         .title()
     )
 
+    teacherless_render = (
+        TeacherlessRender.objects
+        .filter(generation=generation)
+        .order_by("-version")
+        .first()
+    )
+
     context = {
         "workflow": workflow,
 
         "generation": generation,
+
+        "teacherless_render": teacherless_render,
 
         "chapter": chapter,
 

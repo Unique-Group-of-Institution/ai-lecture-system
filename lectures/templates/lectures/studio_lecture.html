@@ -1065,6 +1065,65 @@
 
 
         <!-- =================================================
+             TEACHERLESS LECTURE (AUTOMATED, OFFLINE TTS)
+        ================================================== -->
+
+        {% if all_slides_approved %}
+
+        <section class="card" id="teacherless-card">
+
+            <div class="card-title">
+                Teacherless Lecture
+            </div>
+
+            <div style="display:flex; gap:12px; flex-wrap:wrap; align-items:center;">
+
+                {% if teacherless_render.status == "SUCCEEDED" %}
+
+                    <a class="btn btn-gold render-button"
+                       href="{% url 'teacherless-render-media' teacherless_render.id %}?download=1">
+                        ↓ Download teacherless MP4</a>
+                    <button type="button" class="btn render-button" id="teacherless-btn"
+                            onclick="generateTeacherless()">Re-render</button>
+
+                {% elif teacherless_render.status == "PENDING" or teacherless_render.status == "RUNNING" %}
+
+                    <button type="button" class="btn btn-gold render-button" id="teacherless-btn"
+                            onclick="generateTeacherless()">Rendering… (click to check / recover)</button>
+
+                {% else %}
+
+                    <button type="button" class="btn btn-gold render-button" id="teacherless-btn"
+                            onclick="generateTeacherless()">Generate Teacherless Lecture</button>
+
+                {% endif %}
+
+                <span id="teacherless-status" style="color:#64748b;">
+                    {% if teacherless_render.status == "SUCCEEDED" %}
+                        Ready · {{ teacherless_render.scene_count }} scenes ·
+                        {{ teacherless_render.duration_ms|floatformat:0 }} ms
+                    {% elif teacherless_render.status == "RUNNING" %}
+                        Rendering on this machine — keep the server window open.
+                    {% elif teacherless_render.status == "PENDING" %}
+                        Queued…
+                    {% elif teacherless_render.status == "FAILED" %}
+                        Previous attempt failed ({{ teacherless_render.failure_reason_code }}). Try again.
+                    {% endif %}
+                </span>
+
+            </div>
+
+            {% if teacherless_render.status == "SUCCEEDED" %}
+                <video controls style="width:100%; margin-top:14px; border-radius:10px;"
+                       src="{% url 'teacherless-render-media' teacherless_render.id %}"></video>
+            {% endif %}
+
+        </section>
+
+        {% endif %}
+
+
+        <!-- =================================================
              PRODUCTION READINESS
         ================================================== -->
 
@@ -2396,6 +2455,63 @@
             showToast(error.message || "Approval confirmation failed.", true);
         }
     }
+
+    // ---- T093: teacherless lecture render ----
+
+    async function generateTeacherless() {
+        const button = document.getElementById("teacherless-btn");
+        if (!button) { return; }
+        button.disabled = true;
+        button.textContent = "STARTING...";
+        try {
+            const response = await fetch("{% url 'teacherless-render' generation.id %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": getCsrfToken(),
+                    "X-Requested-With": "XMLHttpRequest"
+                },
+                body: JSON.stringify({})
+            });
+            let data = {};
+            try { data = await response.json(); } catch (jsonError) { data = {}; }
+            if (!response.ok) {
+                throw new Error(data.error || data.detail || "Teacherless render could not start.");
+            }
+            showToast("Teacherless render started — this can take several minutes.");
+            button.textContent = "GENERATING...";
+            pollTeacherless(data.id);
+        } catch (error) {
+            button.disabled = false;
+            button.textContent = "Generate Teacherless Lecture";
+            showToast(error.message || "Teacherless render could not start.", true);
+        }
+    }
+
+    function pollTeacherless(renderId) {
+        const statusEl = document.getElementById("teacherless-status");
+        const timer = window.setInterval(async function() {
+            try {
+                const response = await fetch("/api/teacherless/renders/" + renderId + "/status/", {
+                    headers: {"X-Requested-With": "XMLHttpRequest"}
+                });
+                if (!response.ok) { return; }
+                const data = await response.json();
+                if (data.status === "SUCCEEDED" || data.status === "FAILED") {
+                    window.clearInterval(timer);
+                    window.location.reload();
+                } else if (statusEl) {
+                    statusEl.textContent = data.status === "RUNNING"
+                        ? "Rendering on this machine — keep the server window open."
+                        : "Queued...";
+                }
+            } catch (pollError) { /* transient polling errors are ignored */ }
+        }, 5000);
+    }
+
+    {% if teacherless_render and teacherless_render.status == "RUNNING" or teacherless_render and teacherless_render.status == "PENDING" %}
+    pollTeacherless({{ teacherless_render.id }});
+    {% endif %}
 
 </script>
 

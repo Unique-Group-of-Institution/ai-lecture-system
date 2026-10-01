@@ -950,6 +950,60 @@ class VideoRenderVersion(models.Model):
         raise ValueError("Video render versions cannot be deleted.")
 
 
+class TeacherlessRender(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Queued for local render"
+        RUNNING = "RUNNING", "Local render running"
+        SUCCEEDED = "SUCCEEDED", "Teacherless lecture available"
+        FAILED = "FAILED", "Local render failed"
+
+    generation = models.ForeignKey(
+        GenerationRequest, on_delete=models.PROTECT, related_name="teacherless_renders"
+    )
+    version = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    reference = models.CharField(max_length=128, unique=True)
+    status = models.CharField(max_length=16, choices=Status, default=Status.PENDING)
+    manifest_relative_path = models.CharField(max_length=255, blank=True)
+    video_relative_path = models.CharField(max_length=255, blank=True)
+    manifest_sha256 = models.CharField(max_length=64, blank=True)
+    video_sha256 = models.CharField(max_length=64, blank=True)
+    byte_size = models.PositiveBigIntegerField(null=True, blank=True)
+    scene_count = models.PositiveIntegerField(null=True, blank=True)
+    duration_ms = models.PositiveBigIntegerField(null=True, blank=True)
+    failure_reason_code = models.CharField(max_length=64, blank=True)
+    failure_detail = models.TextField(blank=True)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="teacherless_renders"
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("generation", "version")
+        constraints = [
+            models.UniqueConstraint(
+                fields=("generation", "version"), name="unique_teacherless_render_version"
+            ),
+            models.CheckConstraint(
+                condition=Q(version__gte=1), name="teacherless_render_version_positive"
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("status", "requested_at"), name="teacherless_render_status_idx"),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.pk and TeacherlessRender.objects.filter(pk=self.pk).exists() and not getattr(
+            self, "_domain_service_write", False
+        ):
+            raise ValueError("Teacherless renders may change only through the teacherless service.")
+        return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise ValueError("Teacherless renders cannot be deleted.")
+
+
 class VideoEditDecision(ImmutableVideoRecord):
     class DecisionType(models.TextChoices):
         BRANDING = "BRANDING", "Institutional branding"
