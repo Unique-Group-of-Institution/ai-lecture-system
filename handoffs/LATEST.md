@@ -26,3 +26,13 @@
 - **Pending decision (destructive — needs explicit human approval):** earlier demo rows (users `admin`/`teacher.cs9`, course `CS9`, divisions 1-2, synthetic source 1, generations 1-2, workflow 1) plus pre-fix generations 3-9 and scratch files `.codex/scratch/cs9-textbook-sample.pdf`, `cs9-division.json`. Nothing was deleted.
 - **Operational notes for Windows CMD:** helper batch files at the workspace root set every required `AI_LECTURE_*` variable: `start-server.bat` (runserver), `check-db-state.bat` + `check_db_state.py` (DB inventory), `fix-permissions.bat` + `fix_permissions.py`, `reset-passwords.bat`, `verify_endpoints.py` (endpoint smoke check).
 - **Prior context (not part of T080):** T050 remains DONE; its synchronization-only finalization commit still requires fresh exact-head CI before PR #11 is merged normally, and PR #8 stays superseded.
+
+
+## 2026-10-01 — T090 teacherless foundation
+
+- T090 is IN_PROGRESS under codex on `feature/teacherless-lecture-foundation`; PR #14 is open.
+- Existing T050 teacher-recording Remotion contract and T080 Django/PPT pipeline are untouched.
+- Added isolated `TeacherlessLectureProps` scene contract, deterministic scene renderer, dedicated Remotion entrypoint, synthetic fixture, fixture validator, and boundary documentation.
+- Scene primitives currently cover concept text, formulas, diagrams/callouts, fade-in, draw, highlight and step reveal; optional scene audio does not require teacher recordings.
+- No database migration, external service, paid AI API, voice cloning, credential or production media was added.
+- Branch is 14 commits ahead of main because each small deliverable was committed independently. CI workflow runs were not yet reported for the PR head at handoff; do not treat the PR as verified until CI executes and passes.
