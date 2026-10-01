@@ -845,6 +845,31 @@
           "note": "Claimed isolated teacherless scene-timeline foundation; existing T050/T080 paths remain unchanged."
         }
       ]
+    },
+    {
+      "id": "T091",
+      "title": "Attach real TTS provider and exact audio timing to teacherless scenes",
+      "priority": 15,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T090"
+      ],
+      "scope": [
+        "Implement one approved TTS provider behind the provider-neutral contract",
+        "Persist immutable audio artifacts under local lecture storage",
+        "Replace estimated scene timing with measured audio duration",
+        "Generate synchronized SRT from actual audio timings",
+        "Add technical audio QA without inspecting or committing private audio"
+      ],
+      "acceptance_criteria": [
+        "No change to teacher-recording T050 path",
+        "Provider can be swapped without changing scene renderer",
+        "Every generated scene audio artifact has duration and SHA-256",
+        "Render manifest uses measured audio duration",
+        "SRT timings match measured audio duration within frame quantization",
+        "Provider failure is fail-closed and leaves no partial production artifact"
+      ]
     }
   ]
 }
