@@ -883,7 +883,9 @@
         "Render manifest uses measured audio duration",
         "SRT timings match measured audio duration within frame quantization",
         "Provider failure is fail-closed and leaves no partial production artifact"
-      ]
+      ],
+      "verification": [],
+      "history": []
     }
   ]
 }
