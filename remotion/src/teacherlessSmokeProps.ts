@@ -20,6 +20,6 @@ export const teacherlessSmokeProps: TeacherlessLectureProps = {
     {id: 'diagram-01', kind: 'diagram', durationMs: 1400, title: 'Circuit Representation', elements: [
       {kind: 'diagram', id: 'circuit', label: 'Battery -> Wire -> Load', x: 260, y: 250, width: 1400, height: 360},
       {kind: 'text', id: 'direction', text: 'Show the conventional current direction with an arrow.', x: 360, y: 690, width: 1200, fontSize: 34},
-    ], animations: [{type: 'fadeIn'}]},
+    ], animations: [{type: 'fadeIn'}, {type: 'draw', axis: 'x'}]},
   ],
 };
