@@ -50,6 +50,8 @@ export function validateTeacherlessLectureProps(value: unknown): TeacherlessLect
     if (!Number.isInteger(scene.durationMs) || scene.durationMs < 250) throw new Error('Teacherless scene duration must be at least 250ms.');
     if (!['concept', 'formula', 'diagram', 'workedExample', 'recap'].includes(scene.kind)) throw new Error('Unsupported teacherless scene kind.');
     if (!scene.title.trim() || !Array.isArray(scene.elements) || !Array.isArray(scene.animations)) throw new Error('Invalid teacherless scene.');
+    if (scene.narration && (!scene.narration.text.trim() || !['SOURCE', 'BILINGUAL'].includes(scene.narration.language) || !Number.isInteger(scene.narration.estimatedDurationMs) || scene.narration.estimatedDurationMs < 250)) throw new Error('Invalid teacherless narration.');
+    if (scene.provenance && (!Array.isArray(scene.provenance) || scene.provenance.some((ref) => !Number.isInteger(ref.pageSnapshotId) || !Number.isInteger(ref.pageNumber) || ref.startOffset < 0 || ref.endOffset <= ref.startOffset))) throw new Error('Invalid teacherless provenance.');
     const elementIds = new Set<string>();
     for (const element of scene.elements) {
       if (!element || !ID.test(element.id) || elementIds.has(element.id)) throw new Error('Invalid or duplicate teacherless element id.');
