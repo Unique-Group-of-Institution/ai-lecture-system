@@ -192,3 +192,35 @@ def write_teacherless_manifest(generation_id: int) -> Path:
 
 def manifest_sha256(manifest: dict) -> str:
     return hashlib.sha256(json.dumps(manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def _srt_time(ms: int) -> str:
+    hours, remainder = divmod(max(0, ms), 3_600_000)
+    minutes, remainder = divmod(remainder, 60_000)
+    seconds, millis = divmod(remainder, 1_000)
+    return f"{hours:02d}:{minutes:02d}:{seconds:02d},{millis:03d}"
+
+
+def manifest_to_srt(manifest: dict) -> str:
+    rows = []
+    cursor = 0
+    for number, scene in enumerate(manifest["scenes"], start=1):
+        duration = int(scene["durationMs"])
+        text = scene.get("narration", {}).get("text", "").strip()
+        if not text:
+            cursor += duration
+            continue
+        rows.append(
+            f"{number}\n{_srt_time(cursor)} --> {_srt_time(cursor + duration)}\n{text}\n"
+        )
+        cursor += duration
+    return "\n".join(rows)
+
+
+def write_teacherless_srt(generation_id: int) -> Path:
+    manifest = compile_teacherless_manifest(generation_id)
+    root = Path(settings.DATA_ROOT).resolve() / "lectures" / "teacherless" / f"generation-{generation_id}"
+    root.mkdir(parents=True, exist_ok=True)
+    path = root / "captions-v1.srt"
+    path.write_text(manifest_to_srt(manifest), encoding="utf-8")
+    return path
