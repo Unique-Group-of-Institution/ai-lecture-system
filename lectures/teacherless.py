@@ -18,7 +18,7 @@ MAX_SCENE_TEXT = 4000
 
 
 def _estimate_duration_ms(text: str) -> int:
-    words = max(1, len(re.findall(r"\\S+", text)))
+    words = max(1, len(re.findall(r"\S+", text)))
     return max(2000, int(math.ceil(words * WORD_MS / 100.0) * 100))
 
 
