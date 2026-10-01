@@ -17,12 +17,36 @@ const Element: React.FC<{element: TeacherlessElement; scene: TeacherlessScene; f
   const revealCount = step ? Math.min(step.stepCount, Math.floor(frame / Math.max(1, frames(step.intervalMs ?? 500, 30))) + 1) : Number.POSITIVE_INFINITY;
   const index = scene.elements.findIndex((item) => item.id === element.id);
   if (index >= revealCount) return null;
-  const opacity = animationOpacity(scene.animations, frame, totalFrames);
-  const base: React.CSSProperties = {position: 'absolute', left: element.x, top: element.y, width: element.width, boxSizing: 'border-box'};
-  if (element.kind === 'text') return <div style={{...base, fontSize: element.fontSize, fontWeight: element.weight ?? 500, lineHeight: 1.35, opacity}}>{element.text}</div>;
-  if (element.kind === 'formula') return <div style={{...base, fontSize: element.fontSize ?? 56, fontWeight: 700, textAlign: 'center', fontFamily: 'Georgia, serif', opacity}}>{element.expression}</div>;
-  if (element.kind === 'callout') return <div style={{...base, padding: '20px 26px', border: '3px solid #D4AF37', borderRadius: 18, fontSize: 34, lineHeight: 1.35, opacity}}>{element.text}</div>;
-  return <div style={{...base, height: element.height, border: '5px solid #17365D', borderRadius: 22, opacity}}><div style={{position: 'absolute', inset: 18, border: '2px dashed #D4AF37', borderRadius: 14}} /><div style={{position: 'absolute', left: 28, bottom: 24, fontSize: 28, fontWeight: 700}}>{element.label}</div></div>;
+
+  const fade = animationOpacity(scene.animations, frame, totalFrames);
+  const highlight = scene.animations.find((item) => item.type === 'highlight' && item.target === element.id);
+  const draw = scene.animations.find((item) => item.type === 'draw');
+  const drawProgress = draw ? interpolate(
+    frame,
+    [Math.round((draw.from ?? 0) * totalFrames), Math.max(1, Math.round((draw.to ?? 1) * totalFrames))],
+    [0, 1],
+    {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'},
+  ) : 1;
+  const base: React.CSSProperties = {
+    position: 'absolute',
+    left: element.x,
+    top: element.y,
+    width: element.width,
+    boxSizing: 'border-box',
+    opacity: fade,
+    boxShadow: highlight ? '0 0 0 8px rgba(212,175,55,0.38)' : undefined,
+  };
+
+  if (element.kind === 'text') return <div style={{...base, fontSize: element.fontSize, fontWeight: element.weight ?? 500, lineHeight: 1.35}}>{element.text}</div>;
+  if (element.kind === 'formula') return <div style={{...base, fontSize: element.fontSize ?? 56, fontWeight: 700, textAlign: 'center', fontFamily: 'Georgia, serif'}}>{element.expression}</div>;
+  if (element.kind === 'callout') return <div style={{...base, padding: '20px 26px', border: '3px solid #D4AF37', borderRadius: 18, fontSize: 34, lineHeight: 1.35}}>{element.text}</div>;
+  const drawStyle: React.CSSProperties = draw?.axis === 'y'
+    ? {height: element.height * drawProgress, transformOrigin: 'top center'}
+    : {height: element.height, transform: 'scaleX(' + drawProgress + ')', transformOrigin: 'left center'};
+  return <div style={{...base, height: element.height, border: '5px solid #17365D', borderRadius: 22, ...drawStyle}}>
+    <div style={{position: 'absolute', inset: 18, border: '2px dashed #D4AF37', borderRadius: 14}} />
+    <div style={{position: 'absolute', left: 28, bottom: 24, fontSize: 28, fontWeight: 700}}>{element.label}</div>
+  </div>;
 };
 
 const Scene: React.FC<{scene: TeacherlessScene; props: TeacherlessLectureProps; durationInFrames: number}> = ({scene, props, durationInFrames}) => {
