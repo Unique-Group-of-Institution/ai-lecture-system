@@ -190,6 +190,49 @@ def write_teacherless_manifest(generation_id: int) -> Path:
     return path
 
 
+NARRATION_HOLD_MS = 300
+
+
+def apply_narration_audio(manifest: dict, provider, audio_dir: Path) -> dict:
+    """Attach real text-to-speech audio to every scene and re-time the lecture."""
+    audio_dir.mkdir(parents=True, exist_ok=True)
+    total_ms = 0
+    for scene in manifest["scenes"]:
+        narration = scene.get("narration")
+        if not narration:
+            total_ms += int(scene["durationMs"])
+            continue
+        artifact = provider.synthesize(
+            scene_id=scene["id"],
+            text=narration["text"],
+            language=narration["language"],
+            output_path=audio_dir / f"{scene['id']}.wav",
+        )
+        timed_ms = artifact.duration_ms + NARRATION_HOLD_MS
+        scene["narrationAudioSrc"] = f"audio/{scene['id']}.wav"
+        scene["narration"]["estimatedDurationMs"] = artifact.duration_ms
+        scene["durationMs"] = max(int(scene["durationMs"]), timed_ms)
+        total_ms += int(scene["durationMs"])
+    manifest["narration"] = {
+        "languageMode": manifest.get("narration", {}).get("languageMode", "SOURCE"),
+        "ttsProvider": provider.key,
+        "status": "AUDIO_READY",
+    }
+    qa = manifest.setdefault("qa", {})
+    qa["estimatedDurationMs"] = total_ms
+    qa["estimatedDurationMinutes"] = round(total_ms / 60_000, 2)
+    return manifest
+
+
+def synthesize_teacherless_narration(generation_id: int, provider) -> Path:
+    manifest = compile_teacherless_manifest(generation_id)
+    root = Path(settings.DATA_ROOT).resolve() / "lectures" / "teacherless" / f"generation-{generation_id}"
+    apply_narration_audio(manifest, provider, root / "audio")
+    path = root / "manifest-v2.json"
+    path.write_bytes(json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8"))
+    return path
+
+
 def manifest_sha256(manifest: dict) -> str:
     return hashlib.sha256(json.dumps(manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
 

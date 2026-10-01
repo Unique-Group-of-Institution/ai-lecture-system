@@ -806,7 +806,7 @@
       "id": "T090",
       "title": "Build teacherless lecture scene timeline and Remotion foundation",
       "priority": 14,
-      "status": "IN_PROGRESS",
+      "status": "REVIEW",
       "owner": "codex",
       "dependencies": [
         "T080",
@@ -834,6 +834,12 @@
           "check": "GitHub Actions workspace-ci #61",
           "result": "PASS",
           "details": "Workspace, Django foundation, slide engine, Remotion dependencies/TypeScript and teacherless fixture check completed successfully. Actual MP4 render remains pending because CI intentionally does not run the browser render."
+        },
+        {
+          "at": "2026-10-01T07:30:00Z",
+          "check": "Real Remotion MP4 render (smoke + 4-animation verify props)",
+          "result": "PASS",
+          "details": "t090-teacherless-smoke.mp4 (1.0s) and t090-teacherless-verify.mp4 (5.8s, 1920x1080) rendered via remotion CLI; frame stills confirmed fadeIn, highlight, draw and stepReveal behaviour."
         }
       ],
       "history": [
@@ -857,6 +863,13 @@
           "from": "IN_PROGRESS",
           "to": "IN_PROGRESS",
           "note": "Expanded T090 with approved-generation manifest compiler, provenance, SRT generation, provider-neutral TTS contract, CI fixture validation. CI #61 passed; real MP4 smoke render still pending."
+        },
+        {
+          "at": "2026-10-01T07:30:00Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Product owner directed Phase-2 verification; real MP4 renders and animation stills confirmed. Awaiting reviewer approval to move to DONE."
         }
       ]
     },
@@ -864,8 +877,8 @@
       "id": "T091",
       "title": "Attach real TTS provider and exact audio timing to teacherless scenes",
       "priority": 15,
-      "status": "BACKLOG",
-      "owner": null,
+      "status": "REVIEW",
+      "owner": "codex",
       "dependencies": [
         "T090"
       ],
@@ -884,8 +897,43 @@
         "SRT timings match measured audio duration within frame quantization",
         "Provider failure is fail-closed and leaves no partial production artifact"
       ],
-      "verification": [],
-      "history": []
+      "verification": [
+        {
+          "at": "2026-10-01T07:55:00Z",
+          "check": "python manage.py test lectures.tests.test_teacherless_tts lectures.tests.test_teacherless",
+          "result": "PASS",
+          "details": "8 tests including live Windows synthesis (duration + SHA-256 artifact validation) and stub-provider manifest re-timing."
+        },
+        {
+          "at": "2026-10-01T07:55:00Z",
+          "check": "Teacherless MP4 render with AI narration audio",
+          "result": "PASS",
+          "details": "data/lectures/t090-teacherless-t091-demo.mp4: 11.1s, 1920x1080, AAC audio track carrying the System.Speech narration (scene re-timed to measured 10.8s audio + 300ms hold)."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-10-01T07:35:00Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Product owner phase plan authorized T091 after T090 MP4 verification passed."
+        },
+        {
+          "at": "2026-10-01T07:35:00Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Claimed Windows System.Speech provider implementation behind the provider-neutral contract."
+        },
+        {
+          "at": "2026-10-01T07:55:00Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Added WindowsSystemSpeechProvider, apply_narration_audio and synthesize_teacherless_narration; measured-duration scene timing; tests pass; demo MP4 rendered with AI voice audio."
+        }
+      ]
     }
   ]
 }
