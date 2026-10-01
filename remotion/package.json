@@ -13,7 +13,9 @@
     "lock:check": "node ../scripts/check_remotion_lock.mjs",
     "versions": "remotion versions",
     "browser:ensure": "remotion browser ensure",
-    "smoke": "remotion render src/index.ts SyntheticLectureSmoke ../data/lectures/t050-smoke/synthetic-smoke.mp4 --props=fixtures/smoke-props.json --codec=h264 --concurrency=1 --log=verbose"
+    "smoke": "remotion render src/index.ts SyntheticLectureSmoke ../data/lectures/t050-smoke/synthetic-smoke.mp4 --props=fixtures/smoke-props.json --codec=h264 --concurrency=1 --log=verbose",
+    "teacherless:smoke": "remotion render src/teacherlessEntry.ts TeacherlessLecture ../data/lectures/t090-teacherless-smoke.mp4 --props=fixtures/teacherless-smoke-props.json --codec=h264 --concurrency=1 --log=verbose",
+    "teacherless:check": "node scripts/validate_teacherless_fixture.mjs"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.514",

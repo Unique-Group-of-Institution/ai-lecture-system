@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "compositionId": "TeacherlessLectureSmoke",
+  "fps": 30,
+  "width": 1920,
+  "height": 1080,
+  "renderReference": "synthetic:teacherless-smoke-json",
+  "branding": {
+    "institutionName": "Unique Group of Institutions",
+    "accentColor": "#17365D",
+    "backgroundColor": "#F8FAFC"
+  },
+  "scenes": [
+    {
+      "id": "smoke-scene",
+      "kind": "concept",
+      "durationMs": 1000,
+      "title": "Teacherless Render Smoke Test",
+      "elements": [
+        {"kind": "text", "id": "message", "text": "No teacher recording is required for this renderer.", "x": 100, "y": 250, "width": 1600, "fontSize": 48}
+      ],
+      "animations": [{"type": "fadeIn"}]
+    }
+  ]
+}

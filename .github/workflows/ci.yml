@@ -45,3 +45,4 @@ jobs:
           node scripts/check_remotion_lock.mjs
           npm ci --prefix remotion --ignore-scripts
           npm --prefix remotion run check
+          npm --prefix remotion run teacherless:check

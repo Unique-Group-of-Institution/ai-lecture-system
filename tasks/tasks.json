@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-09-16T13:31:53Z",
+  "updated_at": "2026-10-01T00:00:00Z",
   "tasks": [
     {
       "id": "T001",
@@ -801,6 +801,91 @@
           "note": "Real textbook end-to-end verified: 7 Unit 1 lectures produced genuine PPTX decks (generations 10-16) with workflows and SUCCEEDED engine jobs; slide quality fixed (sentence-level grounded units, page-number artifacts removed); 123 Django tests OK. Awaiting human REVIEW->DONE."
         }
       ]
+    },
+    {
+      "id": "T090",
+      "title": "Build teacherless lecture scene timeline and Remotion foundation",
+      "priority": 14,
+      "status": "IN_PROGRESS",
+      "owner": "codex",
+      "dependencies": [
+        "T080",
+        "T050"
+      ],
+      "scope": [
+        "Add an isolated teacherless scene manifest contract without changing the existing teacher-recording render contract",
+        "Render educational text, formula, diagram and step-by-step animation scenes deterministically in Remotion",
+        "Support scene-level narration audio references while allowing audio-less synthetic verification",
+        "Add synthetic manifest fixtures and automated schema/render-contract checks",
+        "Document the boundary between the existing teacher-recording pipeline and the new automated lecture path"
+      ],
+      "acceptance_criteria": [
+        "Existing LectureProps and LectureAssembly behavior remain source-compatible",
+        "A TeacherlessLecture composition accepts a validated scene manifest at 1920x1080 and derives total duration from scenes",
+        "Formula, diagram, highlight and step animations are deterministic and frame-driven",
+        "Scene audio is optional for the foundation fixture and never requires teacher RecordingTake records",
+        "Invalid scene IDs, non-positive durations and unsupported animation payloads are rejected by the manifest validator",
+        "Synthetic render verification can produce a short teacherless MP4 without teacher recordings or external services",
+        "No paid AI API, external upload, credential, or production data is introduced"
+      ],
+      "verification": [
+        {
+          "at": "2026-10-01T06:00:00Z",
+          "check": "GitHub Actions workspace-ci #61",
+          "result": "PASS",
+          "details": "Workspace, Django foundation, slide engine, Remotion dependencies/TypeScript and teacherless fixture check completed successfully. Actual MP4 render remains pending because CI intentionally does not run the browser render."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-10-01T00:00:00Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Product owner authorized teacherless automated lecture implementation while preserving all existing LMS functionality."
+        },
+        {
+          "at": "2026-10-01T00:00:00Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Claimed isolated teacherless scene-timeline foundation; existing T050/T080 paths remain unchanged."
+        },
+        {
+          "at": "2026-10-01T06:00:00Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "IN_PROGRESS",
+          "note": "Expanded T090 with approved-generation manifest compiler, provenance, SRT generation, provider-neutral TTS contract, CI fixture validation. CI #61 passed; real MP4 smoke render still pending."
+        }
+      ]
+    },
+    {
+      "id": "T091",
+      "title": "Attach real TTS provider and exact audio timing to teacherless scenes",
+      "priority": 15,
+      "status": "BACKLOG",
+      "owner": null,
+      "dependencies": [
+        "T090"
+      ],
+      "scope": [
+        "Implement one approved TTS provider behind the provider-neutral contract",
+        "Persist immutable audio artifacts under local lecture storage",
+        "Replace estimated scene timing with measured audio duration",
+        "Generate synchronized SRT from actual audio timings",
+        "Add technical audio QA without inspecting or committing private audio"
+      ],
+      "acceptance_criteria": [
+        "No change to teacher-recording T050 path",
+        "Provider can be swapped without changing scene renderer",
+        "Every generated scene audio artifact has duration and SHA-256",
+        "Render manifest uses measured audio duration",
+        "SRT timings match measured audio duration within frame quantization",
+        "Provider failure is fail-closed and leaves no partial production artifact"
+      ],
+      "verification": [],
+      "history": []
     }
   ]
 }
