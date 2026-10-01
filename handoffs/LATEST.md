@@ -45,3 +45,13 @@
 - T091 is queued for real TTS integration and measured audio timing.
 - The real browser-based teacherless MP4 smoke render is intentionally still pending; CI does not run the Remotion browser render yet. Do not mark T090 fully complete until that render is executed and inspected.
 - PR #14 remains the isolated integration point; main is unchanged.
+
+## 2026-10-01 — T090 MP4 verification + T091 Windows TTS (qoder)
+
+- T090 moved to REVIEW: real MP4 renders proven locally — `data/lectures/t090-teacherless-smoke.mp4` (1.0s) and `data/lectures/t090-teacherless-verify.mp4` (5.8s, 1920x1080); frame stills in `data/lectures/t090-verify-stills/` confirm fadeIn, highlight, draw and stepReveal.
+- PR #14 is CI-green and MERGEABLE, but the `centralugi-cmyk` gh account lacks merge permission and direct pushes to `main` are blocked by the local Git safety hook. An account with write access must click merge.
+- T091 claimed and moved to REVIEW: `WindowsSystemSpeechProvider` in `lectures/tts.py` (offline, zero-cost, PowerShell System.Speech, mono 22.05 kHz WAV, measured duration + SHA-256 artifact, fail-closed validation); `apply_narration_audio`/`synthesize_teacherless_narration` in `lectures/teacherless.py` attach `narrationAudioSrc`, re-time scenes to measured audio + 300 ms hold, set `ttsProvider`/`AUDIO_READY` and recompute QA; writes `manifest-v2.json` only after full success.
+- Tests: `lectures/tests/test_teacherless_tts.py` — 8 tests OK (stub-provider manifest re-timing, fail-closed input checks, live Windows synthesis).
+- Audio-integrated demo render: `data/lectures/t090-teacherless-t091-demo.mp4` — 11.1s, 1920x1080, AAC track carrying the AI narration.
+- Windows CLI renders need `--timeoutInMilliseconds=300000` and `TEMP`/`TMP` pointed at `data\tmp` (Chrome cold-start constraint on this machine).
+- Work done on local branch `integrate-t090` (== `feature/teacherless-lecture-foundation` tip); T091 changes to be pushed as `task/t091-teacherless-tts`.
