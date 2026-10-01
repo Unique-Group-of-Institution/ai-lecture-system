@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "project": "AI Lecture System",
-  "updated_at": "2026-10-01T00:00:00Z",
+  "updated_at": "2026-10-01T14:10:00Z",
   "tasks": [
     {
       "id": "T001",
@@ -932,6 +932,74 @@
           "from": "IN_PROGRESS",
           "to": "REVIEW",
           "note": "Added WindowsSystemSpeechProvider, apply_narration_audio and synthesize_teacherless_narration; measured-duration scene timing; tests pass; demo MP4 rendered with AI voice audio."
+        }
+      ]
+    },
+    {
+      "id": "T092",
+      "title": "Integrate UGI branding into teacherless renders (intro, outro, logo watermark, music hook)",
+      "priority": 16,
+      "status": "REVIEW",
+      "owner": "codex",
+      "dependencies": [
+        "T090",
+        "T091"
+      ],
+      "scope": [
+        "Add an optional validated production block to the teacherless props contract (intro/outro sources with explicit durations, logo source, music source and volume)",
+        "Prepend the intro video and append the outro video around the scene timeline without changing scene-relative animation or narration behaviour",
+        "Overlay the institution logo as a corner watermark across the whole timeline",
+        "Provide a looping low-volume background music hook that activates as soon as a music file is supplied",
+        "Keep private branding media out of version control via ignore rules"
+      ],
+      "acceptance_criteria": [
+        "Manifests without a production block render exactly as before (fully backward compatible)",
+        "Production asset paths are validated against path traversal and intro/outro require explicit durations",
+        "Total composition duration equals intro frames + scene frames + outro frames",
+        "Demo render with the PO-provided intro.mp4, outro.mp4 and logo.png produces a valid 1920x1080 MP4 with narration audio",
+        "No paid AI API, external upload, or committed private asset is introduced"
+      ],
+      "verification": [
+        {
+          "at": "2026-10-01T13:40:00Z",
+          "check": "remotion npm run check + teacherless:check",
+          "result": "PASS",
+          "details": "TypeScript compiles and the synthetic teacherless fixture validates with and without the production block."
+        },
+        {
+          "at": "2026-10-01T13:58:00Z",
+          "check": "T092 demo MP4 render",
+          "result": "PASS",
+          "details": "data/lectures/t090-teacherless-t092-demo.mp4 rendered (601 frames, 20.096s, 1920x1080, AAC audio track present, 6,006,194 bytes) via CLI with project-local temp."
+        },
+        {
+          "at": "2026-10-01T14:05:00Z",
+          "check": "Frame stills (intro/scene/outro)",
+          "result": "PASS",
+          "details": "data/lectures/t092-stills/: frame 60 shows UGI intro video, frame 300 shows the narration scene with the logo watermark top-right, frame 550 shows the UGI outro."
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-10-01T12:30:00Z",
+          "actor": "human",
+          "from": "BACKLOG",
+          "to": "READY",
+          "note": "Product owner delivered intro.mp4, outro.mp4 and logo.png and directed Phase 3 branding integration; music file to follow later."
+        },
+        {
+          "at": "2026-10-01T12:40:00Z",
+          "actor": "codex",
+          "from": "READY",
+          "to": "IN_PROGRESS",
+          "note": "Claimed after T091 completion; composition and props contract extended behind an optional production block."
+        },
+        {
+          "at": "2026-10-01T14:10:00Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "REVIEW",
+          "note": "Demo MP4 and stills verified. Background music hook is code-complete but untested against a real music file until the product owner supplies one. Awaiting reviewer approval to move to DONE."
         }
       ]
     }

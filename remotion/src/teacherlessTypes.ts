@@ -22,6 +22,16 @@ export type TeacherlessScene = {
   animations: TeacherlessAnimation[];
 };
 
+export type TeacherlessProduction = {
+  introSrc?: string;
+  introDurationMs?: number;
+  outroSrc?: string;
+  outroDurationMs?: number;
+  logoSrc?: string;
+  musicSrc?: string;
+  musicVolume?: number;
+};
+
 export type TeacherlessLectureProps = {
   schemaVersion: 1;
   compositionId: 'TeacherlessLecture' | 'TeacherlessLectureSmoke';
@@ -31,10 +41,18 @@ export type TeacherlessLectureProps = {
   renderReference: string;
   scenes: TeacherlessScene[];
   branding: {institutionName: string; accentColor: string; backgroundColor: string};
+  production?: TeacherlessProduction;
 };
 
 const ID = /^[A-Za-z][A-Za-z0-9_-]{0,63}$/u;
 const COLOR = /^#[0-9A-Fa-f]{6}$/u;
+const ASSET = /^[\w.-]+(?:\/[\w.-]+)*$/u;
+
+const productionMs = (value: number | undefined, fallback: number) => {
+  const ms = value ?? fallback;
+  if (!Number.isInteger(ms) || ms < 250 || ms > 60_000) throw new Error('Invalid teacherless production duration.');
+  return ms;
+};
 
 export function validateTeacherlessLectureProps(value: unknown): TeacherlessLectureProps {
   if (!value || typeof value !== 'object') throw new Error('Teacherless lecture manifest must be an object.');
@@ -43,6 +61,14 @@ export function validateTeacherlessLectureProps(value: unknown): TeacherlessLect
   if (p.fps !== 30 || p.width !== 1920 || p.height !== 1080) throw new Error('Teacherless lecture must use 1920x1080 at 30 fps.');
   if (!Array.isArray(p.scenes) || p.scenes.length === 0) throw new Error('Teacherless lecture requires at least one scene.');
   if (!p.branding || !COLOR.test(p.branding.accentColor) || !COLOR.test(p.branding.backgroundColor) || !p.branding.institutionName.trim()) throw new Error('Invalid teacherless lecture branding.');
+  if (p.production) {
+    for (const key of ['introSrc', 'outroSrc', 'logoSrc', 'musicSrc'] as const) {
+      const src = p.production[key];
+      if (src !== undefined && (typeof src !== 'string' || !ASSET.test(src) || src.includes('..'))) throw new Error('Invalid teacherless production asset reference.');
+    }
+    if ((p.production.introSrc && !p.production.introDurationMs) || (p.production.outroSrc && !p.production.outroDurationMs)) throw new Error('Teacherless intro/outro require an explicit duration.');
+    if (p.production.musicVolume !== undefined && !(p.production.musicVolume > 0 && p.production.musicVolume <= 1)) throw new Error('Invalid teacherless music volume.');
+  }
   const seen = new Set<string>();
   for (const scene of p.scenes) {
     if (!scene || !ID.test(scene.id) || seen.has(scene.id)) throw new Error('Invalid or duplicate teacherless scene id.');
@@ -66,5 +92,11 @@ export function validateTeacherlessLectureProps(value: unknown): TeacherlessLect
   return p as TeacherlessLectureProps;
 }
 
+export const teacherlessIntroFrames = (props: TeacherlessLectureProps) =>
+  props.production?.introSrc ? Math.max(1, Math.round(productionMs(props.production.introDurationMs, 3000) * props.fps / 1000)) : 0;
+
+export const teacherlessOutroFrames = (props: TeacherlessLectureProps) =>
+  props.production?.outroSrc ? Math.max(1, Math.round(productionMs(props.production.outroDurationMs, 3000) * props.fps / 1000)) : 0;
+
 export const teacherlessDurationInFrames = (props: TeacherlessLectureProps) =>
-  Math.max(1, props.scenes.reduce((sum, scene) => sum + Math.max(1, Math.round(scene.durationMs * props.fps / 1000)), 0));
+  teacherlessIntroFrames(props) + Math.max(1, props.scenes.reduce((sum, scene) => sum + Math.max(1, Math.round(scene.durationMs * props.fps / 1000)), 0)) + teacherlessOutroFrames(props);

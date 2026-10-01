@@ -1,5 +1,6 @@
 import React from 'react';
-import {AbsoluteFill, Audio, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, Img, OffthreadVideo, Sequence, interpolate, staticFile, useCurrentFrame} from 'remotion';
+import {teacherlessIntroFrames, teacherlessOutroFrames} from './teacherlessTypes';
 import type {TeacherlessAnimation, TeacherlessElement, TeacherlessLectureProps, TeacherlessScene} from './teacherlessTypes';
 
 const frames = (ms: number, fps: number) => Math.max(1, Math.round(ms * fps / 1000));
@@ -65,11 +66,26 @@ const Scene: React.FC<{scene: TeacherlessScene; props: TeacherlessLectureProps; 
 };
 
 export const TeacherlessLecture: React.FC<TeacherlessLectureProps> = (props) => {
-  let from = 0;
-  return <>{props.scenes.map((scene) => {
-    const durationInFrames = frames(scene.durationMs, props.fps);
-    const start = from;
-    from += durationInFrames;
-    return <Sequence key={scene.id} from={start} durationInFrames={durationInFrames}><Scene scene={scene} props={props} durationInFrames={durationInFrames} /></Sequence>;
-  })}</>;
+  const production = props.production ?? {};
+  const introFrames = teacherlessIntroFrames(props);
+  const outroFrames = teacherlessOutroFrames(props);
+  let from = introFrames;
+  return <>
+    {production.introSrc ? <Sequence from={0} durationInFrames={introFrames} name="intro">
+      <AbsoluteFill style={{background: '#000'}}><OffthreadVideo src={staticFile(production.introSrc)} /></AbsoluteFill>
+    </Sequence> : null}
+    {props.scenes.map((scene) => {
+      const durationInFrames = frames(scene.durationMs, props.fps);
+      const start = from;
+      from += durationInFrames;
+      return <Sequence key={scene.id} from={start} durationInFrames={durationInFrames}><Scene scene={scene} props={props} durationInFrames={durationInFrames} /></Sequence>;
+    })}
+    {production.outroSrc ? <Sequence from={from} durationInFrames={outroFrames} name="outro">
+      <AbsoluteFill style={{background: '#000'}}><OffthreadVideo src={staticFile(production.outroSrc)} /></AbsoluteFill>
+    </Sequence> : null}
+    {production.musicSrc ? <Audio src={staticFile(production.musicSrc)} loop volume={production.musicVolume ?? 0.18} /> : null}
+    {production.logoSrc ? <AbsoluteFill style={{pointerEvents: 'none'}}>
+      <Img src={staticFile(production.logoSrc)} style={{position: 'absolute', top: 28, right: 36, height: 72, width: 'auto', objectFit: 'contain', opacity: 0.92}} />
+    </AbsoluteFill> : null}
+  </>;
 };
