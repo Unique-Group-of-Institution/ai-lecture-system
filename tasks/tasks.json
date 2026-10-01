@@ -828,7 +828,14 @@
         "Synthetic render verification can produce a short teacherless MP4 without teacher recordings or external services",
         "No paid AI API, external upload, credential, or production data is introduced"
       ],
-      "verification": [],
+      "verification": [
+        {
+          "at": "2026-10-01T06:00:00Z",
+          "check": "GitHub Actions workspace-ci #61",
+          "result": "PASS",
+          "details": "Workspace, Django foundation, slide engine, Remotion dependencies/TypeScript and teacherless fixture check completed successfully. Actual MP4 render remains pending because CI intentionally does not run the browser render."
+        }
+      ],
       "history": [
         {
           "at": "2026-10-01T00:00:00Z",
@@ -843,6 +850,13 @@
           "from": "READY",
           "to": "IN_PROGRESS",
           "note": "Claimed isolated teacherless scene-timeline foundation; existing T050/T080 paths remain unchanged."
+        },
+        {
+          "at": "2026-10-01T06:00:00Z",
+          "actor": "codex",
+          "from": "IN_PROGRESS",
+          "to": "IN_PROGRESS",
+          "note": "Expanded T090 with approved-generation manifest compiler, provenance, SRT generation, provider-neutral TTS contract, CI fixture validation. CI #61 passed; real MP4 smoke render still pending."
         }
       ]
     },
