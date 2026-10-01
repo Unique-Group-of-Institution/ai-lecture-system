@@ -15,6 +15,8 @@ export type TeacherlessScene = {
   kind: 'concept' | 'formula' | 'diagram' | 'workedExample' | 'recap';
   durationMs: number;
   narrationAudioSrc?: string;
+  narration?: {text: string; language: 'SOURCE' | 'BILINGUAL'; estimatedDurationMs: number};
+  provenance?: {pageSnapshotId: number; pageNumber: number; startOffset: number; endOffset: number}[];
   title: string;
   elements: TeacherlessElement[];
   animations: TeacherlessAnimation[];
