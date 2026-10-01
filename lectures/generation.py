@@ -224,7 +224,9 @@ def _load_reviewed_pages(source: ContentSource) -> tuple[ExtractionVersion, list
         if len(raw) > settings.GENERATION_MAX_PAGE_TEXT_BYTES or hashlib.sha256(raw).hexdigest() != page.text_sha256:
             raise ValidationError("Reviewed source text failed integrity or resource checks.")
         try:
-            text = raw.decode("utf-8", errors="strict")
+            # Tesseract preserves CR/CRLF from page layout; normalize line endings before
+            # the control-character gate because claim offsets are grounded on this text.
+            text = raw.decode("utf-8", errors="strict").replace("\r\n", "\n").replace("\r", "\n")
         except UnicodeDecodeError as exc:
             raise ValidationError("Reviewed source text is not valid UTF-8.") from exc
         _bounded_text(text, "source_text", settings.GENERATION_MAX_PAGE_CHARACTERS, required=True)

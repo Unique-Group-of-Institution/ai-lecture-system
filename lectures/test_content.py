@@ -15,7 +15,7 @@ from PIL import Image
 from pypdf import PdfWriter
 
 from .admin import ContentFileAdmin, ContentSourceAdmin, ExtractedPageAdmin, ExtractionVersionAdmin
-from .content import _allocate_extraction, _contained, _extract_pdf_text_bounded, _inspect_pdf_bounded, _ocr_image, _remove_known_tree, _render_page_bounded, approve_ocr_extraction, extract_source, register_upload, sources_visible_to, validate_upload
+from .content import _allocate_extraction, _contained, _extract_pdf_text_bounded, _inspect_pdf_bounded, _ocr_image, _remove_known_tree, _render_page_bounded, _watermark_only_text, approve_ocr_extraction, extract_source, register_upload, sources_visible_to, validate_upload
 from .models import Chapter, ContentFile, ContentSource, Course, ExtractedPage, ExtractionVersion
 from .roles import ADMINISTRATOR_ROLE, TEACHER_ROLE, ensure_roles
 
@@ -157,6 +157,41 @@ class ContentFoundationTests(TestCase):
         self.assertEqual(extraction.status, ExtractionVersion.Status.COMPLETE)
         self.assertEqual(list(extraction.pages.values_list("page_number", "method")), [(1, ExtractedPage.Method.PDF_TEXT), (2, ExtractedPage.Method.PDF_TEXT)])
         self.assertTrue(all(page.source_file_id == source.original_file.pk for page in extraction.pages.all()))
+
+    def test_watermark_only_native_page_falls_through_to_ocr(self):
+        self.assertTrue(_watermark_only_text("1 Not for sale \nPCTB"))
+        self.assertTrue(_watermark_only_text("NOT FOR SALE pctb 12"))
+        self.assertTrue(_watermark_only_text("Not for sale PCTB"))
+        self.assertFalse(_watermark_only_text("Page one"))
+        self.assertFalse(_watermark_only_text("Chemistry is the branch of science which deals with matter."))
+        source = self.upload(data=synthetic_pdf(2), name="synthetic.pdf")
+
+        class Page:
+            mediabox = type("Box", (), {"width": 72, "height": 72})()
+
+        class Reader:
+            pages = [Page(), Page()]
+
+        def native(source_path, output):
+            (output / "native-0001.txt").write_text("2 Not for sale PCTB", encoding="utf-8")
+            (output / "native-0002.txt").write_text("Chemistry is the branch of science.", encoding="utf-8")
+
+        def render(source_path, index, output):
+            output.write_bytes(synthetic_image().read())
+
+        with patch("lectures.content.PdfReader", return_value=Reader()), patch(
+            "lectures.content._extract_pdf_text_bounded", side_effect=native
+        ), patch("lectures.content._render_page_bounded", side_effect=render), patch(
+            "lectures.content._ocr_image", return_value=("OCR recovered chemistry page", 96.0)
+        ):
+            extraction = extract_source(source)
+        page_one = extraction.pages.get(page_number=1)
+        page_two = extraction.pages.get(page_number=2)
+        self.assertEqual(page_one.method, ExtractedPage.Method.OCR)
+        self.assertEqual(page_two.method, ExtractedPage.Method.PDF_TEXT)
+        self.assertEqual(extraction.status, ExtractionVersion.Status.REVIEW_REQUIRED)
+        self.assertTrue(page_one.requires_review)
+        self.assertFalse(page_two.requires_review)
 
     def test_low_confidence_urdu_ocr_requires_review_and_preserves_unicode(self):
         source = self.upload()

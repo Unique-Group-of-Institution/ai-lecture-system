@@ -61,6 +61,11 @@ if (manifest.schemaVersion !== 1 || manifest.compositionId !== 'TeacherlessLectu
 boundedText(manifest.renderReference, 256, 'render reference');
 if (!Array.isArray(manifest.scenes) || manifest.scenes.length < 1 || manifest.scenes.length > 120) throw new Error('Invalid teacherless scenes.');
 if (!manifest.branding || typeof manifest.branding !== 'object' || !/^#[0-9A-Fa-f]{6}$/u.test(manifest.branding.accentColor)) throw new Error('Invalid teacherless branding.');
+let renderScale = 1;
+if (manifest.renderScale !== undefined) {
+  if (typeof manifest.renderScale !== 'number' || !(manifest.renderScale >= 0.5 && manifest.renderScale <= 1)) throw new Error('Invalid teacherless render scale.');
+  renderScale = manifest.renderScale;
+}
 
 const publicDir = resolve(manifest.publicDir);
 if (publicDir !== resolve(dirname(manifestPath), 'public') || !contained(teacherlessRoot, publicDir)) {
@@ -126,6 +131,7 @@ try {
     outputLocation: `${outputPath}.part.mp4`,
     inputProps: manifest,
     concurrency: 1,
+    scale: renderScale,
     overwrite: false,
     puppeteerInstance: browser,
     timeoutInMilliseconds: browserSetupTimeoutMs,

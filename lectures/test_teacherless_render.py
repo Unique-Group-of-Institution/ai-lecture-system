@@ -406,6 +406,25 @@ class TeacherlessProcessTests(TeacherlessFixtureMixin, TestCase):
             TeacherlessRender.objects.filter(generation=self.generation).count(), 1
         )
 
+    def test_manifest_omits_render_scale_by_default(self):
+        import json
+        import os as _os
+
+        clean_env = {key: value for key, value in _os.environ.items() if key != "AI_LECTURE_TEACHERLESS_RENDER_SCALE"}
+        with patch.dict(_os.environ, clean_env, clear=True):
+            render = self.run_pipeline()
+        manifest = json.loads((self.root / render.manifest_relative_path).read_bytes())
+        self.assertNotIn("renderScale", manifest)
+
+    def test_downscaled_render_scale_is_written_to_manifest(self):
+        import json
+        import os as _os
+
+        with patch.dict(_os.environ, {"AI_LECTURE_TEACHERLESS_RENDER_SCALE": str(2 / 3)}):
+            render = self.run_pipeline()
+        manifest = json.loads((self.root / render.manifest_relative_path).read_bytes())
+        self.assertAlmostEqual(manifest["renderScale"], 2 / 3, places=9)
+
     def test_unsupported_environment_fails_the_queued_row(self):
         render = request_teacherless_render(self.generation.pk, self.teacher)
         with override_settings(VIDEO_RENDER_DEPLOYMENT_MODE="production"):

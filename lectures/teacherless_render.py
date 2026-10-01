@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import os
 import shutil
 import threading
 from datetime import timedelta
@@ -220,6 +221,12 @@ def process_teacherless_render(render_id: int) -> TeacherlessRender:
         manifest = apply_narration_audio(manifest, WindowsSystemSpeechProvider(), audio_dir)
         _attach_production(manifest, public_dir)
         manifest["publicDir"] = str(public_dir)
+        try:
+            requested_scale = float(os.environ.get("AI_LECTURE_TEACHERLESS_RENDER_SCALE", "1"))
+        except ValueError:
+            requested_scale = 1.0
+        if 0.5 <= requested_scale < 1:
+            manifest["renderScale"] = requested_scale
 
         encoded = json.dumps(manifest, ensure_ascii=False, sort_keys=True, indent=2).encode("utf-8")
         manifest_path = render_dir / "manifest.json"

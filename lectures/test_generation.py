@@ -114,6 +114,11 @@ class SourceGroundedGenerationTests(TestCase):
             "start_offset": row.references.get().start_offset, "end_offset": row.references.get().end_offset,
         } for row in getattr(revision, relation).all()]
 
+    def test_carriage_returns_in_reviewed_page_text_are_normalized(self):
+        source = self.make_source(self.teacher, self.chapter, "Force changes\r\nmotion.\rEnergy is conserved.")
+        generation = self.generate(actor=self.context(source_ids=[source.pk]), source_ids=[source.pk])
+        self.assertGreater(generation.slides.count(), 0)
+
     def test_generation_is_deterministic_and_preserves_urdu_english(self):
         first = self.generate()
         second = self.generate()
