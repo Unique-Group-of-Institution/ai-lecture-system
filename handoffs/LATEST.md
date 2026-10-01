@@ -55,3 +55,10 @@
 - Audio-integrated demo render: `data/lectures/t090-teacherless-t091-demo.mp4` — 11.1s, 1920x1080, AAC track carrying the AI narration.
 - Windows CLI renders need `--timeoutInMilliseconds=300000` and `TEMP`/`TMP` pointed at `data\tmp` (Chrome cold-start constraint on this machine).
 - Work done on local branch `integrate-t090` (== `feature/teacherless-lecture-foundation` tip); T091 changes to be pushed as `task/t091-teacherless-tts`.
+
+## 2026-10-01 — T092 intro/outro/logo/music integration (qoder)
+
+- T092 claimed and moved to REVIEW on branch `task/t092-teacherless-branding` (stacked on `task/t091-teacherless-tts`): `TeacherlessProduction` optional block in `remotion/src/teacherlessTypes.ts` (validated srcs, explicit intro/outro durations, traversal-safe) and intro/outro `Sequence`s, scene shift, looping low-volume music `<Audio>` hook and top-right logo `<Img>` watermark in `remotion/src/TeacherlessLecture.tsx`.
+- Evidence: `data/lectures/t090-teacherless-t092-demo.mp4` — 601 frames, 20.096s, 1920x1080, AAC narration track, 6.0 MB; stills `data/lectures/t092-stills/t092-intro-60.png`, `t092-scene-300.png`, `t092-outro-550.png` visually confirm intro video, watermark over scenes, and outro.
+- Render environment note (PO directive): keep everything under the E-drive project path — `TEMP`/`TMP` = `data\tmp`, `--timeoutInMilliseconds=300000`, `--concurrency=1`. A browser-connect timeout was seen once under heavy RAM/disk pressure; a retry with the same E-drive temp succeeded. Do not scatter scratch to other drives and do not kill the PO's Chrome.
+- Pending: PO to supply background music file (hook ready via `musicSrc`); UGI slide-template PPTX backgrounds are a separate follow-up; next up is the Studio "Generate Teacherless Lecture" button, then a real Class 9 Chemistry lecture end-to-end.

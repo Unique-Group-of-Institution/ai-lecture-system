@@ -88,3 +88,9 @@ data/slide-engine/
 # Ignore accidental CMD files
 findstr
 set
+
+# Content files (large, local-only)
+data/content/
+data/assets/
+# Private PO branding media (copied from data/assets at render time)
+remotion/public/branding/

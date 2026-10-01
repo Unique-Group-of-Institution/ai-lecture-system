@@ -166,3 +166,10 @@ Keep the repository private under `Unique-Group-of-Institution`. Changes must us
 - T090 is REVIEW: the teacherless composition renders real MP4s locally (smoke 1.0s; 4-animation verify 5.8s at 1920x1080) with still-image evidence for fadeIn, highlight, draw and stepReveal. PR #14 CI-green and mergeable; merge requires a write-access GitHub account.
 - T091 is REVIEW: `WindowsSystemSpeechProvider` implements the provider-neutral TTS contract fully offline (no paid API). `apply_narration_audio`/`synthesize_teacherless_narration` attach immutable per-scene WAV artifacts, replace estimated scene timing with measured audio duration plus a 300 ms hold, mark the manifest `AUDIO_READY`, and write `manifest-v2.json` fail-closed. SRT generation reads the measured `durationMs` values.
 - Verification: 8 focused tests pass (stub re-timing, fail-closed inputs, live Windows synthesis); an 11.1s 1080p teacherless MP4 rendered carrying the synthesized narration audio. T050 recording/render paths are unchanged.
+
+## T092 branding integration (2026-10-01)
+
+- T092 is REVIEW: the teacherless composition now accepts an optional validated `production` block — `introSrc`/`introDurationMs`, `outroSrc`/`outroDurationMs`, `logoSrc`, and a `musicSrc`/`musicVolume` background-music hook. Props without a production block render exactly as before.
+- Intro plays before the scenes (scene timeline shifts by intro frames), outro plays after, the logo overlays every frame as a top-right watermark, and music loops at low volume (default 0.18) as soon as a music file is supplied. Asset paths are validated against traversal; intro/outro require explicit durations.
+- Verified with the PO's real media: `data/lectures/t090-teacherless-t092-demo.mp4` (20.096s, 1920x1080, AAC narration) plus stills in `data/lectures/t092-stills/` (frame 60 = UGI intro, frame 300 = scene with watermark, frame 550 = UGI outro).
+- Private branding media stays out of git (`remotion/public/branding/`, `data/assets/`, `data/content/` ignored). No paid API or external upload introduced. Music file not yet delivered — hook is code-complete, awaiting the asset for a live test.
