@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@remotion/bundler": "4.0.514",
+    "@remotion/lambda": "4.0.514",
     "@remotion/renderer": "4.0.514",
     "@remotion/transitions": "4.0.514",
     "react": "19.2.3",

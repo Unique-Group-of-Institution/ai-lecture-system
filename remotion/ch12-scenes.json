@@ -1,0 +1,523 @@
+{
+  "voice": "ur-PK-AsadNeural",
+  "scenes": [
+    {
+      "id": 1,
+      "part": "INTRO",
+      "kind": "title",
+      "visual": "waves",
+      "title": "Chapter 12 — Waves",
+      "subtitle": "MCQs Discussion",
+      "bullets": [],
+      "answer": "",
+      "vo": "Assalam-o-Alaikum bachon! Ab hum Chapter 12 ke MCQs ko discuss karte hain. In MCQs mein hum sirf answer mark nahi karenge, balkay har question ka concept bhi samjhenge, taa-ke agar isi concept se question kisi aur form mein aa jaye to aap easily solve kar saken."
+    },
+    {
+      "id": 2,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "longitudinal",
+      "title": "12.1 — Direction of vibration in a longitudinal wave?",
+      "subtitle": "",
+      "bullets": [
+        "Particles vibrate forward and backward",
+        "Wave travels in the SAME direction",
+        "Answer: \"In the same direction as the wave travels\""
+      ],
+      "answer": "Correct Option: D",
+      "vo": "Sab se pehle baat karte hain longitudinal wave ki. Aapko pata hai ke longitudinal wave mein medium ke particles jis direction mein vibrate karte hain, wave bhi usi direction mein travel karti hai. Yani agar particles forward aur backward vibrate kar rahe hain, to wave bhi usi direction mein travel karegi. Is liye question mein agar poocha jaye ke direction of vibration kya hoti hai, to answer hoga: In the same direction as the wave travels. Is liye correct option D hai."
+    },
+    {
+      "id": 3,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "transverse",
+      "title": "12.2 — Lowest point of a transverse wave?",
+      "subtitle": "",
+      "bullets": [
+        "Highest Point = Crest",
+        "Lowest Point = Trough"
+      ],
+      "answer": "Correct Option: D — Trough",
+      "vo": "Ab aate hain question 12.2 ki taraf. Question poochta hai ke transverse wave ka lowest point kya hota hai? Transverse wave ko dekhein. Is ke top point ko hum crest kehte hain, jab ke bottom ya lowest point ko trough kehte hain. Toh agar question lowest point pooch raha hai, answer hoga: Trough. Is liye correct option D hai."
+    },
+    {
+      "id": 4,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "medium",
+      "title": "12.3 — Which wave requires a medium to travel?",
+      "subtitle": "",
+      "bullets": [
+        "Mechanical Wave → Requires Medium",
+        "Electromagnetic Wave → Does NOT require medium",
+        "X-rays, Light, Radio waves → Electromagnetic",
+        "Sound → Mechanical wave"
+      ],
+      "answer": "Correct Option: D — Sound waves",
+      "vo": "Ab question 12.3. Question hai: in mein se kaunsi wave ko travel karne ke liye medium ki zarurat hoti hai? Yahan do types yaad rakhein. Mechanical waves ko travel karne ke liye medium ki zarurat hoti hai. Jab ke electromagnetic waves ko medium ki zarurat nahi hoti. X-rays electromagnetic hain. Light bhi electromagnetic hai. Radio waves bhi electromagnetic hain. Lekin sound wave mechanical wave hai. Is liye sound ko travel karne ke liye medium chahiye. Toh correct answer hai: Sound waves — Option D."
+    },
+    {
+      "id": 5,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "amplitudes",
+      "title": "12.4 — Which property indicates the energy carried by a wave?",
+      "subtitle": "",
+      "bullets": [
+        "Small amplitude → Less energy",
+        "Large amplitude → More energy",
+        "Amplitude → Energy carried by a wave"
+      ],
+      "answer": "Correct Option: B — Amplitude",
+      "vo": "Ab question 12.4. Question poochta hai ke wave ki kaunsi property ye indicate karti hai ke wave kitni energy carry kar rahi hai? Is ka answer hum pehle Terms and Parameters related to Waves mein parh chuke hain. Woh property hai: Amplitude. Amplitude wave ki energy ko indicate karti hai. Is liye correct option B — Amplitude hai."
+    },
+    {
+      "id": 6,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "wavefront",
+      "title": "12.5 — What is a wavefront?",
+      "subtitle": "",
+      "bullets": [
+        "Particles vibrating in the SAME phase",
+        "Imaginary line or surface joining those points",
+        "Wavefront = Imaginary line/surface joining points vibrating in phase"
+      ],
+      "answer": "Correct Option: C",
+      "vo": "Ab question 12.5 mein wavefront poocha gaya hai. Wavefront ko simple words mein samjhein. Agar medium ke particles same phase mein vibrate kar rahe hon, to un points ko join karne wali imaginary line ya surface ko wavefront kehte hain. Yani particles same phase mein hon — same type ka displacement aur same stage of vibration. Wavefront koi visible line zaroori nahi hoti. Ye ek imaginary line ya surface hoti hai. Is liye correct definition hai: An imaginary line or surface joining points that vibrate in phase. Correct answer: Option C."
+    },
+    {
+      "id": 7,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "refraction",
+      "title": "12.6 — Change of direction due to change of speed?",
+      "subtitle": "",
+      "bullets": [
+        "Deep water → Shallow water",
+        "Speed changes at the boundary",
+        "Direction bends = Refraction",
+        "Change in direction due to change in speed = Refraction"
+      ],
+      "answer": "Correct Option: D — Refraction",
+      "vo": "Ab question 12.6. Question poochta hai: woh wave phenomenon kya hai jisme wave apni speed change hone ki wajah se direction change karti hai? Is ka naam hai: Refraction. Misal ke taur par jab water wave deep water se shallow water mein enter karti hai, to uski speed change hoti hai aur uski direction bhi change ho sakti hai. Is phenomenon ko refraction kehte hain. Correct answer: Option D — Refraction."
+    },
+    {
+      "id": 8,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "tsunami",
+      "title": "12.7 — Tsunami approaching shallow water: what happens?",
+      "subtitle": "",
+      "bullets": [
+        "Deep Water → Shallow Water",
+        "Speed decreases",
+        "Wavelength shortens"
+      ],
+      "answer": "Speed decreases, wavelength shortens",
+      "vo": "Ab question 12.7. Question poochta hai ke jab tsunami shallow water ke qareeb pohanchti hai to wave ki speed aur wavelength ke saath kya hota hai? Jab tsunami deep water se shallow water ki taraf aati hai, to uski speed decrease ho jati hai. Saath hi uski wavelength short ho jati hai. Is liye correct option hai: Speed decreases and wavelength shortens."
+    },
+    {
+      "id": 9,
+      "part": "PART 1 — MCQs",
+      "kind": "mcq",
+      "visual": "diffraction",
+      "title": "12.8 — Why can we hear sound around a corner?",
+      "subtitle": "",
+      "bullets": [
+        "Sound passes the opening / corner",
+        "It spreads to the other side",
+        "Sound heard around a corner → Diffraction"
+      ],
+      "answer": "Correct Option: D — Diffraction",
+      "vo": "Ab aate hain last MCQ ki taraf. Question poochta hai ke kaunsa wave behavior explain karta hai ke hum kisi person ki awaaz wall ke corner ke around bhi sun sakte hain? Is ka answer hai: Diffraction. Agar ek person room ke andar baat kar raha ho aur doosra person wall ke doosri taraf ho, to sound wall ke opening ya corner ke qareeb se guzarti hai aur us ke baad spread ho jati hai. Isi phenomenon ko diffraction kehte hain. Correct answer: Option D — Diffraction."
+    },
+    {
+      "id": 10,
+      "part": "PART 1 — MCQs",
+      "kind": "recap",
+      "visual": "none",
+      "title": "MCQs — Quick Recap",
+      "subtitle": "",
+      "bullets": [
+        "12.1 → D — Same direction",
+        "12.2 → D — Trough",
+        "12.3 → D — Sound waves",
+        "12.4 → B — Amplitude",
+        "12.5 → C — Points vibrating in phase",
+        "12.6 → D — Refraction",
+        "12.7 → B — Speed decreases, wavelength shortens",
+        "12.8 → D — Diffraction"
+      ],
+      "answer": "",
+      "vo": "Toh MCQs ko ek baar quickly repeat kar lete hain. Pehla — same direction. Doosra — trough. Teesra — sound waves. Chautha — amplitude. Paanchwa — points vibrating in phase. Chhata — refraction. Saatwaan — speed decrease hoti hai aur wavelength short hoti hai. Aur aathwaan — diffraction. Ab hum move karte hain exercise ke short questions ki taraf."
+    },
+    {
+      "id": 11,
+      "part": "PART 2",
+      "kind": "divider",
+      "visual": "waves",
+      "title": "Exercise — Short Questions",
+      "subtitle": "Chapter 12",
+      "bullets": [],
+      "answer": "",
+      "vo": "Ab hum Chapter 12 ke exercise ke short questions discuss karte hain. In questions ke answers book ke andar hi available hain, is liye humein unnecessary extra material add karne ki zarurat nahi. Hum question ko samjhenge aur phir book mein relevant answer ko mark karenge."
+    },
+    {
+      "id": 12,
+      "part": "PART 2 — Short Questions",
+      "kind": "concept",
+      "visual": "energy",
+      "title": "Q1. What do waves transfer from one place to another?",
+      "subtitle": "",
+      "bullets": [
+        "Wave transfers ENERGY, not matter",
+        "Particles stay around their positions",
+        "\"A wave can transfer energy from one place to another without transferring matter\""
+      ],
+      "answer": "",
+      "vo": "Pehla question poochta hai: Waves ek place se doosri place kya transfer karti hain? Is chapter mein hum ye concept baar baar parh chuke hain. Wave energy transfer karti hai, lekin matter ko ek place se doosri place transfer nahi karti. Is ka answer simple hai: A wave can transfer energy from one place to another without transferring matter. Bas ye line yaad karni hai."
+    },
+    {
+      "id": 13,
+      "part": "PART 2 — Short Questions",
+      "kind": "concept",
+      "visual": "medium",
+      "title": "Q2. Name any two examples of mechanical waves.",
+      "subtitle": "",
+      "bullets": [
+        "Examples are given in the book",
+        "Any two from the book are acceptable",
+        "Key point: Mechanical waves need a medium"
+      ],
+      "answer": "",
+      "vo": "Doosra question hai: Mechanical waves ki koi bhi do examples likhein. Mechanical waves ke examples book mein diye gaye hain. Aap book mein diye gaye examples mein se koi bhi do yaad kar sakte hain. Important baat ye hai ke mechanical wave ko medium ki zarurat hoti hai."
+    },
+    {
+      "id": 14,
+      "part": "PART 2 — Short Questions",
+      "kind": "concept",
+      "visual": "space",
+      "title": "Q3. Which type of wave can travel through vacuum?",
+      "subtitle": "",
+      "bullets": [
+        "Answer: Electromagnetic waves",
+        "No material medium required",
+        "Radio → Microwave → Infrared → Visible light",
+        "Ultraviolet → X-rays → Gamma rays"
+      ],
+      "answer": "",
+      "vo": "Teesra question poochta hai: Kaunsi waves vacuum ke andar travel kar sakti hain? Answer hai: Electromagnetic waves. Electromagnetic waves ko travel karne ke liye material medium ki zarurat nahi hoti. Aap answer ko complete karne ke liye electromagnetic waves ke examples bhi likh sakte hain. Examples: Radio waves, microwaves, infrared, visible light, ultraviolet, X-rays aur gamma rays. In examples ko proper order mein yaad rakhna hai."
+    },
+    {
+      "id": 15,
+      "part": "PART 2 — Short Questions",
+      "kind": "concept",
+      "visual": "wtypes",
+      "title": "Q4. Difference between transverse and longitudinal waves",
+      "subtitle": "",
+      "bullets": [
+        "Transverse: particles vibrate at right angles to wave direction — e.g. water wave",
+        "Longitudinal: particles vibrate in the same direction — e.g. sound wave",
+        "Cover definition AND examples in the answer"
+      ],
+      "answer": "",
+      "vo": "Ab question number four. Is mein transverse aur longitudinal waves ka difference poocha gaya hai. Transverse wave mein medium ke particles wave ki direction ke right angle par vibrate karte hain. Water wave is ki ek example hai. Longitudinal wave mein particles wave ki direction ke same direction mein vibrate karte hain. Sound wave longitudinal wave ki example hai. Is tarah hum dono waves ki definition aur examples dono cover kar sakte hain."
+    },
+    {
+      "id": 16,
+      "part": "PART 2 — Short Questions",
+      "kind": "concept",
+      "visual": "transverse",
+      "title": "Q5 & Q6. Wavelength and Frequency",
+      "subtitle": "",
+      "bullets": [
+        "Wavelength: SI unit = metre (m) — always write it",
+        "Frequency: SI unit = hertz (Hz)",
+        "1 Hz = 1 wave per second",
+        "Present as: Definition, then SI Unit"
+      ],
+      "answer": "",
+      "vo": "Ab wavelength aur frequency wale questions. Wavelength ki definition likhte waqt us ki SI unit bhi zaroor likhein. Wavelength ki SI unit: metre — m. Isi tarah frequency ki definition ke baad uski SI unit mention karein. Frequency hertz, yani Hz, mein measure hoti hai. Aur: 1 Hz = 1 wave per second. Answers ko headings ke saath present karna behtar rahega, jaise: Definition, phir definition, aur us ke neeche: SI Unit, Meter. Isi tarah frequency ke liye definition aur SI unit Hertz likhein."
+    },
+    {
+      "id": 17,
+      "part": "PART 2 — Short Questions",
+      "kind": "concept",
+      "visual": "tsunami",
+      "title": "Q7. What causes a tsunami in the ocean?",
+      "subtitle": "",
+      "bullets": [
+        "Earthquakes",
+        "Volcanic eruptions",
+        "Landslides",
+        "Prepare this answer from the book's paragraph"
+      ],
+      "answer": "",
+      "vo": "Ab aate hain last short question ki taraf. Question hai: Ocean mein tsunami kis wajah se banti hai? Tsunami ki major causes mein: Earthquakes, volcanic eruptions aur landslides shamil hain. Is answer ko book ke relevant paragraph se prepare karein aur required portion yaad karein. Ye question important hai, is liye is ko properly prepare karna hai."
+    },
+    {
+      "id": 18,
+      "part": "PART 2 — Short Questions",
+      "kind": "checklist",
+      "visual": "none",
+      "title": "Short Questions — Recap",
+      "subtitle": "",
+      "bullets": [
+        "Energy transfer",
+        "Mechanical wave examples",
+        "Electromagnetic waves in vacuum",
+        "Transverse vs longitudinal",
+        "Wavelength",
+        "Frequency",
+        "Causes of tsunami"
+      ],
+      "answer": "",
+      "vo": "Toh Chapter 12 ke short questions bhi humne cover kar liye. Saath hi Terms and Parameters related to Waves ko bhi properly prepare karein. Crest, trough, compression aur doosri important terms mein se koi bhi question aa sakta hai. Is liye sirf exercise ke questions tak limited nahi rehna."
+    },
+    {
+      "id": 19,
+      "part": "PART 3",
+      "kind": "divider",
+      "visual": "waves",
+      "title": "Constructed Response Questions",
+      "subtitle": "Chapter 12",
+      "bullets": [],
+      "answer": "",
+      "vo": "Ab hum Chapter 12 ke constructed response questions discuss karte hain. In questions ke answers book ke andar available hain. Hum concepts ko simple wording mein samjhenge aur phir answer ko proper exam format mein arrange karenge."
+    },
+    {
+      "id": 20,
+      "part": "PART 3 — CRQs",
+      "kind": "concept",
+      "visual": "space",
+      "title": "CRQ 1. Why can sound not travel through space but light can?",
+      "subtitle": "",
+      "bullets": [
+        "Space = vacuum, no material medium",
+        "Sound is mechanical → needs a medium → cannot travel",
+        "Light is electromagnetic → no medium needed → can travel"
+      ],
+      "answer": "",
+      "vo": "Sab se pehla question hai: Sound space ke through travel kyun nahi kar sakti, jab ke light travel kar sakti hai? Sab se pehle space ko samjhein. Space ya vacuum mein koi material medium available nahi hota. Sound ek mechanical wave hai aur mechanical wave ko travel karne ke liye medium chahiye. Is liye sound vacuum ke andar travel nahi kar sakti. Doosri taraf light ek electromagnetic wave hai. Electromagnetic waves ko medium ki zarurat nahi hoti. Isi liye light empty space yani vacuum ke through travel kar sakti hai."
+    },
+    {
+      "id": 21,
+      "part": "PART 3 — CRQs",
+      "kind": "concept",
+      "visual": "rope",
+      "title": "CRQ 2. A student shakes one end of a rope. What type of wave is produced?",
+      "subtitle": "",
+      "bullets": [
+        "One: It is a TRANSVERSE wave",
+        "Two: Draw the diagram",
+        "Three: Particles vibrate at right angles to wave direction"
+      ],
+      "answer": "",
+      "vo": "Ab doosra question. Ek student rope ke ek end ko shake karta hai aur rope ke andar wave move karti hui observe hoti hai. Ye transverse wave hai. Is question mein diagram banana bhi important hai. Rope ke particles jis direction mein vibrate kar rahe hain aur wave jis direction mein travel kar rahi hai, un dono directions ko clearly show karein. Transverse wave mein medium ke particles wave ki direction ke right angle par vibrate karte hain. Is liye answer mein teen important cheezen honi chahiye: One: Ye transverse wave hai. Two: Is ki diagram banani hai. Three: Particles wave ki direction ke right angle par vibrate karte hain."
+    },
+    {
+      "id": 22,
+      "part": "PART 3 — CRQs",
+      "kind": "concept",
+      "visual": "amplitudes",
+      "title": "CRQ 3. How is amplitude related to the energy carried by a wave?",
+      "subtitle": "",
+      "bullets": [
+        "Large amplitude → Higher energy",
+        "Small amplitude → Lower energy",
+        "Tsunami: very large amplitude → enormous energy → destruction"
+      ],
+      "answer": "",
+      "vo": "Ab question number three. Question poochta hai ke wave ki amplitude us ki carried energy se kis tarah related hai? Amplitude wave ki energy ko indicate karti hai. Jis wave ki amplitude zyada hogi, us mein energy bhi zyada hogi. Example ke liye tsunami wave ko dekhein. Tsunami wave ka amplitude bohat zyada ho sakta hai, jis ka matlab hai ke us mein bohat zyada energy hoti hai. Isi wajah se large-amplitude tsunami waves significant destruction cause kar sakti hain. Is ke muqable mein small-amplitude wave comparatively kam energy carry karti hai."
+    },
+    {
+      "id": 23,
+      "part": "PART 3 — CRQs",
+      "kind": "concept",
+      "visual": "diffraction",
+      "title": "CRQ 4. Why can we hear a person behind a wall?",
+      "subtitle": "",
+      "bullets": [
+        "Sound passes the corner / opening",
+        "It spreads on the other side",
+        "Mention DIFFRACTION clearly in the answer"
+      ],
+      "answer": "",
+      "vo": "Ab question number four. Hum kisi person ko wall ke peeche hone ke bawajood kyun sun sakte hain? Is phenomenon ko explain karne ke liye diffraction ka concept use hota hai. Sound waves wall ke corner ya opening ke qareeb se guzarti hain aur doosri side par spread ho jati hain. Isi wajah se sound humein corner ke around bhi sunai de sakti hai. Is liye answer mein diffraction ka concept clearly mention karein."
+    },
+    {
+      "id": 24,
+      "part": "PART 3 — CRQs",
+      "kind": "concept",
+      "visual": "slit",
+      "title": "CRQ 5. What happens when the slit is much smaller than the wavelength?",
+      "subtitle": "",
+      "bullets": [
+        "Slit size << Wavelength",
+        "Wave shows MAXIMUM diffraction",
+        "Wavefronts bend and spread as circular pattern"
+      ],
+      "answer": "",
+      "vo": "Ab last constructed response question. Agar slit ka size wave ki wavelength ke muqable mein bohat chhota ho, to wave ke saath kya hoga? Jab slit ka size wavelength ke muqable mein bohat chhota hota hai, to wave maximum diffraction show karti hai. Slit se guzarnay ke baad wavefronts bend hote hain aur different directions mein spread out ho jate hain. Is situation mein strong circular pattern bhi form ho sakta hai. Yaad rakhein: Small slit compared with wavelength → Maximum diffraction."
+    },
+    {
+      "id": 25,
+      "part": "PART 4",
+      "kind": "formula",
+      "visual": "none",
+      "title": "Numericals — Key Formulas",
+      "subtitle": "Chapter 12",
+      "bullets": [
+        "v = fλ   (v = speed, f = frequency, λ = wavelength)",
+        "f = 1/T      T = 1/f",
+        "Two quantities given → find the third"
+      ],
+      "answer": "",
+      "vo": "Ab hum Chapter 12 ke numericals ki taraf aate hain. Ye numericals kaafi simple hain. Aapko mainly do formulas yaad rakhne hain. Pehla: v = f lambda. Yahan: v = wave speed, f = frequency, lambda = wavelength. Doosra formula: f = 1/T. Aur isi ko rearrange karke: T = 1/f. Aksar numerical mein speed, frequency aur wavelength mein se do quantities di hongi aur teesri find karni hogi."
+    },
+    {
+      "id": 26,
+      "part": "PART 4 — Numericals",
+      "kind": "numeric",
+      "visual": "none",
+      "title": "Numerical 1 — Find wave speed",
+      "subtitle": "",
+      "bullets": [
+        "Given: λ = 2 m,  f = 5 Hz",
+        "Formula: v = fλ",
+        "v = 5 × 2"
+      ],
+      "answer": "v = 10 m/s",
+      "vo": "Pehla numerical. Wave ki wavelength 2 meter hai aur frequency 5 hertz hai. Humein wave ki speed find karni hai. Formula: v = f lambda. Values put karein: v = 5 × 2. Aur answer: v = 10 meter per second."
+    },
+    {
+      "id": 27,
+      "part": "PART 4 — Numericals",
+      "kind": "numeric",
+      "visual": "none",
+      "title": "Numerical 2 — Find frequency",
+      "subtitle": "",
+      "bullets": [
+        "Given: v = 300 m/s,  λ = 3 m",
+        "Formula: f = v/λ",
+        "f = 300 ÷ 3"
+      ],
+      "answer": "f = 100 Hz",
+      "vo": "Doosra numerical. Wave ki speed 300 meter per second hai aur wavelength 3 meter hai. Humein frequency find karni hai. Formula ko rearrange karein: f = v divided by lambda. Ab values put karein: 300 divided by 3. Answer: 100 hertz."
+    },
+    {
+      "id": 28,
+      "part": "PART 4 — Numericals",
+      "kind": "numeric",
+      "visual": "none",
+      "title": "Numerical 3 — Find wavelength",
+      "subtitle": "",
+      "bullets": [
+        "Given: f = 250 Hz,  v = 340 m/s",
+        "Formula: λ = v/f",
+        "λ = 340 ÷ 250"
+      ],
+      "answer": "λ = 1.36 m",
+      "vo": "Teesra numerical. Sound wave ki frequency 250 hertz hai aur speed 340 meter per second. Humein wavelength find karni hai. Formula: lambda = v divided by f. Values put karein: 340 divided by 250. Answer: 1.36 meter."
+    },
+    {
+      "id": 29,
+      "part": "PART 4 — Numericals",
+      "kind": "numeric",
+      "visual": "none",
+      "title": "Numerical 4 — Find time period",
+      "subtitle": "",
+      "bullets": [
+        "Given: f = 50 Hz",
+        "Formula: T = 1/f",
+        "T = 1 ÷ 50"
+      ],
+      "answer": "T = 0.02 s",
+      "vo": "Ab fourth numerical. Frequency 50 hertz di gayi hai aur poocha gaya hai ke ek complete wave cycle ke liye kitna time required hai. Ek complete cycle ka time time period kehlata hai. Formula: T = 1/f. Values put karein: T = 1 divided by 50. Answer: 0.02 seconds."
+    },
+    {
+      "id": 30,
+      "part": "PART 4 — Numericals",
+      "kind": "numeric",
+      "visual": "none",
+      "title": "Numerical 5 — Find wave speed",
+      "subtitle": "",
+      "bullets": [
+        "Given: λ = 0.5 m,  f = 200 Hz",
+        "Formula: v = fλ",
+        "v = 200 × 0.5"
+      ],
+      "answer": "v = 100 m/s",
+      "vo": "Ab fifth numerical. Wavelength 0.5 meter hai aur frequency 200 hertz. Speed find karni hai. Formula: v = f lambda. Values put karein: 200 multiply by 0.5. Answer: 100 meter per second."
+    },
+    {
+      "id": 31,
+      "part": "PART 4 — Numericals",
+      "kind": "numeric",
+      "visual": "none",
+      "title": "Numerical 6 — Find frequency",
+      "subtitle": "",
+      "bullets": [
+        "Given: T = 0.02 s",
+        "Formula: f = 1/T",
+        "f = 1 ÷ 0.02"
+      ],
+      "answer": "f = 50 Hz",
+      "vo": "Ab last numerical. Time period 0.02 seconds diya gaya hai aur frequency find karni hai. Formula: f = 1/T. Values put karein: 1 divided by 0.02. Answer: 50 hertz."
+    },
+    {
+      "id": 32,
+      "part": "PART 4 — Numericals",
+      "kind": "recap",
+      "visual": "none",
+      "title": "Numericals — Quick Recap",
+      "subtitle": "",
+      "bullets": [
+        "1 → v = 10 m/s",
+        "2 → f = 100 Hz",
+        "3 → λ = 1.36 m",
+        "4 → T = 0.02 s",
+        "5 → v = 100 m/s",
+        "6 → f = 50 Hz",
+        "Q4 & Q6 use the SAME concept — reversed"
+      ],
+      "answer": "",
+      "vo": "Toh numericals ka quick recap kar lete hain. Pehle ka answer 10 meter per second. Doosre ka 100 hertz. Teesre ka 1.36 meter. Chauthe ka 0.02 seconds. Paanchwe ka 100 meter per second. Aur sixth ka 50 hertz. Ek important baat: fourth aur sixth numerical ka concept bohat similar hai. Difference sirf itna hai ke ek mein frequency di gayi hai aur time period find karna hai, jab ke doosre mein time period diya gaya hai aur frequency find karni hai."
+    },
+    {
+      "id": 33,
+      "part": "REVISION",
+      "kind": "recap",
+      "visual": "waves",
+      "title": "Chapter 12 — Key Concepts to Revise",
+      "subtitle": "",
+      "bullets": [
+        "Longitudinal vs Transverse waves",
+        "Mechanical vs Electromagnetic waves",
+        "Amplitude–Energy relation, Wavefront",
+        "Refraction, Diffraction, Tsunami",
+        "Wavelength, Frequency, Time Period",
+        "v = fλ      f = 1/T      T = 1/f"
+      ],
+      "answer": "",
+      "vo": "Toh bachon, Chapter 12 ke important MCQs, short questions, constructed response questions aur numericals humne cover kar liye hain. Aap specially ye concepts revise karein: Longitudinal aur transverse waves ka difference. Mechanical aur electromagnetic waves ka difference. Amplitude aur energy ka relation. Wavefront. Refraction. Diffraction. Tsunami ke causes aur shallow water mein wave ki behavior. Wavelength, frequency aur time period. Aur numericals ke liye: v = f lambda, f = 1 by T, T = 1 by f. Ye formulas properly yaad hone chahiye."
+    },
+    {
+      "id": 34,
+      "part": "CLOSING",
+      "kind": "closing",
+      "visual": "waves",
+      "title": "Chapter 12 Completed",
+      "subtitle": "Next: Revision / Practice",
+      "bullets": [
+        "Re-watch any topic that is still unclear",
+        "Revise long questions, MCQs and markings",
+        "Attempt the questions yourself, not just read"
+      ],
+      "answer": "",
+      "vo": "Agar kisi question ka concept abhi bhi clear nahi hua, to us topic ka relevant lecture dobara dekh sakte hain. Chapter ke long questions, MCQs aur important markings ko bhi revise karte rahna. Aaj ke lecture mein humne Chapter 12 ke questions ko detail mein discuss kiya. In questions ko sirf read na karein, balkay khud se attempt bhi karein. InshaAllah is tarah aapka Chapter 12 properly prepare ho jayega. Allah Hafiz bachon. Milte hain next lecture mein."
+    }
+  ]
+}
