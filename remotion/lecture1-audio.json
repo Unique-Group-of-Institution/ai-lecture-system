@@ -1,0 +1,478 @@
+{
+ "0": [
+  {
+   "file": "s00p0.mp3",
+   "voice": "en",
+   "durationMs": 4262
+  }
+ ],
+ "17": [
+  {
+   "file": "s17p0.mp3",
+   "voice": "en",
+   "durationMs": 15550
+  },
+  {
+   "file": "s17p1.mp3",
+   "voice": "ur",
+   "durationMs": 10950
+  }
+ ],
+ "1": [
+  {
+   "file": "s01p0.mp3",
+   "voice": "en",
+   "durationMs": 14500
+  },
+  {
+   "file": "s01p1.mp3",
+   "voice": "ur",
+   "durationMs": 13550
+  },
+  {
+   "file": "s01p2.mp3",
+   "voice": "en",
+   "durationMs": 16975
+  },
+  {
+   "file": "s01p3.mp3",
+   "voice": "ur",
+   "durationMs": 16525
+  }
+ ],
+ "18": [
+  {
+   "file": "s18p0.mp3",
+   "voice": "en",
+   "durationMs": 14150
+  },
+  {
+   "file": "s18p1.mp3",
+   "voice": "ur",
+   "durationMs": 14212
+  }
+ ],
+ "2": [
+  {
+   "file": "s02p0.mp3",
+   "voice": "en",
+   "durationMs": 17925
+  },
+  {
+   "file": "s02p1.mp3",
+   "voice": "ur",
+   "durationMs": 15412
+  }
+ ],
+ "3": [
+  {
+   "file": "s03p0.mp3",
+   "voice": "en",
+   "durationMs": 18937
+  },
+  {
+   "file": "s03p1.mp3",
+   "voice": "ur",
+   "durationMs": 15987
+  },
+  {
+   "file": "s03p2.mp3",
+   "voice": "en",
+   "durationMs": 9387
+  },
+  {
+   "file": "s03p3.mp3",
+   "voice": "ur",
+   "durationMs": 8125
+  }
+ ],
+ "4": [
+  {
+   "file": "s04p0.mp3",
+   "voice": "en",
+   "durationMs": 17612
+  },
+  {
+   "file": "s04p1.mp3",
+   "voice": "ur",
+   "durationMs": 9650
+  },
+  {
+   "file": "s04p2.mp3",
+   "voice": "en",
+   "durationMs": 7812
+  },
+  {
+   "file": "s04p3.mp3",
+   "voice": "ur",
+   "durationMs": 5750
+  }
+ ],
+ "5": [
+  {
+   "file": "s05p0.mp3",
+   "voice": "en",
+   "durationMs": 21475
+  },
+  {
+   "file": "s05p1.mp3",
+   "voice": "ur",
+   "durationMs": 17550
+  }
+ ],
+ "6": [
+  {
+   "file": "s06p0.mp3",
+   "voice": "en",
+   "durationMs": 16862
+  },
+  {
+   "file": "s06p1.mp3",
+   "voice": "ur",
+   "durationMs": 14712
+  },
+  {
+   "file": "s06p2.mp3",
+   "voice": "en",
+   "durationMs": 11987
+  },
+  {
+   "file": "s06p3.mp3",
+   "voice": "ur",
+   "durationMs": 9287
+  }
+ ],
+ "7": [
+  {
+   "file": "s07p0.mp3",
+   "voice": "en",
+   "durationMs": 22187
+  },
+  {
+   "file": "s07p1.mp3",
+   "voice": "ur",
+   "durationMs": 12587
+  }
+ ],
+ "8": [
+  {
+   "file": "s08p0.mp3",
+   "voice": "en",
+   "durationMs": 20650
+  },
+  {
+   "file": "s08p1.mp3",
+   "voice": "ur",
+   "durationMs": 13962
+  }
+ ],
+ "9": [
+  {
+   "file": "s09p0.mp3",
+   "voice": "en",
+   "durationMs": 19400
+  },
+  {
+   "file": "s09p1.mp3",
+   "voice": "ur",
+   "durationMs": 12687
+  }
+ ],
+ "10": [
+  {
+   "file": "s10p0.mp3",
+   "voice": "en",
+   "durationMs": 22087
+  },
+  {
+   "file": "s10p1.mp3",
+   "voice": "ur",
+   "durationMs": 10050
+  }
+ ],
+ "11": [
+  {
+   "file": "s11p0.mp3",
+   "voice": "en",
+   "durationMs": 16700
+  },
+  {
+   "file": "s11p1.mp3",
+   "voice": "ur",
+   "durationMs": 12325
+  }
+ ],
+ "12": [
+  {
+   "file": "s12p0.mp3",
+   "voice": "en",
+   "durationMs": 15962
+  },
+  {
+   "file": "s12p1.mp3",
+   "voice": "ur",
+   "durationMs": 11000
+  }
+ ],
+ "13": [
+  {
+   "file": "s13p0.mp3",
+   "voice": "en",
+   "durationMs": 16325
+  },
+  {
+   "file": "s13p1.mp3",
+   "voice": "ur",
+   "durationMs": 10987
+  }
+ ],
+ "22": [
+  {
+   "file": "s22p0.mp3",
+   "voice": "en",
+   "durationMs": 9625
+  },
+  {
+   "file": "s22p1.mp3",
+   "voice": "ur",
+   "durationMs": 10612
+  },
+  {
+   "file": "s22p2.mp3",
+   "voice": "en",
+   "durationMs": 15862
+  },
+  {
+   "file": "s22p3.mp3",
+   "voice": "ur",
+   "durationMs": 14862
+  },
+  {
+   "file": "s22p4.mp3",
+   "voice": "en",
+   "durationMs": 12925
+  },
+  {
+   "file": "s22p5.mp3",
+   "voice": "ur",
+   "durationMs": 11375
+  },
+  {
+   "file": "s22p6.mp3",
+   "voice": "en",
+   "durationMs": 17212
+  },
+  {
+   "file": "s22p7.mp3",
+   "voice": "ur",
+   "durationMs": 15775
+  }
+ ],
+ "19": [
+  {
+   "file": "s19p0.mp3",
+   "voice": "en",
+   "durationMs": 10450
+  },
+  {
+   "file": "s19p1.mp3",
+   "voice": "ur",
+   "durationMs": 10887
+  },
+  {
+   "file": "s19p2.mp3",
+   "voice": "en",
+   "durationMs": 12900
+  },
+  {
+   "file": "s19p3.mp3",
+   "voice": "ur",
+   "durationMs": 15512
+  },
+  {
+   "file": "s19p4.mp3",
+   "voice": "en",
+   "durationMs": 12625
+  },
+  {
+   "file": "s19p5.mp3",
+   "voice": "ur",
+   "durationMs": 13050
+  },
+  {
+   "file": "s19p6.mp3",
+   "voice": "en",
+   "durationMs": 9450
+  },
+  {
+   "file": "s19p7.mp3",
+   "voice": "ur",
+   "durationMs": 10987
+  },
+  {
+   "file": "s19p8.mp3",
+   "voice": "en",
+   "durationMs": 11787
+  },
+  {
+   "file": "s19p9.mp3",
+   "voice": "ur",
+   "durationMs": 12325
+  },
+  {
+   "file": "s19p10.mp3",
+   "voice": "en",
+   "durationMs": 12487
+  },
+  {
+   "file": "s19p11.mp3",
+   "voice": "ur",
+   "durationMs": 12837
+  }
+ ],
+ "14": [
+  {
+   "file": "s14p0.mp3",
+   "voice": "en",
+   "durationMs": 21187
+  },
+  {
+   "file": "s14p1.mp3",
+   "voice": "ur",
+   "durationMs": 19825
+  }
+ ],
+ "20": [
+  {
+   "file": "s20p0.mp3",
+   "voice": "en",
+   "durationMs": 8887
+  },
+  {
+   "file": "s20p1.mp3",
+   "voice": "ur",
+   "durationMs": 8762
+  },
+  {
+   "file": "s20p2.mp3",
+   "voice": "en",
+   "durationMs": 13025
+  },
+  {
+   "file": "s20p3.mp3",
+   "voice": "ur",
+   "durationMs": 12812
+  },
+  {
+   "file": "s20p4.mp3",
+   "voice": "en",
+   "durationMs": 15275
+  },
+  {
+   "file": "s20p5.mp3",
+   "voice": "ur",
+   "durationMs": 16975
+  },
+  {
+   "file": "s20p6.mp3",
+   "voice": "en",
+   "durationMs": 11750
+  },
+  {
+   "file": "s20p7.mp3",
+   "voice": "ur",
+   "durationMs": 11112
+  },
+  {
+   "file": "s20p8.mp3",
+   "voice": "en",
+   "durationMs": 12450
+  },
+  {
+   "file": "s20p9.mp3",
+   "voice": "ur",
+   "durationMs": 12012
+  },
+  {
+   "file": "s20p10.mp3",
+   "voice": "en",
+   "durationMs": 13562
+  },
+  {
+   "file": "s20p11.mp3",
+   "voice": "ur",
+   "durationMs": 14625
+  }
+ ],
+ "21": [
+  {
+   "file": "s21p0.mp3",
+   "voice": "en",
+   "durationMs": 13187
+  },
+  {
+   "file": "s21p1.mp3",
+   "voice": "ur",
+   "durationMs": 11325
+  },
+  {
+   "file": "s21p2.mp3",
+   "voice": "en",
+   "durationMs": 21537
+  },
+  {
+   "file": "s21p3.mp3",
+   "voice": "ur",
+   "durationMs": 20012
+  },
+  {
+   "file": "s21p4.mp3",
+   "voice": "en",
+   "durationMs": 17775
+  },
+  {
+   "file": "s21p5.mp3",
+   "voice": "ur",
+   "durationMs": 14650
+  },
+  {
+   "file": "s21p6.mp3",
+   "voice": "en",
+   "durationMs": 14212
+  },
+  {
+   "file": "s21p7.mp3",
+   "voice": "ur",
+   "durationMs": 11712
+  }
+ ],
+ "15": [
+  {
+   "file": "s15p0.mp3",
+   "voice": "en",
+   "durationMs": 16187
+  },
+  {
+   "file": "s15p1.mp3",
+   "voice": "ur",
+   "durationMs": 11025
+  },
+  {
+   "file": "s15p2.mp3",
+   "voice": "en",
+   "durationMs": 16562
+  },
+  {
+   "file": "s15p3.mp3",
+   "voice": "ur",
+   "durationMs": 13350
+  }
+ ],
+ "16": [
+  {
+   "file": "s16p0.mp3",
+   "voice": "ur",
+   "durationMs": 5725
+  }
+ ]
+}

@@ -1,0 +1,417 @@
+{
+  "config": {
+    "fontFamily": "'Segoe UI', Arial, sans-serif",
+    "urduFontFamily": "'Noto Nastaliq Urdu', 'Segoe UI', Arial, sans-serif",
+    "fontScale": 1.1
+  },
+  "scenes": [
+    {
+      "id": 0,
+      "kind": "title",
+      "title": "What Is Chemistry?",
+      "subtitle": "Class 9 · Unit 1 · Lecture 1",
+      "segments": [
+        { "voice": "en", "text": "What is Chemistry? Class 9, Unit 1, Lecture 1." }
+      ]
+    },
+    {
+      "id": 17,
+      "kind": "objectives",
+      "title": "Learning Objectives",
+      "visual": "none",
+      "segments": [
+        { "voice": "en", "text": "In this lecture you will be able to: define chemistry; explain composition, structure and energy changes; name and describe the main branches of chemistry; solve the textbook exercise; and get ready for our next topic, states of matter." },
+        { "voice": "ur", "text": "اس لیکچر میں ہم کیمسٹری کی تعریف کریں گے، ترکیب اور ساخت سمجھیں گے، کیمسٹری کی تمام بڑی شاखाں پڑھیں گے اور کتاب کا exercise بھی حل کریں گے — بالکل کتاب کے مطابق۔" }
+      ],
+      "bullets": [
+        "Define CHEMISTRY and its scope",
+        "Composition · structure · energy changes",
+        "The 11 major BRANCHES of chemistry",
+        "Solve the textbook EXERCISE",
+        "Preview: States of Matter"
+      ]
+    },
+    {
+      "id": 1,
+      "kind": "definition",
+      "title": "What Is Chemistry?",
+      "visual": "atom",
+      "segments": [
+        { "voice": "en", "text": "Chemistry is the branch of science which deals with the properties, composition and the structure of substances. It also deals with the physical and chemical changes in matter, and the laws or principles which govern these changes." },
+        { "voice": "ur", "text": "کیمسٹری سائنس وہ شاخ ہے جو مادوں کی خصوصیات، ترکیب اور ساخت کا مطالعہ کرتی ہے۔ نیز مادے میں آنے والی جسمانی اور کیمیائی تبدیلیوں اور ان تبدیلیوں کو قابو کرنے والے قوانین کا بھی مطالعہ کرتی ہے۔" },
+        { "voice": "en", "text": "Determination of composition represents finding out percentages of elements and compounds in a sample of matter. Structure of matter means the arrangement of atoms in matter. Both physical and chemical changes may be brought about by absorption or evolution of energy." },
+        { "voice": "ur", "text": "ترکیب سے مراد کسی نمونے میں موجود عناصر اور مرکبات کی فیصد معلوم کرنا ہے۔ ساخت سے مراد مادے میں ایٹموں کا خاص ترتیب کے ساتھ جڑنا ہے۔ اور ہر تبدیلی — چاہے جسمانی ہو یا کیمیائی — توانائی کے جذب یا اخراج سے ممکن ہوتی ہے۔" }
+      ],
+      "bullets": [
+        "Branch of SCIENCE",
+        "PROPERTIES · COMPOSITION · STRUCTURE of substances",
+        "PHYSICAL & CHEMICAL CHANGES + the laws governing them",
+        "Energy: absorbed IN / released OUT"
+      ]
+    },
+    {
+      "id": 18,
+      "kind": "branch",
+      "title": "Chemistry Around You",
+      "visual": "daily",
+      "accent": "#7dd3fc",
+      "segments": [
+        { "voice": "en", "text": "Chemistry is not only inside laboratories. Cooking food, digestion, soaps and detergents, medicines, fuels, plastics and fertilizers — all of these are chemistry working for us every single day." },
+        { "voice": "ur", "text": "کیمسٹری صرف لیبارٹری تک محدود نہیں۔ کھانا پکنا، ہاضمہ، صابن، دوائیاں، ایندھن، پلاسٹک اور کھاد — روز کی زندگی کا ہر معاملہ کیمسٹری سے جڑا ہے۔ اسی لیے کیمسٹری کو central science کہا جاتا ہے۔" }
+      ],
+      "bullets": [
+        "Kitchen: cooking & digestion = chemical changes",
+        "Bathroom: soap, shampoo, detergents",
+        "Hospital: medicines and vaccines",
+        "Farm: fertilizers and pesticides",
+        "Factory: plastics, fuels, paints"
+      ]
+    },
+    {
+      "id": 2,
+      "kind": "why-branches",
+      "title": "Branches of Chemistry",
+      "visual": "hexagon",
+      "segments": [
+        { "voice": "en", "text": "To understand the widely spread, complex subject of chemistry and to concentrate on its specific aspects, chemistry is divided into many distinct branches. These branches have distinct areas of study for the scientists to focus on, and to achieve breakthroughs and advancements." },
+        { "voice": "ur", "text": "کیمسٹری بہت وسیع اور پیچیدہ موضوع ہے۔ اسے آسانی سے سمجھنے اور ہر پہلو پر توجہ دینے کے لیے متعدد شعبوں میں تقسیم کیا گیا ہے۔ ہر شعبے کا اپنا الگ میدان ہے جہاں سائنس دان کام کر کے نئی دریافتیں کر سکتے ہیں۔" }
+      ],
+      "bullets": [
+        "VAST subject → divided into BRANCHES",
+        "Each branch = its own area of study",
+        "Focus → breakthroughs → advancement"
+      ]
+    },
+    {
+      "id": 3,
+      "kind": "branch",
+      "title": "Physical Chemistry",
+      "visual": "physical",
+      "accent": "#22d3ee",
+      "segments": [
+        { "voice": "en", "text": "Physical Chemistry. This branch investigates how substances behave at atomic and molecular levels. It provides clear explanation as to how fundamental physical laws governing our world cause atoms and molecules to show specific characteristics, and in turn react to give huge structures related to life." },
+        { "voice": "ur", "text": "فزیکی کیمسٹری میں ہم مادوں کا ایٹمی اور مالیکیولر سطح پر سلوک پڑھتے ہیں۔ یہ بتاتی ہے کہ بنیادی طبیعیاتی قوانین ایٹموں اور مالیکیولز کو کیا خصوصیات دکھانے پر مجبور کرتے ہیں، اور وہ مل کر زندگی سے جڑے بڑے ڈھانچے کیسے بناتے ہیں۔" },
+        { "voice": "en", "text": "Physical chemistry is also used to predict and change the rates of reactions, and thus optimize the conditions to carry out the reactions on industrial scale." },
+        { "voice": "ur", "text": "اس کے ذریعے ہم ری ایکشنز کی رفتار کی پیشین گوئی کرتے ہیں اور انہیں صنعتی پیمانے پر بہتر بنانے کے لیے شرائط طے کرتے ہیں۔" }
+      ],
+      "bullets": [
+        "Behaviour at ATOMIC & MOLECULAR level",
+        "Physical LAWS → characteristics → reactions → life's structures",
+        "Predict & change reaction RATES → industrial scale"
+      ]
+    },
+    {
+      "id": 4,
+      "kind": "branch",
+      "title": "Inorganic Chemistry",
+      "visual": "inorganic",
+      "accent": "#fb923c",
+      "segments": [
+        { "voice": "en", "text": "Inorganic Chemistry. It is the study of the synthesis, composition, properties and structure of elements and compounds that contain little or no carbon. An inorganic substance can be composed of metals, non-metals or a mixture of these — salts, acids and bases." },
+        { "voice": "ur", "text": "ان آرگینک کیمسٹری ان عناصر اور مرکبات کا مطالعہ ہے جن میں کاربن بہت کم یا بالکل نہ ہو — مثلاً دھاتیں، غیر دھاتیں، نمکیات، تیزاب اور قواعد۔" },
+        { "voice": "en", "text": "Inorganic compounds are used as fertilizers, medicines, catalysts, pigments, coatings and much more." },
+        { "voice": "ur", "text": "کھاد، ادویات، کیٹالسٹس، رنگ اور کوٹنگز میں ان آرگینک مرکبات ہی استعمال ہوتے ہیں۔" }
+      ],
+      "bullets": [
+        "Little or NO carbon",
+        "Metals · non-metals · SALTS · ACIDS · BASES",
+        "Fertilizers · medicines · catalysts · pigments · coatings"
+      ]
+    },
+    {
+      "id": 5,
+      "kind": "branch",
+      "title": "Organic Chemistry",
+      "visual": "organic",
+      "accent": "#22c55e",
+      "segments": [
+        { "voice": "en", "text": "Organic Chemistry. It is the branch of chemistry that deals with the carbon compounds — hydrocarbons and their derivatives — other than its simple salts like carbonates, bicarbonates, oxides and carbides. In this branch, we study the structure, formation, properties, composition and reactions of carbon containing compounds." },
+        { "voice": "ur", "text": "آرگینک کیمسٹری کاربن کے پیچیدہ مرکبات — ہائیڈرو کاربنز اور ان کے مشتقات — کا مطالعہ ہے، سوائے کاربونیٹس اور بائی کاربونیٹس جیسے سادہ نمکیات کے۔ زندگی کی ہر شکل آرگینک کمپاؤنڈز سے بنی ہے، اس لیے کہتے ہیں: آگینک کیمسٹری زندگی کی کیمسٹری ہے۔" }
+      ],
+      "bullets": [
+        "CARBON compounds: hydrocarbons + derivatives",
+        "EXCEPT simple salts: carbonates, bicarbonates, oxides, carbides",
+        "Found in ALL forms of life — essential for life"
+      ]
+    },
+    {
+      "id": 6,
+      "kind": "branch",
+      "title": "Environmental Chemistry",
+      "visual": "environmental",
+      "accent": "#38bdf8",
+      "segments": [
+        { "voice": "en", "text": "Environmental Chemistry. It is the scientific study of the chemical and biochemical phenomena that occur on this planet. In this subject, we study the sources, reactions, effects and fates of chemical species in the air, soil and water environments." },
+        { "voice": "ur", "text": "ایونائرمنٹل کیمسٹری اس کرہ ارض پر ہونے والے کیمیائی اور حیاتی کیمیائی واقعات کا علمی مطالعہ ہے۔ ہم پڑھتے ہیں کہ ہوا، مٹی اور پانی میں کون سی کیمیکل اسپیشیز کہاں سے آتی ہیں، کیا کرتی ہیں اور انجام کہاں پہنچتی ہیں۔" },
+        { "voice": "en", "text": "Without this, it would be impossible to study the effects that humans have on the environment through the release of chemicals. It helps in understanding the causes, effects and solutions of different types of pollution." },
+        { "voice": "ur", "text": "اس کے بغیر ماحول پر انسان کے اثرات کو سمجھنا ناممکن ہے۔ آلودگی کی انواع کے اسباب، اثرات اور حل بھی اسی شاخ سے نکلتے ہیں۔" }
+      ],
+      "bullets": [
+        "Chemical + biochemical phenomena ON EARTH",
+        "AIR · SOIL · WATER: sources → reactions → effects → fate",
+        "Pollution: causes, effects, SOLUTIONS"
+      ]
+    },
+    {
+      "id": 7,
+      "kind": "branch",
+      "title": "Analytical Chemistry",
+      "visual": "analytical",
+      "accent": "#fbbf24",
+      "segments": [
+        { "voice": "en", "text": "Analytical Chemistry. This branch of chemistry deals with the analysis of different substances. It involves separation, identification and determination of the concentration of the components present in material things. Nowadays the field of analytical chemistry generally involves the use of modern and sophisticated instruments to analyze the matter." },
+        { "voice": "ur", "text": "اینالیٹیکل کیمسٹری میں کسی مادے کا تجزیہ کیا جاتا ہے: اس کے اجزاء کو الگ کرنا، انہیں پہچاننا اور ان کی مقدار متعین کرنا۔ آج کل یہ کام جدید اور پیشیدہ آلات سے کیا جاتا ہے۔" }
+      ],
+      "bullets": [
+        "SEPARATE → IDENTIFY → MEASURE concentration",
+        "Modern, sophisticated INSTRUMENTS"
+      ]
+    },
+    {
+      "id": 8,
+      "kind": "branch",
+      "title": "Biochemistry",
+      "visual": "bio",
+      "accent": "#a78bfa",
+      "segments": [
+        { "voice": "en", "text": "Biochemistry. It is the branch of chemistry in which we understand life through chemical processes. It is the study of chemical substances and vital processes occurring in living organisms. Biochemistry provides insights into the structure and function of molecules such as proteins, carbohydrates, lipids and nucleic acids." },
+        { "voice": "ur", "text": "بایو کیمسٹری میں ہم زندگی کو کیمیائی اعمال کے ذریعے سمجھتے ہیں۔ زندہ مخلوقات کے اندر ہونے والی ضروری کیمیا — پروٹینز، کاربوہائیڈریٹس، لپڈز اور نیوکلیک ایسڈز کی ساخت اور کام — اسی میں پڑھی جاتی ہے۔" }
+      ],
+      "bullets": [
+        "Life understood through CHEMICAL PROCESSES",
+        "Proteins · carbohydrates · lipids · nucleic acids"
+      ]
+    },
+    {
+      "id": 9,
+      "kind": "branch",
+      "title": "Nuclear Chemistry",
+      "visual": "nuclear",
+      "accent": "#f472b6",
+      "segments": [
+        { "voice": "en", "text": "Nuclear Chemistry. Nuclear chemistry deals with the reactions taking place in the nucleus of an atom. It deals with radioactivity, nuclear processes and transformation in the nuclei of atoms. Nuclear chemistry has many applications in agriculture, medicine, industry and research." },
+        { "voice": "ur", "text": "نیوکلیئر کیمسٹری ایٹم کے مرکزے میں ہونے والے ری ایکشنز کا مطالعہ ہے — ریڈیو ایکٹیویٹی، نیوکلیئر اعمال اور مرکزے کی تبدیلیاں۔ زراعت، طب، صنعت اور تحقیق میں اس کے بہت سے استعمالات ہیں۔" }
+      ],
+      "bullets": [
+        "Reactions INSIDE the nucleus",
+        "Radioactivity · nuclear processes · transformation",
+        "Applications: agriculture · medicine · industry · research"
+      ]
+    },
+    {
+      "id": 10,
+      "kind": "branch",
+      "title": "Polymer Chemistry",
+      "visual": "polymer",
+      "accent": "#4ade80",
+      "segments": [
+        { "voice": "en", "text": "Polymer Chemistry. Polymers are large molecules made by linking together a series of building blocks. Polymer chemistry focuses on the properties, structure and synthesis of polymers and macromolecules. Many materials present in living organisms, including proteins, cellulose and nucleic acids, are naturally occurring polymers." },
+        { "voice": "ur", "text": "پولیمرز چھوٹی اکائیوں کو جوڑ کر بنے بڑے مالیکیولز ہوتے ہیں۔ پلاسٹک کے ساتھ ساتھ پروٹینز اور سیلولوز جیسے مادے بھی قدرتی پولیمرز ہیں۔" }
+      ],
+      "bullets": [
+        "Building blocks → CHAINED → giant molecules",
+        "Plastics + NATURAL polymers: proteins, cellulose, nucleic acids"
+      ]
+    },
+    {
+      "id": 11,
+      "kind": "branch",
+      "title": "Geochemistry",
+      "visual": "geo",
+      "accent": "#f59e0b",
+      "segments": [
+        { "voice": "en", "text": "Geochemistry. The study of the chemical composition of Earth and its sources and minerals is called geochemistry. Apart from its use in minerals exploration, geochemical mapping today has applications in environmental monitoring, forestry and medical research." },
+        { "voice": "ur", "text": "جیو کیمسٹری میں زمین کی اپنی کیمیائی ترکیب، اس کے ذخائر اور معدنيات کا مطالعہ ہوتا ہے۔ کانوں کی دریافت کے علاوہ آج کل ماحولیاتی نگرانی اور طبی تحقیق میں بھی اس کا استعمال ہے۔" }
+      ],
+      "bullets": [
+        "EARTH's composition · minerals · sources",
+        "Exploration → mapping → monitoring, forestry, medical research"
+      ]
+    },
+    {
+      "id": 12,
+      "kind": "branch",
+      "title": "Medicinal Chemistry",
+      "visual": "medicinal",
+      "accent": "#06b6d4",
+      "segments": [
+        { "voice": "en", "text": "Medicinal Chemistry. In this branch of chemistry, the chemist tries to design and synthesize medicines or drugs which are beneficial for mankind. It includes the discovery, delivery, absorption and metabolism of drugs in the human body." },
+        { "voice": "ur", "text": "میڈیکل کیمسٹری میں کیمسٹ انسانیت کے فائدے کے لیے ادویات ایجاد اور تیار کرتا ہے — دوا کی دریافت، جسم تک پہنچنا، جذب ہونا اور اثر کرنا اسی شاخ کا کام ہے۔" }
+      ],
+      "bullets": [
+        "DESIGN + SYNTHESIZE medicines",
+        "Discovery → delivery → absorption → metabolism"
+      ]
+    },
+    {
+      "id": 13,
+      "kind": "branch",
+      "title": "Astrochemistry",
+      "visual": "astro",
+      "accent": "#818cf8",
+      "segments": [
+        { "voice": "en", "text": "Astrochemistry. It is the study of molecules and ions occurring in space and interstellar space. In this discipline we study the abundance and reactions of atoms, molecules and ions in the universe, and the interaction of these species with radiation." },
+        { "voice": "ur", "text": "ایسٹرو کیمسٹری خلا اور ستاروں کے درمیان موجود مالیکیولز اور آئنز کا مطالعہ ہے۔ کائنات میں عناصر کی وافرات اور ان کا ریڈی ایشن سے تعامل اسی میں پڑھا جاتا ہے۔" }
+      ],
+      "bullets": [
+        "SPACE + interstellar molecules & ions",
+        "Abundance · reactions · interaction with RADIATION"
+      ]
+    },
+    {
+      "id": 22,
+      "kind": "objectives",
+      "title": "Careers that Use Chemistry",
+      "visual": "none",
+      "accent": "#a78bfa",
+      "bullets": [
+        "PHARMACEUTICAL scientist - designs and tests medicines",
+        "FOOD technologist - keeps our food safe, fresh and nutritious",
+        "WATER quality expert - tests and purifies drinking water",
+        "AGRICHEMIST - fertilizers and pesticides for better crops",
+        "FORENSIC scientist - solves crimes with chemical evidence",
+        "MATERIALS engineer - develops plastics, alloys and batteries"
+      ],
+      "segments": [
+        {"voice": "en", "text": "You may wonder: what can I become if I am good at chemistry? The answer is: many things. Let us look at six popular careers that are built on chemistry."},
+        {"voice": "ur", "text": "شاید آپ سوچ رہے ہوں کہ کیمیاء اچھی آئے تو کیا بنا جا سکتا ہے؟ جواب ہے: بہت کچھ۔ آئیے کیمیاء پر مبنی چھ مشہور پیشے دیکھتے ہیں۔"},
+        {"voice": "en", "text": "First, the pharmaceutical industry: scientists design, synthesize and test medicines in laboratories. Second, food technologists use chemistry to keep food safe, fresh and nutritious, from milk packets to canned goods."},
+        {"voice": "ur", "text": "پہلا، pharmaceutical industry یعنی دوائی کی صنعت: سائنسدان لیب میں ادویات بناتے اور انچتے ہیں۔ دوسرا، food technologist کیمیاء سے خوراک کو محفوظ، تازہ اور غذائیت رکھنے والا بناتا ہے، دودھ کے پیکٹ سے ڈبے کے کھانے تک۔"},
+        {"voice": "en", "text": "Third, water quality experts test and purify the drinking water of whole cities. Fourth, agri-chemists develop fertilizers and pesticides that protect crops and increase harvests."},
+        {"voice": "ur", "text": "تیسرا، water quality expert پورے شہر کا پینے کا پانی جانچتا اور صاف کرتا ہے۔ چوتھا، agri-chemist کھاد اور کیڑے مار ادویات بناتا ہے جو فصل بچاتی اور پیداوار بڑھاتی ہیں۔"},
+        {"voice": "en", "text": "Fifth, forensic scientists solve crimes using chemical evidence from crime scenes. And sixth, materials engineers create the plastics, alloys, paints and batteries our modern world runs on. Chemistry is not just a subject; it is a career."},
+        {"voice": "ur", "text": "پانچواں، forensic scientist جگہ جرم سے کیمیائی ثبوت لے کر جرائم سلجھاتا ہے۔ چھٹا، materials engineer وہ plastics, alloys, رنگ اور بیٹریاں بناتا ہے جن پر آج کا دنیا چلتا ہے۔ کیمیاء صرف ایک مضمون نہیں، ایک پیشہ بھی ہے۔"}
+      ]
+    },
+    {
+      "id": 19,
+      "kind": "glossary",
+      "title": "Key Terms: English aur Urdu",
+      "visual": "glossary",
+      "accent": "#fbbf24",
+      "terms": [
+        {"en": "Matter", "ur": "مادہ"},
+        {"en": "Atom", "ur": "ایٹم"},
+        {"en": "Molecule", "ur": "جُزیء"},
+        {"en": "Element", "ur": "عنصر"},
+        {"en": "Compound", "ur": "مرکب"},
+        {"en": "Composition", "ur": "ترکیب"},
+        {"en": "Structure", "ur": "ساخت"},
+        {"en": "Energy", "ur": "توانائی"},
+        {"en": "Reaction", "ur": "کیمیائی عمل"},
+        {"en": "Substance", "ur": "مادہ / چیز"}
+      ],
+      "termBatches": [3, 2, 2, 2, 1],
+      "segments": [
+        {"voice": "en", "text": "Before we move ahead, let us lock down the key terms of this lecture. These words will repeat in every chemistry chapter, so learn them in both English and Urdu."},
+        {"voice": "ur", "text": "اس لیکچر آگے بڑھانے سے پہلے، اہم اصطلاحات واضح کر لیتے ہیں۔ یہ الفاظ ہر کیمیاء کے باب میں دہرائے جاتے ہیں، اس لیے انہیں انگریزی اور اردو دونوں میں یاد رکھیں۔"},
+        {"voice": "en", "text": "Matter: anything that has mass and occupies space. Atom: the smallest particle of an element that can take part in a chemical reaction. Molecule: a group of atoms bonded together."},
+        {"voice": "ur", "text": "مادہ یعنی matter: ہر وہ چیز جس کا وزن ہو اور جگہ گھیرے۔ ایٹم یعنی atom: عنصر کا سب سے چھوٹا ذرہ جو کیمیائی عمل میں حصہ لے سکے۔ جُزیء یعنی molecule: ایٹموں کا اجتماعی گروہ جو آپس میں جُڑا ہو۔"},
+        {"voice": "en", "text": "Element: a pure substance that cannot be split into simpler substances by chemical means. Compound: a substance formed when two or more elements chemically combine in a fixed ratio."},
+        {"voice": "ur", "text": "عنصر یعنی element: خالص مادہ جسے کیمیائی طریقوں سے سادہ مادوں میں نہ توڑا جا سکے۔ مرکب یعنی compound: دو یا زیادہ عناصر کے مقررہ تناسب میں کیمیائی ملاپ سے بننے والا مادہ۔"},
+        {"voice": "en", "text": "Composition: the list of elements and the percentages present in a substance. Structure: the arrangement of atoms within that substance."},
+        {"voice": "ur", "text": "ترکیب یعنی composition: کسی مادے میں کون کون سے عناصر کتنی مقدار میں موجود ہیں۔ ساخت یعنی structure: مادے کے اندر ایٹموں کی ترتیب کیسی ہے۔"},
+        {"voice": "en", "text": "Energy: the capacity to do work, which is absorbed or released during chemical changes. Reaction: the chemical process in which substances are transformed into new substances."},
+        {"voice": "ur", "text": "توانائی یعنی energy: کام کرنے کی صلاحیت، جو کیمیائی تبدیلی کے دوران جذب یا خارج ہوتی ہے۔ کیمیائی عمل یعنی reaction: وہ process جس میں مادے نئے مادوں میں بدل جاتے ہیں۔"},
+        {"voice": "en", "text": "Substance is a general word for a particular form of matter with constant composition, like water, salt, or iron. Review this glossary once, and use these exact words in your notes and exams."},
+        {"voice": "ur", "text": "سبسٹینس یعنی substance: مادے کی ایک خاص شکل جس کی ترکیب ہمیشہ ایک جیسی ہو، جیسے پانی، نمک یا لوہا۔ یہ لغت ایک بار دہرائیں اور اپنے نوٹس اور امتحان میں یہی الفاظ استعمال کریں۔"}
+      ]
+    },
+    {
+      "id": 14,
+      "kind": "exercise",
+      "title": "Exercise: Which Branch?",
+      "visual": "exercise",
+      "segments": [
+        { "voice": "en", "text": "Exercise. The following experiments were then carried out on a sample. Point out the branch of chemistry these experiments are related to. Number one: determining its composition. Number two: studying the physical properties of materials it contains. Number three: carrying out chemical reactions with usual inorganic reagents." },
+        { "voice": "ur", "text": "اب خود سوچیں: اگر کسی نمونے کی ترکیب معلوم کی جائے تو یہ کون سی شاخ ہوئی؟ اینالیٹیکل کیمسٹری۔ اندر کے مادوں کی جسمانی خصوصیات پڑھی جائیں؟ فزیکی کیمسٹری۔ اور عام ان آرگینک ری ایجنٹس سے کیمیائی ری ایکشن کروائے جائیں؟ ان آرگینک کیمسٹری۔" }
+      ],
+      "bullets": [
+        "Q1: Determining its composition",
+        "Q2: Physical properties of materials",
+        "Q3: Reactions with inorganic reagents"
+      ],
+      "answers": ["Analytical Chemistry", "Physical Chemistry", "Inorganic Chemistry"]
+    },
+    {
+      "id": 20,
+      "kind": "mcq",
+      "title": "Practice: Quick MCQs",
+      "visual": "mcq",
+      "accent": "#34d399",
+      "questions": [
+        {"q": "Chemistry mainly deals with the study of...", "options": ["living organisms only", "matter and its changes", "planets and stars", "electric circuits"], "answer": 1},
+        {"q": "Which branch studies carbon compounds?", "options": ["Inorganic chemistry", "Nuclear chemistry", "Organic chemistry", "Geochemistry"], "answer": 2},
+        {"q": "The study of radioactive nuclei and their transformations is...", "options": ["Nuclear chemistry", "Analytical chemistry", "Biochemistry", "Medicinal chemistry"], "answer": 0},
+        {"q": "Determining the percentage of elements in a sample belongs to...", "options": ["Astrochemistry", "Polymer chemistry", "Environmental chemistry", "Analytical chemistry"], "answer": 3},
+        {"q": "Salts, acids and bases are studied under...", "options": ["Organic chemistry", "Inorganic chemistry", "Physical chemistry", "Biochemistry"], "answer": 1}
+      ],
+      "segments": [
+        {"voice": "en", "text": "Now let us test your understanding with five quick multiple choice questions. Pause the video, choose your answer, then listen to the explanation."},
+        {"voice": "ur", "text": "اب پانچ مختصر multi choice سوالات سے اپنی سمجھ جانچتے ہیں۔ ویڈیو روکیں، اپنا جواب منتخب کریں، پھر وضاحت غور سے سنیں۔"},
+        {"voice": "en", "text": "Question one: Chemistry mainly deals with the study of what? The answer is matter and its changes. Chemistry is the science of the composition, structure, properties, and changes of matter."},
+        {"voice": "ur", "text": "سوال ایک: کیمیاء بنیادی طور پر کس کے مطالعے سے متعلق ہے؟ جواب ہے matter اور اس میں آنے والی تبدیلیاں۔ کیمیاء مادہ کی ترکیب، ساخت، خصوصیات اور تبدیلیوں کا علم ہے۔"},
+        {"voice": "en", "text": "Question two: Which branch studies carbon compounds? Correct: organic chemistry. Remember the exception: simple carbon salts like carbonates, bicarbonates, oxides and carbides are studied in inorganic chemistry."},
+        {"voice": "ur", "text": "سوال دو: کاربن کے مرکبات کس branch میں پڑھے جاتے ہیں؟ درست جواب: organic chemistry۔ ایک استثنا یاد رکھیں: carbonates, bicarbonates, oxides اور carbides جیسے سادہ کاربن نمک inorganic chemistry میں پڑھے جاتے ہیں۔"},
+        {"voice": "en", "text": "Question three: Radioactive nuclei and their transformations belong to which branch? The answer is nuclear chemistry, the study of what happens inside the nucleus of an atom."},
+        {"voice": "ur", "text": "سوال تین: تابکار نیوکلیس اور ان کی تبدیلیاں کس branch سے متعلق ہیں؟ جواب nuclear chemistry ہے، یعنی ایٹم کے مرکزے کے اندر ہونے والے واقعات کا مطالعہ۔"},
+        {"voice": "en", "text": "Question four: Determining the percentage of elements in a sample belongs to which branch? That is analytical chemistry, because it separates, identifies, and measures the components of matter."},
+        {"voice": "ur", "text": "سوال چار: کسی نمونے میں عناصر کی فیصد معلوم کرنا کس branch کا کام ہے؟ یہ analytical chemistry ہے، کیونکہ وہی مادہ کے اجزاء کو الگ کرتی، پہچانتی اور مقدار ناپتی ہے۔"},
+        {"voice": "en", "text": "Question five: Salts, acids and bases are studied under which branch? Inorganic chemistry. If you got four or more right, your basics are strong. If not, replay the branches section once more."},
+        {"voice": "ur", "text": "سوال پانچ: نمک، تیزاب اور قاعدة کس branch میں پڑھے جاتے ہیں؟ Inorganic chemistry میں۔ اگر چار یا اس سے زیادہ جواب درست آئے تو آپ کی بنیاد مضبوط ہے، ورنہ branches والا حصہ ایک بار دوبارہ دیکھیں۔"}
+      ]
+    },
+    {
+      "id": 21,
+      "kind": "summary",
+      "title": "Lecture Summary",
+      "visual": "none",
+      "accent": "#f472b6",
+      "bullets": [
+        "CHEMISTRY = study of matter: properties, composition, structure + changes",
+        "Energy absorbed or evolved drives physical & chemical changes",
+        "11 BRANCHES: physical, inorganic, organic, environmental, analytical, bio, nuclear, polymer, geo, medicinal, astro",
+        "Each branch has its OWN focus: atoms, carbon, space, life, nuclei, drugs...",
+        "Key terms: matter, atom, molecule, element, compound, composition, structure",
+        "Next lecture: STATES OF MATTER - solid, liquid, gas, plasma"
+      ],
+      "segments": [
+        {"voice": "en", "text": "Let us summarize everything we learned today. Chemistry is the branch of science that studies the properties, composition, and structure of substances, along with the physical and chemical changes they undergo."},
+        {"voice": "ur", "text": "آج کے پورے لیکچر کا خلاصہ کرتے ہیں۔ کیمیاء سائنس وہ شاخ ہے جو مادوں کی خصوصیات، ترکیب اور ساخت کو پڑھتی ہے، اور ان میں آنے والی طبعی و کیمیائی تبدیلیوں کو بھی۔"},
+        {"voice": "en", "text": "We learned that both physical and chemical changes involve energy, absorbed or released. Because chemistry is so vast, it is divided into distinct branches: physical, inorganic, organic, environmental, analytical, biochemistry, nuclear, polymer, geochemistry, medicinal, and astrochemistry."},
+        {"voice": "ur", "text": "ہم نے سیکھا کہ ہر طبعی اور کیمیائی تبدیلی میں توانائی شامل ہوتی ہے، چاہے جذب ہو یا خارج۔ کیمیاء بہت وسیع ہے اس لیے اسے الگ الگ branches میں تقسیم کیا گیا: physical, inorganic, organic, environmental, analytical, biochemistry, nuclear, polymer, geochemistry, medicinal اور astrochemistry۔"},
+        {"voice": "en", "text": "Each branch has its own focus: the atom and reaction rates, carbon compounds, life processes, pollution, analysis, nuclei, polymers, the Earth, medicines, and even molecules in space. Master these key terms, and revise the exercise."},
+        {"voice": "ur", "text": "ہر branch کا اپنا مرکزِ توجہ ہے: ایٹم اور ردِعمل کی رفتار، کاربن کے مرکبات، زندگی کے اعمال، آلودگی، تجزیہ، نیوکلیس، polymer, زمین، ادویات اور خلا کے مالیکیول۔ ان اصطلاحات کو جانیں اور exercise دہرائیں۔"},
+        {"voice": "en", "text": "In the next lecture, we begin the second topic of this chapter: the states of matter. Solid, liquid, gas, and plasma, and what makes them different. Until then, keep observing chemistry around you."},
+        {"voice": "ur", "text": "اگلے لیکچر میں اس باب کا دوسرا موضوع شروع کریں گے: states of matter۔ یعنی ٹھوس، مائع، گیس اور plasma، اور ان میں فرق۔ جب تک، اپنے گرد کیمیاء کو دیکھتے رہیں۔"}
+      ]
+    },
+    {
+      "id": 15,
+      "kind": "branch",
+      "title": "Looking Ahead: States of Matter",
+      "visual": "states",
+      "accent": "#7dd3fc",
+      "segments": [
+        { "voice": "en", "text": "This world is made up of matter and energy. Energy is non-material in nature. Anything other than energy which carries weight and occupies volume is called matter. We encounter material things everywhere, in all sorts of different and distinct forms." },
+        { "voice": "ur", "text": "یہ جہان مادے اور توانائی سے بنا ہے۔ توانائی بے جسم چیز ہے؛ جو وزن رکھے اور جگہ گھیرے وہ مادہ ہے۔ مادے کی ہر شکل اس کی حالت کہلاتی ہے۔" },
+        { "voice": "en", "text": "A state of matter is one of the many distinct forms in which matter can exist. We observe four states of matter in everyday life: solid, liquid, gas and plasma. Apart from these, there are more states of matter which we do not see in our everyday life." },
+        { "voice": "ur", "text": "روز کی زندگی میں ہم چار حالتیں دیکھتے ہیں: ٹھوس، مائع، گیس اور پلازما۔ ان کے علاوہ اور بھی حالتیں ہیں جو عام طور پر نظر نہیں آتیں۔ اگلا لیکچر یہی موضوع ہے: States of Matter۔" }
+      ],
+      "bullets": [
+        "World = MATTER + ENERGY",
+        "Matter: has WEIGHT, occupies VOLUME",
+        "4 everyday states: SOLID · LIQUID · GAS · PLASMA"
+      ]
+    },
+    {
+      "id": 16,
+      "kind": "outro",
+      "title": "Lecture 1 Complete",
+      "subtitle": "What is Chemistry · 11 Branches · Exercise · Next: States of Matter",
+      "segments": [
+        { "voice": "ur", "text": "آج کا لیکچر یہی تک تھا۔ اللہ حافظ — ملتے ہیں اگلے لیکچر میں!" }
+      ]
+    }
+  ]
+}
