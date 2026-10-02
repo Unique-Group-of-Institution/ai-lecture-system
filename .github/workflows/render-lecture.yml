@@ -1,0 +1,70 @@
+name: Render Lecture Video
+
+on:
+  # Manual trigger (GitHub UI se)
+  workflow_dispatch:
+    inputs:
+      composition:
+        description: 'Composition ID (e.g., TeacherlessLecture)'
+        required: true
+        default: 'TeacherlessLecture'
+      output_name:
+        description: 'Output file name'
+        required: true
+        default: 'lecture.mp4'
+      scale:
+        description: 'Render scale (1 = 1080p, 0.6667 = 720p)'
+        required: false
+        default: '0.6667'
+
+  # Auto-trigger when manifest changes
+  push:
+    paths:
+      - 'remotion/**'
+      - 'data/lectures/teacherless/**'
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: 'remotion/package-lock.json'
+
+      - name: Install dependencies
+        working-directory: ./remotion
+        run: npm ci
+
+      - name: Render video
+        working-directory: ./remotion
+        run: |
+          npx remotion render \
+            src/index.ts \
+            ${{ github.event.inputs.composition || 'TeacherlessLecture' }} \
+            out/${{ github.event.inputs.output_name || 'lecture.mp4' }} \
+            --scale=${{ github.event.inputs.scale || '0.6667' }} \
+            --codec=h264 \
+            --crf=23
+
+      - name: Upload rendered video
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-lecture
+          path: remotion/out/*.mp4
+          retention-days: 30
+
+      - name: Upload render logs (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: render-logs
+          path: remotion/out/
+          retention-days: 7
