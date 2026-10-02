@@ -397,6 +397,20 @@ def _review_flags(text: str, confidence: float | None) -> list[str]:
     return flags
 
 
+# Scanned board textbooks ship a text layer containing only the watermark plus
+# the printed page number; that layer hides the real (image) content, so such
+# pages must fall through to local OCR instead of being accepted as PDF_TEXT.
+WATERMARK_TOKENS = ("not for sale", "pctb")
+
+
+def _watermark_only_text(text: str) -> bool:
+    remainder = text.casefold()
+    for token in WATERMARK_TOKENS:
+        remainder = remainder.replace(token, " ")
+    condensed = "".join(remainder.split())
+    return not condensed or condensed.isdigit()
+
+
 def extract_source(source: ContentSource, *, tesseract_path: Path | None = None, tessdata_path: Path | None = None) -> ExtractionVersion:
     source = ContentSource.objects.select_related("original_file").get(pk=source.pk)
     original = source.original_file
@@ -421,7 +435,7 @@ def extract_source(source: ContentSource, *, tesseract_path: Path | None = None,
                 native_path = staging / f"native-{index:04d}.txt"
                 text = native_path.read_text(encoding="utf-8")
                 native_path.unlink()
-                if text:
+                if text and not _watermark_only_text(text):
                     pages.append((index, text, ExtractedPage.Method.PDF_TEXT, None, []))
                     continue
                 width, height = float(page.mediabox.width), float(page.mediabox.height)

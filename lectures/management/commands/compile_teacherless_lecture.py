@@ -14,7 +14,8 @@ class Command(BaseCommand):
         generation_id = options["generation_id"]
         try:
             manifest = compile_teacherless_manifest(generation_id)
-            path = write_teacherless_manifest(generation_id) if options["write"] else None\n            srt_path = write_teacherless_srt(generation_id) if options["write"] else None
+            path = write_teacherless_manifest(generation_id) if options["write"] else None
+            srt_path = write_teacherless_srt(generation_id) if options["write"] else None
         except Exception as exc:
             raise CommandError(str(exc)) from exc
 

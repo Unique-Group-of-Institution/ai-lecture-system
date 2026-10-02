@@ -106,6 +106,28 @@ urlpatterns = [
     ),
 
     # ============================================================
+    # TEACHERLESS (AUTOMATED) LECTURE RENDER PATH
+    # ============================================================
+
+    path(
+        "api/teacherless/generations/<int:generation_id>/render/",
+        views.teacherless_render_api,
+        name="teacherless-render",
+    ),
+
+    path(
+        "api/teacherless/renders/<int:render_id>/status/",
+        views.teacherless_render_status_api,
+        name="teacherless-render-status",
+    ),
+
+    path(
+        "teacherless/renders/<int:render_id>/media/",
+        views.teacherless_render_media,
+        name="teacherless-render-media",
+    ),
+
+    # ============================================================
     # DJANGO ADMIN
     # ============================================================
 

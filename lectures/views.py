@@ -9,6 +9,7 @@ from pathlib import Path
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.conf import settings
+from django.db import transaction
 from django.http import FileResponse, HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -17,7 +18,7 @@ from .content import register_upload, sources_visible_to
 from .generation import actor_context_for_user, approve_slide, caption_for_slide, create_generation, revise_slide
 from .models import (
     Chapter, ContentSource, GenerationRequest, LectureWorkflow, RecordingTake, SlideDraft,
-    VideoEditDecision, VideoRenderVersion, WorkflowJob,
+    TeacherlessRender, VideoEditDecision, VideoRenderVersion, WorkflowJob,
 )
 from .recording import (
     RecordingConflict, complete_recording, create_take, open_recording, recording_path,
@@ -40,6 +41,10 @@ from .video import (
     request_export_package, request_initial_render,
     submit_for_teacher_review, video_workflows_visible_to,
 )
+from .teacherless_render import (
+    request_teacherless_render, start_teacherless_render, teacherless_render_payload,
+)
+from .teacherless_render import render_video_path as teacherless_render_video_path
 
 logger = logging.getLogger(__name__)
 
@@ -1060,3 +1065,65 @@ def recording_take_media(request, take_id):
         return response
     except (PermissionDenied, ValidationError, RecordingTake.DoesNotExist, OSError):
         return _safe_json({"error": "Recording media is unavailable."}, status=404)
+
+# ============================================================
+# T093: TEACHERLESS (AUTOMATED) LECTURE RENDER PATH
+# Parallel to the T050 teacher-recording workflow; keyed on generation id.
+# ============================================================
+
+
+def _teacherless_render_visible_to(render, user):
+    generation = render.generation
+    return generation.requested_by_id == user.pk or user.is_staff or user.is_superuser
+
+
+@login_required
+@require_http_methods(["POST"])
+def teacherless_render_api(request, generation_id):
+    try:
+        body = _video_body(request)
+        _exact_fields(body, set())
+        render = request_teacherless_render(generation_id, request.user)
+        if render.status == TeacherlessRender.Status.PENDING:
+            transaction.on_commit(lambda: start_teacherless_render(render.pk))
+        return _safe_json(teacherless_render_payload(render), status=201)
+    except (ObjectDoesNotExist, PermissionDenied, UnsupportedRenderEnvironment, ValidationError) as exc:
+        return _video_error(exc)
+
+
+@login_required
+@require_http_methods(["GET"])
+def teacherless_render_status_api(request, render_id):
+    try:
+        render = TeacherlessRender.objects.select_related("generation").get(pk=render_id)
+    except TeacherlessRender.DoesNotExist:
+        return _safe_json({"error": "Teacherless render is unavailable."}, status=404)
+    if not _teacherless_render_visible_to(render, request.user):
+        return _safe_json({"error": "Teacherless render is unavailable."}, status=404)
+    return _safe_json(teacherless_render_payload(render))
+
+
+@login_required
+@require_http_methods(["GET"])
+def teacherless_render_media(request, render_id):
+    try:
+        render = TeacherlessRender.objects.select_related("generation").get(pk=render_id)
+    except TeacherlessRender.DoesNotExist:
+        return _safe_json({"error": "Teacherless media is unavailable."}, status=404)
+    if (
+        not _teacherless_render_visible_to(render, request.user)
+        or render.status != TeacherlessRender.Status.SUCCEEDED
+    ):
+        return _safe_json({"error": "Teacherless media is unavailable."}, status=404)
+    try:
+        path = teacherless_render_video_path(render)
+    except (ValidationError, OSError):
+        return _safe_json({"error": "Teacherless media is unavailable."}, status=404)
+    disposition = "attachment" if request.GET.get("download") == "1" else "inline"
+    response = FileResponse(path.open("rb"), content_type="video/mp4")
+    response["Content-Disposition"] = (
+        f'{disposition}; filename="teacherless-lecture-g{render.generation_id}-v{render.version}.mp4"'
+    )
+    response["Cache-Control"] = "private, no-store"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
